@@ -3,5 +3,12 @@
 version = 3
 
 [[package]]
-name = "learn-browsers-work"
+name = "dev-playground"
+version = "0.1.0"
+dependencies = [
+ "html5parser",
+]
+
+[[package]]
+name = "html5parser"
 version = "0.1.0"
