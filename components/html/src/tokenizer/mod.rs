@@ -307,7 +307,37 @@ where
         }
 
         State::BeforeAttributeValue => {
-          todo!("State::BeforeAttributeValue");
+          let ch = self.consume_next();
+
+          match ch {
+            Char::whitespace => continue,
+            Char::ch('"') => {
+              self.switch_to(State::AttributeValueDoubleQuoted);
+            }
+            Char::ch('\'') => {
+              self.switch_to(State::AttributeValueSingleQuoted);
+            }
+            Char::ch('>') => {
+              emit_error!("missing-attribute-value");
+              self.switch_to(State::Data);
+              return self.emit_current_token();
+            }
+            _ => {
+              self.reconsume_in(State::AttributeValueUnQuoted);
+            }
+          }
+        }
+
+        State::AttributeValueDoubleQuoted => {
+          todo!("State::AttributeValueDoubleQuoted");
+        }
+
+        State::AttributeValueSingleQuoted => {
+          todo!("State::AttributeValueSingleQuoted");
+        }
+
+        State::AttributeValueUnQuoted => {
+          todo!("State::AttributeValueUnQuoted");
         }
 
         State::BogusComment => {
