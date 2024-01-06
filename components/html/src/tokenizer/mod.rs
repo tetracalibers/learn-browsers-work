@@ -253,7 +253,27 @@ where
         }
 
         State::AttributeName => {
-          todo!("State::AttributeName");
+          let ch = self.consume_next();
+
+          match ch {
+            Char::whitespace | Char::ch('/') | Char::ch('>') | Char::eof => {
+              self.reconsume_in(State::AfterAttributeName);
+            }
+            Char::ch('=') => {
+              self.reconsume_in(State::BeforeAttributeName);
+            }
+            Char::null => {
+              emit_error!("unexpected-null-character");
+              self.append_char_to_attribute_name(REPLACEMENT_CHARACTER);
+            }
+            Char::ch('"') | Char::ch('\'') | Char::ch('<') => {
+              emit_error!("unexpected-character-in-attribute-name");
+              self.append_char_to_attribute_name(self.current_character);
+            }
+            _ => {
+              self.append_char_to_attribute_name(self.current_character);
+            }
+          }
         }
 
         State::AfterAttributeName => {
@@ -379,6 +399,17 @@ where
         data.push(ch);
       }
       _ => unreachable!("No comment found"),
+    }
+  }
+
+  fn append_char_to_attribute_name(&mut self, ch: char) {
+    let current_tag = self.current_token.as_mut().unwrap();
+    if let Token::Tag {
+      ref mut attributes, ..
+    } = current_tag
+    {
+      let attribute = attributes.last_mut().unwrap();
+      attribute.name.push(ch);
     }
   }
 
