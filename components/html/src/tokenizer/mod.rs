@@ -35,6 +35,7 @@ macro_rules! emit_error {
 const REPLACEMENT_CHARACTER: char = '\u{FFFD}';
 
 #[allow(non_camel_case_types)]
+#[derive(Debug)]
 pub enum Char {
   ch(char),
   eof,
@@ -260,7 +261,7 @@ where
               self.reconsume_in(State::AfterAttributeName);
             }
             Char::ch('=') => {
-              self.reconsume_in(State::BeforeAttributeValue);
+              self.switch_to(State::BeforeAttributeValue);
             }
             Char::ch(c) if c.is_ascii_uppercase() => {
               self.append_char_to_attribute_name(c.to_ascii_lowercase());
