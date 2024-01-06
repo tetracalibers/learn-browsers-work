@@ -23,4 +23,5 @@ pub enum State {
   AttributeValueDoubleQuoted,
   AttributeValueSingleQuoted,
   AttributeValueUnQuoted,
+  AfterAttributeValueQuoted,
 }
