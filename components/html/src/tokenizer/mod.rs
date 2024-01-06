@@ -277,7 +277,30 @@ where
         }
 
         State::AfterAttributeName => {
-          todo!("State::AfterAttributeName");
+          let ch = self.consume_next();
+
+          match ch {
+            Char::whitespace => continue,
+            Char::ch('/') => {
+              self.switch_to(State::SelfClosingStartTag);
+            }
+            Char::ch('=') => {
+              self.switch_to(State::BeforeAttributeName);
+            }
+            Char::ch('>') => {
+              self.switch_to(State::Data);
+              return self.emit_current_token();
+            }
+            Char::eof => {
+              emit_error!("eof-in-tag");
+              return self.emit_eof();
+            }
+            _ => {
+              let attribute = Attribute::new();
+              self.new_attribute(attribute);
+              self.reconsume_in(State::AttributeName);
+            }
+          }
         }
 
         State::BogusComment => {
