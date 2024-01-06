@@ -18,4 +18,6 @@ pub enum State {
   BeforeAttributeName,
   AttributeName,
   AfterAttributeName,
+
+  BeforeAttributeValue,
 }

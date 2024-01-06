@@ -260,7 +260,7 @@ where
               self.reconsume_in(State::AfterAttributeName);
             }
             Char::ch('=') => {
-              self.reconsume_in(State::BeforeAttributeName);
+              self.reconsume_in(State::BeforeAttributeValue);
             }
             Char::ch(c) if c.is_ascii_uppercase() => {
               self.append_char_to_attribute_name(c.to_ascii_lowercase());
@@ -288,7 +288,7 @@ where
               self.switch_to(State::SelfClosingStartTag);
             }
             Char::ch('=') => {
-              self.switch_to(State::BeforeAttributeName);
+              self.switch_to(State::BeforeAttributeValue);
             }
             Char::ch('>') => {
               self.switch_to(State::Data);
@@ -304,6 +304,10 @@ where
               self.reconsume_in(State::AttributeName);
             }
           }
+        }
+
+        State::BeforeAttributeValue => {
+          todo!("State::BeforeAttributeValue");
         }
 
         State::BogusComment => {
