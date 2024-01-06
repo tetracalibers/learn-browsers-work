@@ -262,6 +262,9 @@ where
             Char::ch('=') => {
               self.reconsume_in(State::BeforeAttributeName);
             }
+            Char::ch(c) if c.is_ascii_uppercase() => {
+              self.append_char_to_attribute_name(c.to_ascii_lowercase());
+            }
             Char::null => {
               emit_error!("unexpected-null-character");
               self.append_char_to_attribute_name(REPLACEMENT_CHARACTER);
