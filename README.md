@@ -1,1 +1,1 @@
-a toy browser with Rust
+Challenge to build a toy browser in Rust
