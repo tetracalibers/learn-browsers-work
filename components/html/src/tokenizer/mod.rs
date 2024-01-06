@@ -6,6 +6,7 @@ use std::env;
 
 use state::State;
 
+use token::Attribute;
 use token::Token;
 
 use stream::input_stream::CharInputStream;
@@ -229,7 +230,34 @@ where
         }
 
         State::BeforeAttributeName => {
-          todo!("State::BeforeAttributeName");
+          let ch = self.consume_next();
+
+          match ch {
+            Char::whitespace => continue,
+            Char::ch('/') | Char::ch('>') | Char::eof => {
+              self.reconsume_in(State::AfterAttributeName);
+            }
+            Char::ch('=') => {
+              emit_error!("unexpected-equals-sign-before-attribute-name");
+              let mut attribute = Attribute::new();
+              attribute.name.push(self.current_character);
+              self.new_attribute(attribute);
+              self.switch_to(State::AttributeName);
+            }
+            _ => {
+              let attribute = Attribute::new();
+              self.new_attribute(attribute);
+              self.switch_to(State::AttributeName);
+            }
+          }
+        }
+
+        State::AttributeName => {
+          todo!("State::AttributeName");
+        }
+
+        State::AfterAttributeName => {
+          todo!("State::AfterAttributeName");
         }
 
         State::BogusComment => {
@@ -358,6 +386,16 @@ where
 
   fn new_token(&mut self, token: Token) {
     self.current_token = Some(token);
+  }
+
+  fn new_attribute(&mut self, attr: Attribute) {
+    let token = self.current_token.as_mut().unwrap();
+    if let Token::Tag {
+      ref mut attributes, ..
+    } = token
+    {
+      attributes.push(attr);
+    }
   }
 
   /* emit token --------------------------------- */

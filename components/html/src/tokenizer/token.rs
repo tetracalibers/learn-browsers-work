@@ -47,3 +47,12 @@ impl Token {
     }
   }
 }
+
+impl Attribute {
+  pub fn new() -> Self {
+    Attribute {
+      name: String::new(),
+      value: String::new(),
+    }
+  }
+}

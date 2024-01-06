@@ -16,4 +16,6 @@ pub enum State {
   BogusComment,
 
   BeforeAttributeName,
+  AttributeName,
+  AfterAttributeName,
 }
