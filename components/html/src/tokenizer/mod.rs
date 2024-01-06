@@ -61,28 +61,16 @@ where
   tmp_buffer: String,
 }
 
-impl<T> Tokenizer<T>
+pub trait Tokenizing {
+  fn next_token(&mut self) -> Token;
+  fn switch_to(&mut self, state: State);
+}
+
+impl<T> Tokenizing for Tokenizer<T>
 where
   T: Iterator<Item = char>,
 {
-  pub fn new(input: T) -> Self {
-    Self {
-      input: CharInputStream::new(input),
-      output: VecDeque::new(),
-
-      state: State::Data,
-      return_state: None,
-
-      current_character: '\0',
-      reconsume_char: false,
-
-      current_token: None,
-
-      tmp_buffer: String::new(),
-    }
-  }
-
-  pub fn next_token(&mut self) -> Token {
+  fn next_token(&mut self) -> Token {
     if !self.output.is_empty() {
       return self.output.pop_front().unwrap();
     }
@@ -452,6 +440,28 @@ where
       println!("Switch to: {:#?}", state);
     }
     self.state = state;
+  }
+}
+
+impl<T> Tokenizer<T>
+where
+  T: Iterator<Item = char>,
+{
+  pub fn new(input: T) -> Self {
+    Self {
+      input: CharInputStream::new(input),
+      output: VecDeque::new(),
+
+      state: State::Data,
+      return_state: None,
+
+      current_character: '\0',
+      reconsume_char: false,
+
+      current_token: None,
+
+      tmp_buffer: String::new(),
+    }
   }
 
   /* consume char ------------------------------- */

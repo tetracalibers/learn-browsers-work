@@ -1,16 +1,12 @@
 use html::tokenizer;
+use html::tree_builder;
 
 fn main() {
   let target = r#"<p id='x'>"#.chars();
   print!("{:?}\n", target);
 
-  let mut tokenizer = tokenizer::Tokenizer::new(target);
-  loop {
-    let token = tokenizer.next_token();
-    println!("{:?}", token);
+  let tokenizer = tokenizer::Tokenizer::new(target);
+  let mut tree_builder = tree_builder::TreeBuilder::new(tokenizer);
 
-    if token.is_eof() {
-      break;
-    }
-  }
+  tree_builder.run();
 }
