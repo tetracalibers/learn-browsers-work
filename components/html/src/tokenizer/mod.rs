@@ -355,7 +355,28 @@ where
         }
 
         State::AttributeValueSingleQuoted => {
-          todo!("State::AttributeValueSingleQuoted");
+          let ch = self.consume_next();
+
+          match ch {
+            Char::ch('\'') => {
+              self.switch_to(State::AfterAttributeValueQuoted);
+            }
+            Char::ch('&') => {
+              self.return_state = Some(State::AttributeValueSingleQuoted);
+              self.switch_to(State::CharacterReference);
+            }
+            Char::null => {
+              emit_error!("unexpected-null-character");
+              self.append_char_to_attribute_value(REPLACEMENT_CHARACTER);
+            }
+            Char::eof => {
+              emit_error!("eof-in-tag");
+              return self.emit_eof();
+            }
+            _ => {
+              self.append_char_to_attribute_value(self.current_character);
+            }
+          }
         }
 
         State::AttributeValueUnQuoted => {
