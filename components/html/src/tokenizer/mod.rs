@@ -539,7 +539,38 @@ where
         }
 
         State::DOCTYPEName => {
-          todo!("State::DOCTYPEName");
+          let ch = self.consume_next();
+
+          match ch {
+            Char::whitespace => {
+              self.switch_to(State::AfterDOCTYPEName);
+            }
+            Char::ch('>') => {
+              self.switch_to(State::Data);
+              return self.emit_current_token();
+            }
+            Char::ch(c) if c.is_ascii_uppercase() => {
+              self.append_char_to_doctype_name(c.to_ascii_lowercase());
+            }
+            Char::null => {
+              emit_error!("unexpected-null-character");
+              self.append_char_to_doctype_name(REPLACEMENT_CHARACTER);
+            }
+            Char::eof => {
+              emit_error!("eof-in-doctype");
+              let token = self.current_token.as_mut().unwrap();
+              token.set_force_quirks(true);
+              self.will_emit(self.current_token.clone().unwrap());
+              return self.emit_eof();
+            }
+            _ => {
+              self.append_char_to_doctype_name(self.current_character);
+            }
+          }
+        }
+
+        State::AfterDOCTYPEName => {
+          todo!("State::AfterDOCTYPEName");
         }
 
         State::CharacterReference => {
@@ -702,6 +733,13 @@ where
     {
       let attribute = attributes.last_mut().unwrap();
       attribute.value.push(ch);
+    }
+  }
+
+  fn append_char_to_doctype_name(&mut self, ch: char) {
+    let token = self.current_token.as_mut().unwrap();
+    if let Token::DOCTYPE { ref mut name, .. } = token {
+      name.as_mut().unwrap().push(ch);
     }
   }
 
