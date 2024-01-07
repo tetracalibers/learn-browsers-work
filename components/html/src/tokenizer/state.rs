@@ -24,4 +24,7 @@ pub enum State {
   AttributeValueSingleQuoted,
   AttributeValueUnQuoted,
   AfterAttributeValueQuoted,
+
+  DOCTYPE,
+  BeforeDOCTYPEName,
 }

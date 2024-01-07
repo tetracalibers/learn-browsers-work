@@ -2,7 +2,7 @@ use html::tokenizer;
 use html::tree_builder;
 
 fn main() {
-  let target = r#"<p id='x'>"#.chars();
+  let target = r#"<!DOCTYPE html>"#.chars();
   print!("{:?}\n", target);
 
   let tokenizer = tokenizer::Tokenizer::new(target);

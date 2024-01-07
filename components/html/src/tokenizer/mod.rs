@@ -451,6 +451,35 @@ where
           }
         }
 
+        State::DOCTYPE => {
+          let ch = self.consume_next();
+
+          match ch {
+            Char::whitespace => {
+              self.switch_to(State::BeforeDOCTYPEName);
+            }
+            Char::ch('>') => {
+              self.reconsume_in(State::BeforeDOCTYPEName);
+            }
+            Char::eof => {
+              emit_error!("eof-in-doctype");
+              let mut token = Token::new_doctype();
+              token.set_force_quirks(true);
+              self.new_token(token);
+              self.will_emit(self.current_token.clone().unwrap());
+              return self.emit_eof();
+            }
+            _ => {
+              emit_error!("missing-whitespace-before-doctype-name");
+              self.reconsume_in(State::BeforeDOCTYPEName);
+            }
+          }
+        }
+
+        State::BeforeDOCTYPEName => {
+          todo!("State::BeforeDOCTYPEName");
+        }
+
         State::MarkupDeclarationOpen => {
           todo!("State::MarkupDeclarationOpen");
         }

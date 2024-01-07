@@ -14,6 +14,10 @@ pub enum Token {
   },
   Comment(String),
   Character(char),
+  DOCTYPE {
+    name: Option<String>,
+    force_quirks: bool,
+  },
   EOF,
 }
 
@@ -38,6 +42,23 @@ impl Token {
 
   pub fn new_comment(data: &str) -> Self {
     Token::Comment(data.to_owned())
+  }
+
+  pub fn new_doctype() -> Self {
+    Token::DOCTYPE {
+      name: None,
+      force_quirks: false,
+    }
+  }
+
+  pub fn set_force_quirks(&mut self, value: bool) {
+    if let Token::DOCTYPE {
+      ref mut force_quirks,
+      ..
+    } = self
+    {
+      *force_quirks = value;
+    }
   }
 
   pub fn is_eof(&self) -> bool {
