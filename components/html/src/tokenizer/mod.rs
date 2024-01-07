@@ -405,7 +405,28 @@ where
         }
 
         State::AfterAttributeValueQuoted => {
-          todo!("State::AfterAttributeValueQuoted");
+          let ch = self.consume_next();
+
+          match ch {
+            Char::whitespace => {
+              self.switch_to(State::BeforeAttributeName);
+            }
+            Char::ch('/') => {
+              self.switch_to(State::SelfClosingStartTag);
+            }
+            Char::ch('>') => {
+              self.switch_to(State::Data);
+              return self.emit_current_token();
+            }
+            Char::eof => {
+              emit_error!("eof-in-tag");
+              return self.emit_eof();
+            }
+            _ => {
+              emit_error!("missing-whitespace-between-attributes");
+              self.reconsume_in(State::BeforeAttributeName);
+            }
+          }
         }
 
         State::BogusComment => {
