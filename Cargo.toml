@@ -6,7 +6,7 @@ edition = "2021"
 
 [workspace]
 
-members = ["components/html", "utilities/stream"]
+members = ["components/html", "utilities/tree", "utilities/stream"]
 
 [dependencies]
 html = { path = "./components/html" }
