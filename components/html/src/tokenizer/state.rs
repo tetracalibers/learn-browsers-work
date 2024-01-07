@@ -28,4 +28,5 @@ pub enum State {
 
   DOCTYPE,
   BeforeDOCTYPEName,
+  DOCTYPEName,
 }

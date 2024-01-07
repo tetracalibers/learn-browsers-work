@@ -61,6 +61,14 @@ impl Token {
     }
   }
 
+  pub fn set_doctype_name_from_char(&mut self, ch: char) {
+    if let Token::DOCTYPE { ref mut name, .. } = self {
+      let mut new_name = String::new();
+      new_name.push(ch);
+      *name = Some(new_name);
+    }
+  }
+
   pub fn is_eof(&self) -> bool {
     match self {
       Token::EOF => true,

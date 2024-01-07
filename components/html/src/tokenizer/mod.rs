@@ -496,7 +496,50 @@ where
         }
 
         State::BeforeDOCTYPEName => {
-          todo!("State::BeforeDOCTYPEName");
+          let ch = self.consume_next();
+
+          match ch {
+            Char::whitespace => continue,
+            Char::ch(c) if c.is_ascii_uppercase() => {
+              let mut token = Token::new_doctype();
+              token.set_doctype_name_from_char(c.to_ascii_lowercase());
+              self.new_token(token);
+              self.switch_to(State::DOCTYPEName);
+            }
+            Char::null => {
+              emit_error!("unexpected-null-character");
+              let mut token = Token::new_doctype();
+              token.set_doctype_name_from_char(REPLACEMENT_CHARACTER);
+              self.new_token(token);
+              self.switch_to(State::DOCTYPEName);
+            }
+            Char::ch('>') => {
+              emit_error!("missing-doctype-name");
+              let mut token = Token::new_doctype();
+              token.set_force_quirks(true);
+              self.new_token(token);
+              self.switch_to(State::Data);
+              return self.emit_current_token();
+            }
+            Char::eof => {
+              emit_error!("eof-in-doctype");
+              let mut token = Token::new_doctype();
+              token.set_force_quirks(true);
+              self.new_token(token);
+              self.will_emit(self.current_token.clone().unwrap());
+              return self.emit_eof();
+            }
+            _ => {
+              let mut token = Token::new_doctype();
+              token.set_doctype_name_from_char(self.current_character);
+              self.new_token(token);
+              self.switch_to(State::DOCTYPEName);
+            }
+          }
+        }
+
+        State::DOCTYPEName => {
+          todo!("State::DOCTYPEName");
         }
 
         State::CharacterReference => {
