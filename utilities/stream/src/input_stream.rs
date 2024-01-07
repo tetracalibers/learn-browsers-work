@@ -49,4 +49,21 @@ where
       self.buffer.push_back(item);
     }
   }
+
+  pub fn peek_max(&mut self) -> Vec<I> {
+    while let Some(item) = self.source.next() {
+      self.buffer.push_back(item);
+    }
+
+    let mut result =
+      self.buffer.iter().map(|i| i.clone()).collect::<VecDeque<I>>();
+
+    if self.is_reconsume {
+      if let Some(current) = &self.last_consumed {
+        result.push_front(current.clone());
+      }
+    }
+
+    result.iter().map(|i| i.clone()).collect()
+  }
 }

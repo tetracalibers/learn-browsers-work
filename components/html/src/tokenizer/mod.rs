@@ -451,6 +451,25 @@ where
           }
         }
 
+        State::MarkupDeclarationOpen => {
+          if self.consume_if_match("--", false) {
+            self.new_token(Token::new_comment(""));
+            self.switch_to(State::CommentStart);
+          } else if self.consume_if_match("doctype", true) {
+            self.switch_to(State::DOCTYPE);
+          } else if self.consume_if_match("[CDATA[", false) {
+            unimplemented!("unsupported: CDATA");
+          } else {
+            emit_error!("incorrectly-opened-comment");
+            self.new_token(Token::new_comment(""));
+            self.switch_to(State::BogusComment);
+          }
+        }
+
+        State::CommentStart => {
+          todo!("State::CommentStart");
+        }
+
         State::DOCTYPE => {
           let ch = self.consume_next();
 
@@ -478,10 +497,6 @@ where
 
         State::BeforeDOCTYPEName => {
           todo!("State::BeforeDOCTYPEName");
-        }
-
-        State::MarkupDeclarationOpen => {
-          todo!("State::MarkupDeclarationOpen");
         }
 
         State::CharacterReference => {
@@ -569,6 +584,29 @@ where
       }
       None => Char::eof,
     }
+  }
+
+  fn consume_if_match(
+    &mut self,
+    pattern: &str,
+    case_insensitive: bool,
+  ) -> bool {
+    let mut current_str = self.input.peek_max().iter().collect::<String>();
+    let mut pattern = pattern.to_owned();
+
+    if case_insensitive {
+      current_str = current_str.to_ascii_lowercase();
+      pattern = pattern.to_ascii_lowercase();
+    }
+
+    if current_str.starts_with(&pattern) {
+      for _ in 0..pattern.len() {
+        self.consume_next();
+      }
+      return true;
+    }
+
+    false
   }
 
   fn reconsume_in(&mut self, state: State) {
