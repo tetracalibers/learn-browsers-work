@@ -598,7 +598,23 @@ where
         }
 
         State::BogusDOCTYPE => {
-          todo!("State::BogusDOCTYPE");
+          let ch = self.consume_next();
+
+          match ch {
+            Char::ch('>') => {
+              self.switch_to(State::Data);
+              return self.emit_current_token();
+            }
+            Char::null => {
+              emit_error!("unexpected-null-character");
+              continue;
+            }
+            Char::eof => {
+              self.will_emit(self.current_token.clone().unwrap());
+              return self.emit_eof();
+            }
+            _ => continue,
+          }
         }
 
         State::CharacterReference => {
