@@ -236,7 +236,7 @@ where
             _ => {
               let attribute = Attribute::new();
               self.new_attribute(attribute);
-              self.switch_to(State::AttributeName);
+              self.reconsume_in(State::AttributeName);
             }
           }
         }
