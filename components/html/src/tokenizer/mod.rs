@@ -368,7 +368,40 @@ where
         }
 
         State::AttributeValueUnQuoted => {
-          todo!("State::AttributeValueUnQuoted");
+          let ch = self.consume_next();
+
+          match ch {
+            Char::whitespace => {
+              self.switch_to(State::BeforeAttributeName);
+            }
+            Char::ch('&') => {
+              self.return_state = Some(State::AttributeValueUnQuoted);
+              self.switch_to(State::CharacterReference);
+            }
+            Char::ch('>') => {
+              self.switch_to(State::Data);
+              return self.emit_current_token();
+            }
+            Char::null => {
+              emit_error!("unexpected-null-character");
+              self.append_char_to_attribute_value(REPLACEMENT_CHARACTER);
+            }
+            Char::ch('"')
+            | Char::ch('\'')
+            | Char::ch('<')
+            | Char::ch('=')
+            | Char::ch('`') => {
+              emit_error!("unexpected-character-in-unquoted-attribute-value");
+              self.append_char_to_attribute_value(self.current_character);
+            }
+            Char::eof => {
+              emit_error!("eof-in-tag");
+              return self.emit_eof();
+            }
+            _ => {
+              self.append_char_to_attribute_value(self.current_character);
+            }
+          }
         }
 
         State::AfterAttributeValueQuoted => {
