@@ -570,7 +570,35 @@ where
         }
 
         State::AfterDOCTYPEName => {
-          todo!("State::AfterDOCTYPEName");
+          let ch = self.consume_next();
+
+          match ch {
+            Char::whitespace => continue,
+            Char::ch('>') => {
+              self.switch_to(State::Data);
+              return self.emit_current_token();
+            }
+            Char::eof => {
+              emit_error!("eof-in-doctype");
+              let token = self.current_token.as_mut().unwrap();
+              token.set_force_quirks(true);
+              self.will_emit(self.current_token.clone().unwrap());
+              return self.emit_eof();
+            }
+            _ => {
+              // 本来ならここで PUBLIC や SYSTEM などの識別子を読み取り、適切な状態に遷移する
+              // が、このパーサーでは対応しない
+
+              emit_error!("invalid-character-sequence-after-doctype-name");
+              let token = self.current_token.as_mut().unwrap();
+              token.set_force_quirks(true);
+              self.reconsume_in(State::BogusDOCTYPE);
+            }
+          }
+        }
+
+        State::BogusDOCTYPE => {
+          todo!("State::BogusDOCTYPE");
         }
 
         State::CharacterReference => {

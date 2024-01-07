@@ -30,4 +30,5 @@ pub enum State {
   BeforeDOCTYPEName,
   DOCTYPEName,
   AfterDOCTYPEName,
+  BogusDOCTYPE,
 }
