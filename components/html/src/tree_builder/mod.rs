@@ -12,7 +12,7 @@ use dom::comment::Comment;
 use dom::document::{Document, DocumentType};
 use dom::node::{Node, NodeData, NodePtr};
 
-use tree::TreeNode;
+use tree::{TreeNode, WeakTreeNode};
 
 use insert_mode::InsertMode;
 
@@ -197,11 +197,24 @@ impl<T: Tokenizing> TreeBuilder<T> {
       ("".to_string(), vec![])
     };
 
-    todo!("create_element: {}", tag_name);
+    let element_ref =
+      dom::create_element(WeakTreeNode::from(&self.document.0), &tag_name);
+    let element = element_ref.as_element();
+
+    for attr in attributes {
+      element.set_attribute(&attr.name, &attr.value);
+    }
+
+    element_ref
   }
 
   fn create_element_for_tag_name(&self, tag_name: &str) -> NodePtr {
-    todo!("create_element_for: {}", tag_name);
+    self.create_element(Token::Tag {
+      tag_name: tag_name.to_owned(),
+      self_closing: false,
+      is_end_tag: false,
+      attributes: vec![],
+    })
   }
 
   /* -------------------------------------------- */

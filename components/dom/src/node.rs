@@ -100,10 +100,25 @@ impl Node {
     }
   }
 
+  pub fn set_document(&self, document: WeakTreeNode<Node>) {
+    self.owner_document.replace(Some(document));
+  }
+
   pub fn as_maybe_document(&self) -> Option<&Document> {
     match &self.data {
       Some(NodeData::Document(doc)) => Some(doc),
       _ => None,
     }
+  }
+
+  pub fn as_maybe_element(&self) -> Option<&Element> {
+    match &self.data {
+      Some(NodeData::Element(element)) => Some(element),
+      _ => None,
+    }
+  }
+
+  pub fn as_element(&self) -> &Element {
+    self.as_maybe_element().expect("Node is not an Element")
   }
 }
