@@ -9,10 +9,6 @@ trait ElementHooks {
   fn on_attribute_change(&self, name: &str, value: &str) {}
 }
 
-pub trait ElementMethods {
-  fn tag_name(&self) -> String;
-}
-
 #[derive(Debug)]
 pub enum ElementData {
   Unknown(HTMLElement),
@@ -25,5 +21,11 @@ impl ElementHooks for ElementData {}
 impl ElementData {
   pub fn handle_attribute_change(&self, name: &str, value: &str) {
     self.on_attribute_change(name, value);
+  }
+
+  pub fn tag_name(&self) -> String {
+    match self {
+      ElementData::Unknown(element) => element.tag_name(),
+    }
   }
 }

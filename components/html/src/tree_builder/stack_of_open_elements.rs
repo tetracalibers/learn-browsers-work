@@ -21,4 +21,11 @@ impl StackOfOpenElements {
   pub fn new() -> Self {
     Self(Vec::new())
   }
+
+  pub fn current_node(&self) -> Option<NodePtr> {
+    if let Some(node) = self.0.last() {
+      return Some(node.clone());
+    }
+    None
+  }
 }

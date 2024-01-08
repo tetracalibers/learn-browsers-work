@@ -53,6 +53,14 @@ impl Element {
     }
   }
 
+  pub fn tag_name(&self) -> String {
+    self.data.tag_name()
+  }
+
+  pub fn match_tag_name_in(&self, names: &[&str]) -> bool {
+    names.iter().any(|name| self.tag_name() == *name)
+  }
+
   pub fn set_attribute(&self, name: &str, value: &str) {
     match name {
       "id" => {

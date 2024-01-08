@@ -37,6 +37,11 @@ macro_rules! emit_error {
   };
 }
 
+pub enum AdjustedInsertionLocation {
+  LastChild(NodePtr),
+  BeforeSibling(NodePtr, NodePtr),
+}
+
 pub struct TreeBuilder<T: Tokenizing> {
   tokenizer: T,
   insert_mode: InsertMode,
@@ -44,6 +49,7 @@ pub struct TreeBuilder<T: Tokenizing> {
   document: NodePtr,
   head_pointer: Option<NodePtr>,
   should_stop: bool,
+  foster_parenting: bool,
 }
 
 impl<T: Tokenizing> TreeBuilder<T> {
@@ -55,6 +61,7 @@ impl<T: Tokenizing> TreeBuilder<T> {
       document,
       head_pointer: None,
       should_stop: false,
+      foster_parenting: false,
     }
   }
 
@@ -287,11 +294,30 @@ impl<T: Tokenizing> TreeBuilder<T> {
 
   /* insert ------------------------------------- */
 
-  fn get_appropriate_insert_position(&self, target: Option<NodePtr>) {
-    todo!("get_appropriate_insert_position");
+  fn current_node(&self) -> NodePtr {
+    self.open_elements.current_node().unwrap()
   }
 
-  fn insert_at(&mut self, location: (), child: NodePtr) {
+  fn get_appropriate_insert_position(
+    &self,
+    target: Option<NodePtr>,
+  ) -> AdjustedInsertionLocation {
+    let target = target.unwrap_or(self.current_node());
+
+    let adjust_location = if self.foster_parenting
+      && target
+        .as_element()
+        .match_tag_name_in(&["table", "tbody", "tfoot", "thead", "tr"])
+    {
+      todo!("get_appropriate_insert_position: foster parenting");
+    } else {
+      AdjustedInsertionLocation::LastChild(target)
+    };
+
+    adjust_location
+  }
+
+  fn insert_at(&mut self, location: AdjustedInsertionLocation, child: NodePtr) {
     todo!("insert_at");
   }
 
