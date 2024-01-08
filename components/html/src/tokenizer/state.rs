@@ -4,6 +4,8 @@ pub enum State {
 
   RCDATA,
   RCDATALessThanSign,
+  RCDATAEndTagOpen,
+
   RAWTEXT,
 
   CharacterReference,

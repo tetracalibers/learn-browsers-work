@@ -219,7 +219,22 @@ where
         }
 
         State::RCDATALessThanSign => {
-          todo!("State::RCDATALessThanSign");
+          let ch = self.consume_next();
+
+          match ch {
+            Char::ch('/') => {
+              self.tmp_buffer.clear();
+              self.switch_to(State::RCDATAEndTagOpen);
+            }
+            _ => {
+              self.will_emit(Token::Character('<'));
+              self.reconsume_in(State::RCDATA);
+            }
+          }
+        }
+
+        State::RCDATAEndTagOpen => {
+          todo!("State::RCDATAEndTagOpen");
         }
 
         State::SelfClosingStartTag => {
