@@ -102,7 +102,27 @@ where
         }
 
         State::RCDATA => {
-          todo!("State::RCDATA");
+          let ch = self.consume_next();
+
+          match ch {
+            Char::ch('&') => {
+              self.return_state = Some(State::RCDATA);
+              self.switch_to(State::CharacterReference);
+            }
+            Char::ch('<') => {
+              self.switch_to(State::RCDATALessThanSign);
+            }
+            Char::null => {
+              emit_error!("unexpected-null-character");
+              return self.emit_char(REPLACEMENT_CHARACTER);
+            }
+            Char::eof => {
+              return self.emit_eof();
+            }
+            _ => {
+              return self.emit_current_char();
+            }
+          }
         }
 
         State::RAWTEXT => {
@@ -196,6 +216,10 @@ where
               self.append_char_to_tag_name(self.current_character);
             }
           }
+        }
+
+        State::RCDATALessThanSign => {
+          todo!("State::RCDATALessThanSign");
         }
 
         State::SelfClosingStartTag => {

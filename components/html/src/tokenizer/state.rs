@@ -3,6 +3,7 @@ pub enum State {
   Data,
 
   RCDATA,
+  RCDATALessThanSign,
   RAWTEXT,
 
   CharacterReference,
