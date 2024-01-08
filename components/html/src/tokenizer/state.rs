@@ -2,6 +2,9 @@
 pub enum State {
   Data,
 
+  RCDATA,
+  RAWTEXT,
+
   CharacterReference,
   NamedCharacterReference,
   NumericCharacterReference,

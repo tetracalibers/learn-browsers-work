@@ -6,6 +6,7 @@ use std::rc::Rc;
 
 use self::stack_of_open_elements::StackOfOpenElements;
 
+use super::tokenizer::state::State;
 use super::tokenizer::token::Token;
 use super::tokenizer::Tokenizing;
 
@@ -53,9 +54,15 @@ impl AdjustedInsertionLocation {
   }
 }
 
+enum TextOnlyElementParsingAlgorithm {
+  GenericRawText,
+  GenericRCDataElement,
+}
+
 pub struct TreeBuilder<T: Tokenizing> {
   tokenizer: T,
   insert_mode: InsertMode,
+  original_insert_mode: Option<InsertMode>,
   open_elements: StackOfOpenElements,
   document: NodePtr,
   head_pointer: Option<NodePtr>,
@@ -71,6 +78,7 @@ impl<T: Tokenizing> TreeBuilder<T> {
     TreeBuilder {
       tokenizer,
       insert_mode: InsertMode::Initial,
+      original_insert_mode: None,
       open_elements: StackOfOpenElements::new(),
       document,
       head_pointer: None,
@@ -116,6 +124,7 @@ impl<T: Tokenizing> TreeBuilder<T> {
       InsertMode::InHead => self.process_in_head(token),
       InsertMode::InHeadNoScript => self.process_in_head_no_script(token),
       InsertMode::AfterHead => self.process_after_head(token),
+      InsertMode::Text => self.process_text(token),
     }
   }
 
@@ -296,16 +305,28 @@ impl<T: Tokenizing> TreeBuilder<T> {
     }
 
     if token.is_start_tag() && token.tag_name() == "title" {
-      todo!("process_in_head: title");
+      self.handle_text_only_element(
+        token,
+        TextOnlyElementParsingAlgorithm::GenericRCDataElement,
+      );
+      return;
     }
 
     if token.is_start_tag() && token.tag_name() == "noscript" && !self.scripting
     {
-      todo!("process_in_head: noscript && !scripting");
+      self.handle_text_only_element(
+        token,
+        TextOnlyElementParsingAlgorithm::GenericRawText,
+      );
+      return;
     }
 
     if token.is_start_tag() && token.match_tag_name_in(&["noframes", "style"]) {
-      todo!("process_in_head: noframes || style");
+      self.handle_text_only_element(
+        token,
+        TextOnlyElementParsingAlgorithm::GenericRawText,
+      );
+      return;
     }
 
     if token.is_start_tag() && token.tag_name() == "noscript" && self.scripting
@@ -358,6 +379,10 @@ impl<T: Tokenizing> TreeBuilder<T> {
 
   fn process_in_body(&mut self, token: Token) {
     todo!("process_in_body");
+  }
+
+  fn process_text(&mut self, token: Token) {
+    todo!("process_in_text");
   }
 
   /* -------------------------------------------- */
@@ -538,6 +563,27 @@ impl<T: Tokenizing> TreeBuilder<T> {
 
       self.text_insertion_string_data.clear();
     }
+  }
+
+  fn handle_text_only_element(
+    &mut self,
+    token: Token,
+    algorithm: TextOnlyElementParsingAlgorithm,
+  ) {
+    self.insert_html_element(token);
+
+    match algorithm {
+      TextOnlyElementParsingAlgorithm::GenericRawText => {
+        self.tokenizer.switch_to(State::RAWTEXT);
+      }
+      TextOnlyElementParsingAlgorithm::GenericRCDataElement => {
+        self.tokenizer.switch_to(State::RCDATA);
+      }
+    }
+
+    // テキストの解析が終わったら、元の挿入モードに戻る
+    self.original_insert_mode = Some(self.insert_mode.clone());
+    self.switch_to(InsertMode::Text);
   }
 
   /* -------------------------------------------- */

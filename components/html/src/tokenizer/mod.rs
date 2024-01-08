@@ -101,6 +101,14 @@ where
           }
         }
 
+        State::RCDATA => {
+          todo!("State::RCDATA");
+        }
+
+        State::RAWTEXT => {
+          todo!("State::RAWTEXT");
+        }
+
         State::TagOpen => {
           let ch = self.consume_next();
 
