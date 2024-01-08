@@ -57,6 +57,7 @@ where
   reconsume_char: bool,
 
   current_token: Option<Token>,
+  last_emitted_start_tag: Option<Token>,
 
   tmp_buffer: String,
 }
@@ -250,7 +251,50 @@ where
         }
 
         State::RCDATAEndTagName => {
-          todo!("State::RCDATAEndTagName");
+          let ch = self.consume_next();
+
+          fn invalid<T: Iterator<Item = char>>(this: &mut Tokenizer<T>) {
+            this.will_emit(Token::Character('<'));
+            this.will_emit(Token::Character('/'));
+            this.emit_tmp_buffer();
+            this.reconsume_in(State::RCDATA);
+          }
+
+          match ch {
+            Char::whitespace => {
+              if !self.is_appropriate_end_tag() {
+                invalid(self);
+              } else {
+                self.switch_to(State::BeforeAttributeName);
+              }
+            }
+            Char::ch('/') => {
+              if !self.is_appropriate_end_tag() {
+                invalid(self);
+              } else {
+                self.switch_to(State::SelfClosingStartTag);
+              }
+            }
+            Char::ch('>') => {
+              if !self.is_appropriate_end_tag() {
+                invalid(self);
+              } else {
+                self.switch_to(State::Data);
+                return self.emit_current_token();
+              }
+            }
+            Char::ch(c) if c.is_ascii_uppercase() => {
+              self.append_char_to_tag_name(c.to_ascii_lowercase());
+              self.tmp_buffer.push(self.current_character);
+            }
+            Char::ch(c) if c.is_ascii_lowercase() => {
+              self.append_char_to_tag_name(self.current_character);
+              self.tmp_buffer.push(self.current_character);
+            }
+            _ => {
+              invalid(self);
+            }
+          }
         }
 
         State::SelfClosingStartTag => {
@@ -738,6 +782,7 @@ where
       reconsume_char: false,
 
       current_token: None,
+      last_emitted_start_tag: None,
 
       tmp_buffer: String::new(),
     }
@@ -848,6 +893,29 @@ where
     if let Token::DOCTYPE { ref mut name, .. } = token {
       name.as_mut().unwrap().push(ch);
     }
+  }
+
+  /* checker ------------------------------------ */
+
+  fn is_appropriate_end_tag(&mut self) -> bool {
+    if self.last_emitted_start_tag.is_none() {
+      return false;
+    }
+
+    let current_tag = self.current_token.as_ref().unwrap();
+    let last_start_tag = self.last_emitted_start_tag.as_ref().unwrap();
+
+    if let Token::Tag { tag_name, .. } = current_tag {
+      let current_tag_name = tag_name;
+
+      if let Token::Tag { tag_name, .. } = last_start_tag {
+        let last_tag_name = tag_name;
+
+        return current_tag_name == last_tag_name;
+      }
+    }
+
+    false
   }
 
   /* token -------------------------------------- */
