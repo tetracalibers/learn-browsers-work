@@ -653,7 +653,7 @@ where
 
   fn switch_to(&mut self, state: State) {
     if is_trace() {
-      println!("Switch to: {:#?}", state);
+      println!("-- Tokenizer State: switch to {:#?}", state);
     }
     self.state = state;
   }
