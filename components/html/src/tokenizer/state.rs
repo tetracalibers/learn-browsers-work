@@ -5,6 +5,7 @@ pub enum State {
   RCDATA,
   RCDATALessThanSign,
   RCDATAEndTagOpen,
+  RCDATAEndTagName,
 
   RAWTEXT,
 

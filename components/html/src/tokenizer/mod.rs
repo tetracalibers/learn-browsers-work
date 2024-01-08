@@ -234,7 +234,23 @@ where
         }
 
         State::RCDATAEndTagOpen => {
-          todo!("State::RCDATAEndTagOpen");
+          let ch = self.consume_next();
+
+          match ch {
+            Char::ch(c) if c.is_ascii_alphabetic() => {
+              self.new_token(Token::new_end_tag());
+              self.reconsume_in(State::RCDATAEndTagName);
+            }
+            _ => {
+              self.will_emit(Token::Character('<'));
+              self.will_emit(Token::Character('/'));
+              self.reconsume_in(State::RCDATA);
+            }
+          }
+        }
+
+        State::RCDATAEndTagName => {
+          todo!("State::RCDATAEndTagName");
         }
 
         State::SelfClosingStartTag => {
