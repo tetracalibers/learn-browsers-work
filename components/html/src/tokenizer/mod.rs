@@ -1,6 +1,7 @@
 pub mod state;
 pub mod token;
 
+use std::collections::HashSet;
 use std::collections::VecDeque;
 use std::env;
 
@@ -936,7 +937,43 @@ where
 
   /* emit token --------------------------------- */
 
+  fn get_duplicate_attribute_index(
+    &self,
+    attributes: &Vec<Attribute>,
+  ) -> Vec<usize> {
+    let mut seen = HashSet::new();
+    let mut remove_indexes = Vec::new();
+
+    for (index, attribute) in attributes.iter().enumerate() {
+      if seen.contains(&attribute.name) {
+        emit_error!("duplicate-attribute");
+        remove_indexes.push(index);
+      } else {
+        seen.insert(attribute.name.clone());
+      }
+    }
+
+    remove_indexes
+  }
+
   fn will_emit(&mut self, token: Token) {
+    let mut token = token;
+
+    if let Token::Tag {
+      is_end_tag,
+      ref mut attributes,
+      ..
+    } = token
+    {
+      for index in self.get_duplicate_attribute_index(attributes) {
+        attributes.remove(index);
+      }
+
+      if !is_end_tag {
+        self.last_emitted_start_tag = Some(token.clone());
+      }
+    }
+
     self.output.push_back(token);
   }
 
