@@ -382,7 +382,27 @@ impl<T: Tokenizing> TreeBuilder<T> {
   }
 
   fn process_text(&mut self, token: Token) {
-    todo!("process_in_text");
+    if let Token::Character(c) = token {
+      self.insert_char(c);
+      return;
+    }
+
+    if let Token::EOF = token {
+      self.unexpected(&token);
+      self.open_elements.pop();
+      self.switch_to(self.original_insert_mode.clone().unwrap());
+      return self.process(token);
+    }
+
+    if token.is_end_tag() && token.tag_name() == "script" {
+      todo!("process_text: script");
+    }
+
+    if token.is_end_tag() {
+      self.open_elements.pop();
+      self.switch_to(self.original_insert_mode.clone().unwrap());
+      return;
+    }
   }
 
   /* -------------------------------------------- */
