@@ -145,6 +145,12 @@ impl<T: Tokenizing> TreeBuilder<T> {
       return;
     }
 
+    if let Token::Character(c) = token {
+      if c.is_whitespace() {
+        return;
+      }
+    }
+
     if token.is_start_tag() && token.tag_name() == "html" {
       let element = self.create_element(token);
       self.document.append_child(element.0.clone());
