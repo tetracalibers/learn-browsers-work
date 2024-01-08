@@ -24,6 +24,12 @@ pub trait TreeNodeHooks<T: TreeNodeHooks<T> + Debug> {
   fn on_children_updated(&self, current: TreeNode<T>) {}
 }
 
+impl<T: TreeNodeHooks<T> + Debug> WeakTreeNode<T> {
+  pub fn upgrade(&self) -> Option<TreeNode<T>> {
+    self.0.upgrade().map(|rc| TreeNode::from(rc))
+  }
+}
+
 impl<T: TreeNodeHooks<T> + Debug> Debug for TreeNode<T> {
   fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
     write!(f, "{:?}", self.data)

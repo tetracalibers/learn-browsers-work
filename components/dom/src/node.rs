@@ -104,6 +104,13 @@ impl Node {
     self.owner_document.replace(Some(document));
   }
 
+  pub fn owner_document(&self) -> Option<TreeNode<Node>> {
+    match self.owner_document.borrow().deref() {
+      Some(node) => node.upgrade(),
+      _ => None,
+    }
+  }
+
   pub fn as_maybe_document(&self) -> Option<&Document> {
     match &self.data {
       Some(NodeData::Document(doc)) => Some(doc),
