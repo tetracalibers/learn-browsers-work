@@ -194,4 +194,32 @@ impl<T: TreeNodeHooks<T> + Debug> TreeNode<T> {
     // self.data.on_inserted(child.clone(), self.clone());
     // self.data.on_children_updated(self.clone());
   }
+
+  pub fn insert_before(
+    &self,
+    child: TreeNode<T>,
+    ref_child: Option<TreeNode<T>>,
+  ) {
+    if self.find_first_anecestor(|parent| Rc::ptr_eq(&child, &parent)).is_some()
+    {
+      panic!("Cannot append parent: {:?}", child);
+    }
+
+    child.detach();
+
+    if let Some(ref_child) = ref_child {
+      child.parent.replace(Some(WeakTreeNode::from(self)));
+
+      if let Some(prev_sibling) = ref_child.prev_sibling() {
+        prev_sibling.next_sibling.replace(Some(child.clone()));
+        child.prev_sibling.replace(Some(WeakTreeNode::from(prev_sibling)));
+      } else {
+        self.first_child.replace(Some(child.clone()));
+      }
+
+      ref_child.prev_sibling.replace(Some(WeakTreeNode::from(child.clone())));
+    } else {
+      self.append_child(child);
+    }
+  }
 }

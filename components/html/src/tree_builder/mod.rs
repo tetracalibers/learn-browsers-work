@@ -318,7 +318,14 @@ impl<T: Tokenizing> TreeBuilder<T> {
   }
 
   fn insert_at(&mut self, location: AdjustedInsertionLocation, child: NodePtr) {
-    todo!("insert_at");
+    match location {
+      AdjustedInsertionLocation::LastChild(parent) => {
+        parent.append_child(child.0);
+      }
+      AdjustedInsertionLocation::BeforeSibling(parent, sibling) => {
+        parent.insert_before(child.0, Some(sibling.0));
+      }
+    }
   }
 
   fn insert_html_element(&mut self, token: Token) -> NodePtr {
