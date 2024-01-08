@@ -50,6 +50,7 @@ pub struct TreeBuilder<T: Tokenizing> {
   head_pointer: Option<NodePtr>,
   should_stop: bool,
   foster_parenting: bool,
+  scripting: bool,
 }
 
 impl<T: Tokenizing> TreeBuilder<T> {
@@ -62,6 +63,7 @@ impl<T: Tokenizing> TreeBuilder<T> {
       head_pointer: None,
       should_stop: false,
       foster_parenting: false,
+      scripting: false,
     }
   }
 
@@ -97,6 +99,8 @@ impl<T: Tokenizing> TreeBuilder<T> {
       InsertMode::BeforeHtml => self.process_before_html(token),
       InsertMode::BeforeHead => self.process_before_head(token),
       InsertMode::InHead => self.process_in_head(token),
+      InsertMode::InHeadNoScript => self.process_in_head_no_script(token),
+      InsertMode::AfterHead => self.process_after_head(token),
     }
   }
 
@@ -189,6 +193,7 @@ impl<T: Tokenizing> TreeBuilder<T> {
         attributes: vec![],
         is_end_tag: false,
         self_closing: false,
+        self_closing_acknowledged: false,
       });
       this.head_pointer = Some(head_element.clone());
       this.switch_to(InsertMode::InHead);
@@ -237,8 +242,103 @@ impl<T: Tokenizing> TreeBuilder<T> {
     anything_else(self, token);
   }
 
-  fn process_in_head(&mut self, token: Token) {
-    todo!("process_in_head");
+  fn process_in_head(&mut self, mut token: Token) {
+    if let Token::Character(c) = token {
+      if c.is_whitespace() {
+        self.insert_char(c);
+        return;
+      }
+    }
+
+    if let Token::Comment(text) = token {
+      self.insert_comment(text);
+      return;
+    }
+
+    if let Token::DOCTYPE { .. } = token {
+      self.unexpected(&token);
+      return;
+    }
+
+    if token.is_start_tag() && token.tag_name() == "html" {
+      return self.process_in_body(token);
+    }
+
+    if token.is_start_tag()
+      && token.match_tag_name_in(&["base", "basefont", "bgsound", "link"])
+    {
+      self.insert_html_element(token.clone());
+      self.open_elements.pop();
+      token.acknowledge_self_closing_if_set();
+      return;
+    }
+
+    if token.is_start_tag() && token.tag_name() == "meta" {
+      self.insert_html_element(token.clone());
+      self.open_elements.pop();
+      token.acknowledge_self_closing_if_set();
+      return;
+    }
+
+    if token.is_start_tag() && token.tag_name() == "title" {
+      todo!("process_in_head: title");
+    }
+
+    if token.is_start_tag() && token.tag_name() == "noscript" && !self.scripting
+    {
+      todo!("process_in_head: noscript && !scripting");
+    }
+
+    if token.is_start_tag() && token.match_tag_name_in(&["noframes", "style"]) {
+      todo!("process_in_head: noframes || style");
+    }
+
+    if token.is_start_tag() && token.tag_name() == "noscript" && self.scripting
+    {
+      self.insert_html_element(token.clone());
+      self.switch_to(InsertMode::InHeadNoScript);
+      return;
+    }
+
+    if token.is_start_tag() && token.tag_name() == "script" {
+      todo!("process_in_head: script");
+    }
+
+    if token.is_end_tag() && token.tag_name() == "head" {
+      self.open_elements.pop();
+      self.switch_to(InsertMode::AfterHead);
+      return;
+    }
+
+    if token.is_start_tag() && token.tag_name() == "template" {
+      todo!("process_in_head: template start");
+    }
+
+    if token.is_end_tag() && token.tag_name() == "template" {
+      todo!("process_in_head: template end");
+    }
+
+    if token.is_start_tag() && token.tag_name() == "head" {
+      self.unexpected(&token);
+      return;
+    }
+
+    if token.is_end_tag() {
+      self.unexpected(&token);
+      return;
+    }
+
+    self.open_elements.pop();
+    self.switch_to(InsertMode::AfterHead);
+    self.process(token);
+  }
+
+  fn process_in_head_no_script(&mut self, token: Token) {
+    todo!("process_in_head_no_script");
+  }
+
+  fn process_after_head(&mut self, token: Token) {
+    todo!("process_after_head");
   }
 
   fn process_in_body(&mut self, token: Token) {
@@ -287,6 +387,7 @@ impl<T: Tokenizing> TreeBuilder<T> {
     self.create_element(Token::Tag {
       tag_name: tag_name.to_owned(),
       self_closing: false,
+      self_closing_acknowledged: false,
       is_end_tag: false,
       attributes: vec![],
     })
@@ -345,6 +446,10 @@ impl<T: Tokenizing> TreeBuilder<T> {
       TreeNode::new(Node::new(NodeData::Comment(Comment::new(data))));
     comment.set_document(WeakTreeNode::from(&self.document.0));
     self.insert_at(insert_position, NodePtr(comment));
+  }
+
+  fn insert_char(&self, ch: char) {
+    todo!("insert_char");
   }
 
   /* -------------------------------------------- */

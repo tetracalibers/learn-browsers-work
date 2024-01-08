@@ -10,6 +10,7 @@ pub enum Token {
     tag_name: String,
     attributes: Vec<Attribute>,
     self_closing: bool,
+    self_closing_acknowledged: bool,
     is_end_tag: bool,
   },
   Comment(String),
@@ -29,6 +30,7 @@ impl Token {
       tag_name: String::new(),
       is_end_tag: false,
       self_closing: false,
+      self_closing_acknowledged: false,
       attributes: Vec::new(),
     }
   }
@@ -38,6 +40,7 @@ impl Token {
       tag_name: String::new(),
       is_end_tag: true,
       self_closing: false,
+      self_closing_acknowledged: false,
       attributes: Vec::new(),
     }
   }
@@ -80,6 +83,19 @@ impl Token {
       let mut new_name = String::new();
       new_name.push(ch);
       *name = Some(new_name);
+    }
+  }
+
+  pub fn acknowledge_self_closing_if_set(&mut self) {
+    if let Token::Tag {
+      ref mut self_closing_acknowledged,
+      self_closing,
+      ..
+    } = self
+    {
+      if *self_closing {
+        *self_closing_acknowledged = true;
+      }
     }
   }
 
