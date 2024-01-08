@@ -40,6 +40,12 @@ pub trait NodeHooks {
   fn on_children_updated(&self, context: ChildrenUpdateContext) {}
 }
 
+impl Clone for NodePtr {
+  fn clone(&self) -> Self {
+    NodePtr(self.0.clone())
+  }
+}
+
 impl Deref for NodePtr {
   type Target = TreeNode<Node>;
   fn deref(&self) -> &Self::Target {

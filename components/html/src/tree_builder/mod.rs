@@ -1,10 +1,14 @@
 mod insert_mode;
+mod stack_of_open_elements;
 
 use std::env;
+
+use self::stack_of_open_elements::StackOfOpenElements;
 
 use super::tokenizer::token::Token;
 use super::tokenizer::Tokenizing;
 
+use dom::comment::Comment;
 use dom::document::{Document, DocumentType};
 use dom::node::{Node, NodeData, NodePtr};
 
@@ -36,6 +40,7 @@ macro_rules! emit_error {
 pub struct TreeBuilder<T: Tokenizing> {
   tokenizer: T,
   insert_mode: InsertMode,
+  open_elements: StackOfOpenElements,
   document: NodePtr,
   should_stop: bool,
 }
@@ -45,6 +50,7 @@ impl<T: Tokenizing> TreeBuilder<T> {
     TreeBuilder {
       tokenizer,
       insert_mode: InsertMode::Initial,
+      open_elements: StackOfOpenElements::new(),
       document,
       should_stop: false,
     }
@@ -80,6 +86,7 @@ impl<T: Tokenizing> TreeBuilder<T> {
     match self.insert_mode {
       InsertMode::Initial => self.process_initial(token),
       InsertMode::BeforeHtml => self.process_before_html(token),
+      InsertMode::BeforeHead => self.process_before_head(token),
     }
   }
 
@@ -115,7 +122,52 @@ impl<T: Tokenizing> TreeBuilder<T> {
   }
 
   fn process_before_html(&mut self, token: Token) {
-    todo!("process_before_html");
+    fn anything_else<T: Tokenizing>(this: &mut TreeBuilder<T>, token: Token) {
+      let element = this.create_element_for_tag_name("html");
+      this.document.append_child(element.0.clone());
+      this.open_elements.push(element.clone());
+      this.switch_to(InsertMode::BeforeHead);
+      this.process(token.clone());
+    }
+
+    if let Token::DOCTYPE { .. } = token {
+      self.unexpected(&token);
+      return;
+    }
+
+    if let Token::Comment(text) = token {
+      let data = NodeData::Comment(Comment::new(text));
+      let comment = TreeNode::new(Node::new(data));
+      self.document.append_child(comment);
+      return;
+    }
+
+    if token.is_start_tag() && token.tag_name() == "html" {
+      let element = self.create_element(token);
+      self.document.append_child(element.0.clone());
+      self.open_elements.push(element.clone());
+      self.switch_to(InsertMode::BeforeHead);
+      return;
+    }
+
+    if token.is_end_tag()
+      && token.match_tag_name_in(&["head", "body", "html", "br"])
+    {
+      anything_else(self, token);
+      return;
+    }
+
+    if token.is_end_tag() {
+      self.unexpected(&token);
+      anything_else(self, token);
+      return;
+    }
+
+    anything_else(self, token);
+  }
+
+  fn process_before_head(&mut self, token: Token) {
+    todo!("process_before_head: {:?}", token);
   }
 
   /* -------------------------------------------- */
@@ -129,6 +181,27 @@ impl<T: Tokenizing> TreeBuilder<T> {
       println!("-- Builder State: switch to {:#?}", mode);
     }
     self.insert_mode = mode;
+  }
+
+  /* element ------------------------------------ */
+
+  fn create_element(&self, tag_token: Token) -> NodePtr {
+    let (tag_name, attributes) = if let Token::Tag {
+      tag_name,
+      attributes,
+      ..
+    } = tag_token
+    {
+      (tag_name, attributes)
+    } else {
+      ("".to_string(), vec![])
+    };
+
+    todo!("create_element: {}", tag_name);
+  }
+
+  fn create_element_for_tag_name(&self, tag_name: &str) -> NodePtr {
+    todo!("create_element_for: {}", tag_name);
   }
 
   /* -------------------------------------------- */

@@ -24,6 +24,12 @@ pub trait TreeNodeHooks<T: TreeNodeHooks<T> + Debug> {
   fn on_children_updated(&self, current: TreeNode<T>) {}
 }
 
+impl<T: TreeNodeHooks<T> + Debug> Debug for TreeNode<T> {
+  fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+    write!(f, "{:?}", self.data)
+  }
+}
+
 impl<T: TreeNodeHooks<T> + Debug> Deref for Node<T> {
   type Target = T;
   fn deref(&self) -> &Self::Target {
@@ -45,6 +51,36 @@ impl<T: TreeNodeHooks<T> + Debug> Deref for WeakTreeNode<T> {
   }
 }
 
+impl<T: TreeNodeHooks<T> + Debug> Clone for TreeNode<T> {
+  fn clone(&self) -> Self {
+    TreeNode(self.0.clone())
+  }
+}
+
+impl<T: TreeNodeHooks<T> + Debug> Clone for WeakTreeNode<T> {
+  fn clone(&self) -> Self {
+    WeakTreeNode(self.0.clone())
+  }
+}
+
+impl<T: TreeNodeHooks<T> + Debug> From<Rc<Node<T>>> for TreeNode<T> {
+  fn from(rc: Rc<Node<T>>) -> Self {
+    TreeNode(rc)
+  }
+}
+
+impl<T: TreeNodeHooks<T> + Debug> From<TreeNode<T>> for WeakTreeNode<T> {
+  fn from(rc: TreeNode<T>) -> Self {
+    WeakTreeNode(Rc::downgrade(&rc))
+  }
+}
+
+impl<T: TreeNodeHooks<T> + Debug> From<&TreeNode<T>> for WeakTreeNode<T> {
+  fn from(rc: &TreeNode<T>) -> Self {
+    WeakTreeNode(Rc::downgrade(rc))
+  }
+}
+
 impl<T: TreeNodeHooks<T> + Debug> Node<T> {
   pub fn new(data: T) -> Self {
     Self {
@@ -61,5 +97,94 @@ impl<T: TreeNodeHooks<T> + Debug> Node<T> {
 impl<T: TreeNodeHooks<T> + Debug> TreeNode<T> {
   pub fn new(data: T) -> Self {
     Self(Rc::new(Node::new(data)))
+  }
+
+  pub fn first_child(&self) -> NullableNode<T> {
+    self.first_child.borrow().clone()
+  }
+
+  pub fn last_child(&self) -> NullableNode<T> {
+    self.last_child.borrow().clone()
+  }
+
+  pub fn next_sibling(&self) -> NullableNode<T> {
+    self.next_sibling.borrow().clone()
+  }
+
+  pub fn prev_sibling(&self) -> NullableNode<T> {
+    match self.prev_sibling.borrow().deref() {
+      Some(node) => node.upgrade().map(|rc| TreeNode::from(rc)),
+      _ => None,
+    }
+  }
+
+  pub fn parent(&self) -> NullableNode<T> {
+    match self.parent.borrow().deref() {
+      Some(node) => node.upgrade().map(|rc| TreeNode::from(rc)),
+      _ => None,
+    }
+  }
+
+  pub fn detach(&self) {
+    if let Some(prev_sibling) = self.prev_sibling() {
+      prev_sibling.next_sibling.replace(self.next_sibling());
+    }
+    if let Some(next_sibling) = self.next_sibling() {
+      next_sibling.prev_sibling.replace(self.prev_sibling.borrow().clone());
+    }
+    if let Some(parent) = self.parent() {
+      let first_child = self.first_child().unwrap();
+      let last_child = self.last_child().unwrap();
+
+      if Rc::ptr_eq(&self, &first_child) {
+        parent.first_child.replace(self.next_sibling());
+      } else if Rc::ptr_eq(&self, &last_child) {
+        parent.last_child.replace(self.prev_sibling());
+      }
+    }
+
+    self.parent.replace(None);
+    self.next_sibling.replace(None);
+    self.prev_sibling.replace(None);
+  }
+
+  pub fn find_first_anecestor<F>(&self, predicate: F) -> Option<TreeNode<T>>
+  where
+    F: Fn(TreeNode<T>) -> bool,
+  {
+    let mut parent = self.parent();
+    while let Some(node) = parent {
+      if predicate(node.clone()) {
+        return Some(node);
+      }
+      parent = node.parent();
+    }
+    None
+  }
+
+  pub fn append_child(&self, child: TreeNode<T>) {
+    if self.find_first_anecestor(|parent| Rc::ptr_eq(&child, &parent)).is_some()
+    {
+      panic!("Cannot append parent: {:?}", child);
+    }
+
+    // 親から切り離す
+    child.detach();
+
+    if let Some(last_child) = self.last_child() {
+      last_child.next_sibling.replace(Some(child.clone()));
+      child.prev_sibling.replace(Some(WeakTreeNode::from(last_child)));
+    }
+
+    child.parent.replace(Some(WeakTreeNode::from(self)));
+
+    if self.first_child().is_none() {
+      self.first_child.replace(Some(child.clone()));
+    }
+
+    self.last_child.replace(Some(child.clone()));
+
+    self.data.on_inserted(child.clone(), self.clone());
+    self.data.on_children_updated(self.clone());
   }
 }

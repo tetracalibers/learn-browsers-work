@@ -1,4 +1,4 @@
-mod comment;
+pub mod comment;
 pub mod document;
 mod element;
 mod elements;

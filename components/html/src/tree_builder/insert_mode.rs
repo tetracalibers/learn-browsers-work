@@ -2,4 +2,5 @@
 pub enum InsertMode {
   Initial,
   BeforeHtml,
+  BeforeHead,
 }

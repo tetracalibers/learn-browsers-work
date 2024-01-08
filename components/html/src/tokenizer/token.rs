@@ -22,6 +22,8 @@ pub enum Token {
 }
 
 impl Token {
+  /* constructor -------------------------------- */
+
   pub fn new_start_tag() -> Self {
     Token::Tag {
       tag_name: String::new(),
@@ -51,6 +53,18 @@ impl Token {
     }
   }
 
+  /* getter ------------------------------------- */
+
+  pub fn tag_name(&self) -> &String {
+    if let Token::Tag { tag_name, .. } = self {
+      tag_name
+    } else {
+      panic!("Token is not a Tag");
+    }
+  }
+
+  /* setter ------------------------------------- */
+
   pub fn set_force_quirks(&mut self, value: bool) {
     if let Token::DOCTYPE {
       ref mut force_quirks,
@@ -69,10 +83,34 @@ impl Token {
     }
   }
 
+  /* checker ------------------------------------ */
+
+  pub fn is_start_tag(&self) -> bool {
+    match self {
+      Token::Tag { is_end_tag, .. } => !is_end_tag,
+      _ => false,
+    }
+  }
+
+  pub fn is_end_tag(&self) -> bool {
+    match self {
+      Token::Tag { is_end_tag, .. } => *is_end_tag,
+      _ => false,
+    }
+  }
+
   pub fn is_eof(&self) -> bool {
     match self {
       Token::EOF => true,
       _ => false,
+    }
+  }
+
+  pub fn match_tag_name_in(&self, names: &[&str]) -> bool {
+    if let Token::Tag { tag_name, .. } = self {
+      names.contains(&tag_name.as_str())
+    } else {
+      false
     }
   }
 }
