@@ -21,5 +21,8 @@ fn main() {
   let tokenizer = tokenizer::Tokenizer::new(target);
   let tree_builder = tree_builder::TreeBuilder::default(tokenizer);
 
-  tree_builder.run();
+  let document = tree_builder.run();
+
+  // documentの中身を一覧表示する
+  println!("{:#?}", document);
 }

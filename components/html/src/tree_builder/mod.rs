@@ -90,6 +90,10 @@ impl<T: Tokenizing> TreeBuilder<T> {
     }
   }
 
+  pub fn get_document(&self) -> NodePtr {
+    self.document.clone()
+  }
+
   pub fn default(tokenizer: T) -> Self {
     let document = NodePtr(TreeNode::new(Node::new(NodeData::Document(
       Document::new(),
@@ -97,7 +101,7 @@ impl<T: Tokenizing> TreeBuilder<T> {
     Self::new(tokenizer, document)
   }
 
-  pub fn run(mut self) {
+  pub fn run(mut self) -> NodePtr {
     loop {
       let token = self.tokenizer.next_token();
       println!("{:?}", token);
@@ -108,6 +112,9 @@ impl<T: Tokenizing> TreeBuilder<T> {
         break;
       }
     }
+    self.flush_text_insertion();
+
+    self.document
   }
 
   pub fn process(&mut self, token: Token) {
