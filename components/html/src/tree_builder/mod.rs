@@ -42,6 +42,7 @@ pub struct TreeBuilder<T: Tokenizing> {
   insert_mode: InsertMode,
   open_elements: StackOfOpenElements,
   document: NodePtr,
+  head_pointer: Option<NodePtr>,
   should_stop: bool,
 }
 
@@ -52,6 +53,7 @@ impl<T: Tokenizing> TreeBuilder<T> {
       insert_mode: InsertMode::Initial,
       open_elements: StackOfOpenElements::new(),
       document,
+      head_pointer: None,
       should_stop: false,
     }
   }
@@ -87,6 +89,7 @@ impl<T: Tokenizing> TreeBuilder<T> {
       InsertMode::Initial => self.process_initial(token),
       InsertMode::BeforeHtml => self.process_before_html(token),
       InsertMode::BeforeHead => self.process_before_head(token),
+      InsertMode::InHead => self.process_in_head(token),
     }
   }
 
@@ -167,7 +170,66 @@ impl<T: Tokenizing> TreeBuilder<T> {
   }
 
   fn process_before_head(&mut self, token: Token) {
-    todo!("process_before_head: {:?}", token);
+    fn anything_else<T: Tokenizing>(this: &mut TreeBuilder<T>, token: Token) {
+      let head_element = this.insert_html_element(Token::Tag {
+        tag_name: "head".to_owned(),
+        attributes: vec![],
+        is_end_tag: false,
+        self_closing: false,
+      });
+      this.head_pointer = Some(head_element.clone());
+      this.switch_to(InsertMode::InHead);
+      this.process(token);
+    }
+
+    if let Token::Character(c) = token {
+      if c.is_whitespace() {
+        return;
+      }
+    }
+
+    if let Token::Comment(text) = token {
+      self.insert_comment(text);
+      return;
+    }
+
+    if let Token::DOCTYPE { .. } = token {
+      self.unexpected(&token);
+      return;
+    }
+
+    if token.is_start_tag() && token.tag_name() == "html" {
+      return self.process_in_body(token);
+    }
+
+    if token.is_start_tag() && token.tag_name() == "head" {
+      let head_element = self.insert_html_element(token);
+      self.head_pointer = Some(head_element);
+      self.switch_to(InsertMode::InHead);
+      return;
+    }
+
+    if token.is_end_tag()
+      && token.match_tag_name_in(&["head", "body", "html", "br"])
+    {
+      anything_else(self, token);
+      return;
+    }
+
+    if token.is_end_tag() {
+      self.unexpected(&token);
+      return;
+    }
+
+    anything_else(self, token);
+  }
+
+  fn process_in_head(&mut self, token: Token) {
+    todo!("process_in_head");
+  }
+
+  fn process_in_body(&mut self, token: Token) {
+    todo!("process_in_body");
   }
 
   /* -------------------------------------------- */
@@ -215,6 +277,35 @@ impl<T: Tokenizing> TreeBuilder<T> {
       is_end_tag: false,
       attributes: vec![],
     })
+  }
+
+  /* insert ------------------------------------- */
+
+  fn get_appropriate_insert_position(&self, target: Option<NodePtr>) {
+    todo!("get_appropriate_insert_position");
+  }
+
+  fn insert_at(&mut self, location: (), child: NodePtr) {
+    todo!("insert_at");
+  }
+
+  fn insert_html_element(&mut self, token: Token) -> NodePtr {
+    let insert_position = self.get_appropriate_insert_position(None);
+    let element = self.create_element(token);
+    let return_ref = element.clone();
+
+    self.open_elements.push(element.clone());
+    self.insert_at(insert_position, element);
+
+    return_ref
+  }
+
+  fn insert_comment(&mut self, data: String) {
+    let insert_position = self.get_appropriate_insert_position(None);
+    let comment =
+      TreeNode::new(Node::new(NodeData::Comment(Comment::new(data))));
+    comment.set_document(WeakTreeNode::from(&self.document.0));
+    self.insert_at(insert_position, NodePtr(comment));
   }
 
   /* -------------------------------------------- */
