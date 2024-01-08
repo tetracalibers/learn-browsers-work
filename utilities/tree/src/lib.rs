@@ -190,7 +190,8 @@ impl<T: TreeNodeHooks<T> + Debug> TreeNode<T> {
 
     self.last_child.replace(Some(child.clone()));
 
-    self.data.on_inserted(child.clone(), self.clone());
-    self.data.on_children_updated(self.clone());
+    // TODO: 目的がはっきりしてから
+    // self.data.on_inserted(child.clone(), self.clone());
+    // self.data.on_children_updated(self.clone());
   }
 }
