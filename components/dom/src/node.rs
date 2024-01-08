@@ -76,6 +76,22 @@ impl core::fmt::Debug for NodeData {
   }
 }
 
+impl NodeHooks for NodeData {
+  fn on_inserted(&self, context: InsertContext) {}
+
+  fn on_children_updated(&self, context: ChildrenUpdateContext) {}
+}
+
+impl NodeData {
+  pub fn handle_on_inserted(&self, context: InsertContext) {
+    self.on_inserted(context);
+  }
+
+  pub fn handle_on_children_updated(&self, context: ChildrenUpdateContext) {
+    self.on_children_updated(context);
+  }
+}
+
 impl TreeNodeHooks<Node> for Node {
   fn on_inserted(&self, current: TreeNode<Node>, parent: TreeNode<Node>) {
     todo!("Node::on_inserted");
@@ -98,6 +114,10 @@ impl Node {
       owner_document: RefCell::new(None),
       data: None,
     }
+  }
+
+  pub fn data(&self) -> &Option<NodeData> {
+    &self.data
   }
 
   pub fn set_document(&self, document: WeakTreeNode<Node>) {
@@ -125,7 +145,18 @@ impl Node {
     }
   }
 
+  pub fn as_maybe_text(&self) -> Option<&Text> {
+    match &self.data {
+      Some(NodeData::Text(text)) => Some(text),
+      _ => None,
+    }
+  }
+
   pub fn as_element(&self) -> &Element {
     self.as_maybe_element().expect("Node is not an Element")
+  }
+
+  pub fn as_text(&self) -> &Text {
+    self.as_maybe_text().expect("Node is not a Text")
   }
 }

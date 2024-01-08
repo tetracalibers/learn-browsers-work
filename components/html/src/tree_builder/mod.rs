@@ -2,6 +2,7 @@ mod insert_mode;
 mod stack_of_open_elements;
 
 use std::env;
+use std::rc::Rc;
 
 use self::stack_of_open_elements::StackOfOpenElements;
 
@@ -10,7 +11,8 @@ use super::tokenizer::Tokenizing;
 
 use dom::comment::Comment;
 use dom::document::{Document, DocumentType};
-use dom::node::{Node, NodeData, NodePtr};
+use dom::node::{ChildrenUpdateContext, Node, NodeData, NodePtr};
+use dom::text::Text;
 
 use tree::{TreeNode, WeakTreeNode};
 
@@ -42,12 +44,23 @@ pub enum AdjustedInsertionLocation {
   BeforeSibling(NodePtr, NodePtr),
 }
 
+impl AdjustedInsertionLocation {
+  pub fn parent(&self) -> &NodePtr {
+    match self {
+      AdjustedInsertionLocation::LastChild(parent) => parent,
+      AdjustedInsertionLocation::BeforeSibling(parent, _) => parent,
+    }
+  }
+}
+
 pub struct TreeBuilder<T: Tokenizing> {
   tokenizer: T,
   insert_mode: InsertMode,
   open_elements: StackOfOpenElements,
   document: NodePtr,
   head_pointer: Option<NodePtr>,
+  text_insertion_node: Option<NodePtr>,
+  text_insertion_string_data: String,
   should_stop: bool,
   foster_parenting: bool,
   scripting: bool,
@@ -61,6 +74,8 @@ impl<T: Tokenizing> TreeBuilder<T> {
       open_elements: StackOfOpenElements::new(),
       document,
       head_pointer: None,
+      text_insertion_node: None,
+      text_insertion_string_data: String::new(),
       should_stop: false,
       foster_parenting: false,
       scripting: false,
@@ -418,6 +433,36 @@ impl<T: Tokenizing> TreeBuilder<T> {
     adjust_location
   }
 
+  fn get_node_for_text_insertion(
+    &mut self,
+    insert_position: AdjustedInsertionLocation,
+  ) -> NodePtr {
+    match &insert_position {
+      AdjustedInsertionLocation::LastChild(parent) => {
+        if let Some(last_child) = parent.last_child() {
+          if last_child.as_maybe_text().is_some() {
+            return NodePtr(last_child);
+          }
+        }
+      }
+      AdjustedInsertionLocation::BeforeSibling(_, sibling) => {
+        if let Some(prev_sibling) = sibling.prev_sibling() {
+          if prev_sibling.as_maybe_text().is_some() {
+            return NodePtr(prev_sibling);
+          }
+        }
+      }
+    }
+
+    let text_node = Node::new(NodeData::Text(Text::new(String::new())));
+    let text = NodePtr(TreeNode::new(text_node));
+
+    text.set_document(WeakTreeNode::from(&self.document.0));
+    self.insert_at(insert_position, text.clone());
+
+    text
+  }
+
   fn insert_at(&mut self, location: AdjustedInsertionLocation, child: NodePtr) {
     match location {
       AdjustedInsertionLocation::LastChild(parent) => {
@@ -448,8 +493,51 @@ impl<T: Tokenizing> TreeBuilder<T> {
     self.insert_at(insert_position, NodePtr(comment));
   }
 
-  fn insert_char(&self, ch: char) {
-    todo!("insert_char");
+  fn insert_char(&mut self, ch: char) {
+    let insert_position = self.get_appropriate_insert_position(None);
+
+    if insert_position.parent().as_maybe_document().is_some() {
+      return;
+    }
+
+    let text_insertion_node = self.get_node_for_text_insertion(insert_position);
+
+    match &self.text_insertion_node {
+      Some(node) if Rc::ptr_eq(&node, &text_insertion_node) => {
+        self.text_insertion_string_data.push(ch);
+      }
+      None => {
+        self.text_insertion_node = Some(text_insertion_node);
+        self.text_insertion_string_data.push(ch);
+      }
+      _ => {
+        self.flush_text_insertion();
+        self.text_insertion_node = Some(text_insertion_node);
+        self.text_insertion_string_data.push(ch);
+      }
+    }
+  }
+
+  fn flush_text_insertion(&mut self) {
+    if self.text_insertion_string_data.is_empty() {
+      return;
+    }
+
+    if let Some(node) = &self.text_insertion_node {
+      let text_node = node.as_text();
+      text_node.characters.set_data(&self.text_insertion_string_data);
+
+      let parent = node.parent().unwrap();
+      let context = ChildrenUpdateContext {
+        document: NodePtr(parent.owner_document().unwrap()),
+        current_node: node.clone(),
+      };
+
+      // TODO: 目的がはっきりしてから
+      // parent.data().as_ref().unwrap().handle_on_children_updated(context);
+
+      self.text_insertion_string_data.clear();
+    }
   }
 
   /* -------------------------------------------- */
