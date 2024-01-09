@@ -5,6 +5,11 @@ use std::{
 
 use dom::node::NodePtr;
 
+const SCOPE_BASE_LIST: [&str; 9] = [
+  "applet", "caption", "html", "table", "td", "th", "marquee", "object",
+  "template",
+];
+
 pub struct StackOfOpenElements(pub Vec<NodePtr>);
 
 impl Deref for StackOfOpenElements {
@@ -25,6 +30,8 @@ impl StackOfOpenElements {
     Self(Vec::new())
   }
 
+  /* getter ------------------------------------- */
+
   pub fn get(&self, index: usize) -> NodePtr {
     return self.0[index].clone();
   }
@@ -39,6 +46,8 @@ impl StackOfOpenElements {
   pub fn len(&self) -> usize {
     self.0.len()
   }
+
+  /* predicate ---------------------------------- */
 
   pub fn any<F>(&self, test: F) -> bool
   where
@@ -55,9 +64,42 @@ impl StackOfOpenElements {
     self.any(|node| tag_names.contains(&node.as_element().tag_name().as_str()))
   }
 
+  // tag_namesのいずれでもないnodeを持つ場合にtrueを返す
+  pub fn contains_not_in(&self, tag_names: &[&str]) -> bool {
+    self.any(|node| !tag_names.contains(&node.as_element().tag_name().as_str()))
+  }
+
   pub fn contains_node(&self, node: &NodePtr) -> bool {
     self.any(|node_2| Rc::ptr_eq(node_2, node))
   }
+
+  /* scope -------------------------------------- */
+
+  pub fn has_element_in_specific_scope(
+    &self,
+    tag_name: &str,
+    list: Vec<&str>,
+  ) -> bool {
+    for node in self.0.iter().rev() {
+      let element = node.as_element();
+
+      if element.tag_name() == tag_name {
+        return true;
+      }
+
+      if list.contains(&element.tag_name().as_str()) {
+        return false;
+      }
+    }
+
+    false
+  }
+
+  pub fn has_element_in_scope(&self, tag_name: &str) -> bool {
+    self.has_element_in_specific_scope(tag_name, SCOPE_BASE_LIST.to_vec())
+  }
+
+  /* remove ------------------------------------- */
 
   pub fn remove_first_matching_node<F>(&mut self, test: F)
   where
