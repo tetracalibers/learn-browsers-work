@@ -61,6 +61,10 @@ impl Element {
     names.iter().any(|name| self.tag_name() == *name)
   }
 
+  pub fn has_attribute(&self, name: &str) -> bool {
+    self.attributes.borrow().contains_key(name)
+  }
+
   pub fn set_attribute(&self, name: &str, value: &str) {
     match name {
       "id" => {

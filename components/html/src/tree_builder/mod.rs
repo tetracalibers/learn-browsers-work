@@ -424,7 +424,7 @@ impl<T: Tokenizing> TreeBuilder<T> {
       return;
     }
 
-    // 本来ならここでframesetタグを処理するが、framesetタグ自体非推奨なので対応しない
+    // TODO: framesetタグの扱いを決める
 
     if token.is_start_tag()
       && token.match_tag_name_in(&[
@@ -466,7 +466,117 @@ impl<T: Tokenizing> TreeBuilder<T> {
   }
 
   fn process_in_body(&mut self, token: Token) {
-    todo!("process_in_body");
+    fn any_other_end_tags<T: Tokenizing>(
+      this: &mut TreeBuilder<T>,
+      token: Token,
+    ) {
+      todo!("any_other_end_tags");
+    }
+
+    if let Token::Character(c) = token {
+      if c == '\0' {
+        emit_error!("Unexpected null character");
+        return;
+      }
+
+      if c.is_whitespace() {
+        self.reconstruct_active_formatting_elements();
+        self.insert_char(c);
+        return;
+      }
+
+      self.reconstruct_active_formatting_elements();
+      self.insert_char(c);
+      self.frameset_ok = false;
+      return;
+    }
+
+    if let Token::Comment(text) = token {
+      self.insert_comment(text);
+      return;
+    }
+
+    if let Token::DOCTYPE { .. } = token {
+      emit_error!("Unexpected DOCTYPE");
+      return;
+    }
+
+    if token.is_start_tag() && token.tag_name() == "html" {
+      emit_error!("Unexpected HTML tag");
+
+      if self.open_elements.contains("template") {
+        return;
+      }
+
+      let current_node = self.open_elements.current_node().unwrap();
+      self.add_missing_attributes_to_node(&current_node, &token);
+
+      return;
+    }
+
+    if token.is_start_tag()
+      && token.match_tag_name_in(&[
+        "base", "basefont", "bgsound", "link", "meta", "noframes", "script",
+        "style", "template", "title",
+      ])
+    {
+      return self.process_in_head(token);
+    }
+
+    if token.is_end_tag() && token.tag_name() == "template" {
+      return self.process_in_head(token);
+    }
+
+    if token.is_start_tag() && token.tag_name() == "body" {
+      self.unexpected(&token);
+
+      // 開いている要素が1つしか存在しない場合
+      if self.open_elements.len() == 1 {
+        return;
+      }
+
+      let body = self.open_elements.get(1);
+
+      // 開いている要素の2番目の要素がbody要素でない場合
+      if let Some(element) = body.as_maybe_element() {
+        if element.tag_name() != "body" {
+          return;
+        }
+      }
+
+      // 開いている要素にtemplate要素が存在する場合
+      if self.open_elements.contains("template") {
+        return;
+      }
+
+      self.frameset_ok = false;
+      self.add_missing_attributes_to_node(&body, &token);
+    }
+
+    // TODO: framesetタグの扱いを決める
+
+    if token.is_eof() {
+      // TODO: template挿入モードを扱うかどうか決める
+
+      if self.open_elements.contains_in(&[
+        "dd", "dt", "li", "optgroup", "option", "p", "rb", "rp", "rt", "rtc",
+        "tbody", "td", "tfoot", "th", "thead", "tr", "body", "html",
+      ]) {
+        self.unexpected(&token);
+      }
+
+      self.stop_parsing();
+    }
+
+    if token.is_end_tag() && token.tag_name() == "body" {
+      todo!("process_in_body: body end tag");
+    }
+
+    if token.is_end_tag() && token.tag_name() == "html" {
+      todo!("process_in_body: html end tag");
+    }
+
+    todo!("process_in_body: any other tag");
   }
 
   fn process_text(&mut self, token: Token) {
@@ -493,7 +603,7 @@ impl<T: Tokenizing> TreeBuilder<T> {
     }
   }
 
-  /* -------------------------------------------- */
+  /* parse flow --------------------------------- */
 
   fn stop_parsing(&mut self) {
     self.should_stop = true;
@@ -506,7 +616,7 @@ impl<T: Tokenizing> TreeBuilder<T> {
     self.insert_mode = mode;
   }
 
-  /* element ------------------------------------ */
+  /* create element ----------------------------- */
 
   fn create_element(&self, tag_token: Token) -> NodePtr {
     let (tag_name, attributes) = if let Token::Tag {
@@ -541,11 +651,32 @@ impl<T: Tokenizing> TreeBuilder<T> {
     })
   }
 
-  /* insert ------------------------------------- */
+  /* structure ---------------------------------- */
 
   fn current_node(&self) -> NodePtr {
     self.open_elements.current_node().unwrap()
   }
+
+  fn reconstruct_active_formatting_elements(&mut self) {
+    todo!("reconstruct_active_formatting_elements");
+  }
+
+  /* attribute ---------------------------------- */
+
+  // tokenが持つ属性をelementが持っていなければ、elementに追加する
+  fn add_missing_attributes_to_node(&self, node: &NodePtr, token: &Token) {
+    if let Token::Tag { attributes, .. } = token {
+      let element = node.as_element();
+      for attr in attributes {
+        if element.has_attribute(&attr.name) {
+          continue;
+        }
+        element.set_attribute(&attr.name, &attr.value);
+      }
+    }
+  }
+
+  /* insert ------------------------------------- */
 
   fn get_appropriate_insert_position(
     &self,

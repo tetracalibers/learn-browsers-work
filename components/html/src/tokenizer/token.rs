@@ -66,6 +66,14 @@ impl Token {
     }
   }
 
+  pub fn attributes(&self) -> &Vec<Attribute> {
+    if let Token::Tag { attributes, .. } = self {
+      attributes
+    } else {
+      panic!("Token is not a Tag");
+    }
+  }
+
   /* setter ------------------------------------- */
 
   pub fn set_force_quirks(&mut self, value: bool) {
