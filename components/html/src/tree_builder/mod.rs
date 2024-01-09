@@ -744,7 +744,12 @@ impl<T: Tokenizing> TreeBuilder<T> {
     }
 
     if token.is_end_tag() && token.tag_name() == "p" {
-      todo!("process_in_body: p end tag");
+      if !self.open_elements.has_element_in_button_scope("p") {
+        self.unexpected(&token);
+        self.insert_html_element(Token::new_start_tag_of("p"));
+      }
+      self.close_p_element();
+      return;
     }
 
     if token.is_end_tag() && token.tag_name() == "li" {

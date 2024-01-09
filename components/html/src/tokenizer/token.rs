@@ -35,6 +35,16 @@ impl Token {
     }
   }
 
+  pub fn new_start_tag_of(name: &str) -> Self {
+    Token::Tag {
+      tag_name: name.to_owned(),
+      is_end_tag: false,
+      self_closing: false,
+      self_closing_acknowledged: false,
+      attributes: Vec::new(),
+    }
+  }
+
   pub fn new_end_tag() -> Self {
     Token::Tag {
       tag_name: String::new(),
