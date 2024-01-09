@@ -71,11 +71,12 @@ pub struct TreeBuilder<T: Tokenizing> {
   should_stop: bool,
   foster_parenting: bool,
   scripting: bool,
+  frameset_ok: bool,
 }
 
 impl<T: Tokenizing> TreeBuilder<T> {
   pub fn new(tokenizer: T, document: NodePtr) -> Self {
-    TreeBuilder {
+    Self {
       tokenizer,
       insert_mode: InsertMode::Initial,
       original_insert_mode: None,
@@ -87,6 +88,7 @@ impl<T: Tokenizing> TreeBuilder<T> {
       should_stop: false,
       foster_parenting: false,
       scripting: false,
+      frameset_ok: true,
     }
   }
 
@@ -131,6 +133,7 @@ impl<T: Tokenizing> TreeBuilder<T> {
       InsertMode::InHead => self.process_in_head(token),
       InsertMode::InHeadNoScript => self.process_in_head_no_script(token),
       InsertMode::AfterHead => self.process_after_head(token),
+      InsertMode::InBody => self.process_in_body(token),
       InsertMode::Text => self.process_text(token),
     }
   }
@@ -381,7 +384,85 @@ impl<T: Tokenizing> TreeBuilder<T> {
   }
 
   fn process_after_head(&mut self, token: Token) {
-    todo!("process_after_head");
+    fn anything_else<T: Tokenizing>(this: &mut TreeBuilder<T>, token: Token) {
+      this.insert_html_element(Token::Tag {
+        tag_name: "body".to_owned(),
+        attributes: Vec::new(),
+        is_end_tag: false,
+        self_closing: false,
+        self_closing_acknowledged: false,
+      });
+      this.switch_to(InsertMode::InBody);
+      this.process(token);
+    }
+
+    if let Token::Character(c) = token {
+      if c.is_whitespace() {
+        self.insert_char(c);
+        return;
+      }
+    }
+
+    if let Token::Comment(text) = token {
+      self.insert_comment(text);
+      return;
+    }
+
+    if let Token::DOCTYPE { .. } = token {
+      self.unexpected(&token);
+      return;
+    }
+
+    if token.is_start_tag() && token.tag_name() == "html" {
+      return self.process_in_body(token);
+    }
+
+    if token.is_start_tag() && token.tag_name() == "body" {
+      self.insert_html_element(token);
+      self.frameset_ok = false;
+      self.switch_to(InsertMode::InBody);
+      return;
+    }
+
+    // 本来ならここでframesetタグを処理するが、framesetタグ自体非推奨なので対応しない
+
+    if token.is_start_tag()
+      && token.match_tag_name_in(&[
+        "base", "basefont", "bgsound", "link", "meta", "noframes", "script",
+        "style", "template", "title",
+      ])
+    {
+      self.unexpected(&token);
+
+      let head = self.head_pointer.clone().unwrap();
+      self.open_elements.push(head.clone());
+      self.process_in_head(token);
+      self
+        .open_elements
+        .remove_first_matching_node(|node| Rc::ptr_eq(node, &head));
+
+      return;
+    }
+
+    if token.is_end_tag() && token.tag_name() == "template" {
+      return self.process_in_head(token);
+    }
+
+    if token.is_end_tag() && token.match_tag_name_in(&["body", "html", "br"]) {
+      return anything_else(self, token);
+    }
+
+    if token.is_start_tag() && token.tag_name() == "head" {
+      self.unexpected(&token);
+      return;
+    }
+
+    if token.is_end_tag() {
+      self.unexpected(&token);
+      return;
+    }
+
+    anything_else(self, token);
   }
 
   fn process_in_body(&mut self, token: Token) {

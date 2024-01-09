@@ -6,6 +6,7 @@ pub enum InsertMode {
   InHead,
   InHeadNoScript,
   AfterHead,
+  InBody,
 
   Text,
 }

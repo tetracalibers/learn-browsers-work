@@ -28,4 +28,16 @@ impl StackOfOpenElements {
     }
     None
   }
+
+  pub fn remove_first_matching_node<F>(&mut self, test: F)
+  where
+    F: Fn(&NodePtr) -> bool,
+  {
+    for (i, node) in self.0.iter().rev().enumerate() {
+      if test(node) {
+        self.0.remove(i);
+        return;
+      }
+    }
+  }
 }
