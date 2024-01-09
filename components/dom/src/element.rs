@@ -4,6 +4,7 @@ use std::{cell::RefCell, collections::HashMap};
 use super::elements::ElementData;
 use super::token_list::TokenList;
 
+#[derive(Clone)]
 pub struct AttributeMap(HashMap<String, String>);
 
 pub struct Element {
@@ -59,6 +60,10 @@ impl Element {
 
   pub fn match_tag_name_in(&self, names: &[&str]) -> bool {
     names.iter().any(|name| self.tag_name() == *name)
+  }
+
+  pub fn attributes(&self) -> RefCell<AttributeMap> {
+    self.attributes.clone()
   }
 
   pub fn has_attribute(&self, name: &str) -> bool {

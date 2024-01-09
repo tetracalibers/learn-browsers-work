@@ -1,4 +1,5 @@
 mod insert_mode;
+mod list_of_active_formatting_elements;
 mod stack_of_open_elements;
 
 use std::env;
@@ -6,8 +7,11 @@ use std::rc::Rc;
 
 use self::stack_of_open_elements::StackOfOpenElements;
 
+use self::list_of_active_formatting_elements::Entry;
+use self::list_of_active_formatting_elements::ListOfActiveFormattingElements;
+
 use super::tokenizer::state::State;
-use super::tokenizer::token::Token;
+use super::tokenizer::token::{Attribute, Token};
 use super::tokenizer::Tokenizing;
 
 use dom::comment::Comment;
@@ -64,6 +68,7 @@ pub struct TreeBuilder<T: Tokenizing> {
   insert_mode: InsertMode,
   original_insert_mode: Option<InsertMode>,
   open_elements: StackOfOpenElements,
+  active_formatting_elements: ListOfActiveFormattingElements,
   document: NodePtr,
   head_pointer: Option<NodePtr>,
   text_insertion_node: Option<NodePtr>,
@@ -81,6 +86,7 @@ impl<T: Tokenizing> TreeBuilder<T> {
       insert_mode: InsertMode::Initial,
       original_insert_mode: None,
       open_elements: StackOfOpenElements::new(),
+      active_formatting_elements: ListOfActiveFormattingElements::new(),
       document,
       head_pointer: None,
       text_insertion_node: None,
@@ -657,8 +663,87 @@ impl<T: Tokenizing> TreeBuilder<T> {
     self.open_elements.current_node().unwrap()
   }
 
+  fn is_marker_or_open_element(&self, entry: &Entry) -> bool {
+    match entry {
+      Entry::Marker => true,
+      Entry::Element(node) if self.open_elements.contains_node(node) => true,
+      _ => false,
+    }
+  }
+
   fn reconstruct_active_formatting_elements(&mut self) {
-    todo!("reconstruct_active_formatting_elements");
+    if self.active_formatting_elements.is_empty() {
+      return;
+    }
+
+    let last_active_element = self.active_formatting_elements.last().unwrap();
+
+    if self.is_marker_or_open_element(last_active_element) {
+      return;
+    }
+
+    // リストの最後のエントリから始める
+    let last_index = self.active_formatting_elements.len() - 1;
+    let mut index = last_index;
+
+    // Rewind step
+    loop {
+      // リストに前のエントリがなければ Create step へ
+      if index == 0 {
+        break;
+      }
+
+      // エントリを1つ前に進める
+      index -= 1;
+      let entry = &self.active_formatting_elements[index];
+
+      // マーカーでも開いている要素でもなければ Rewind step へ（繰り返し）
+      // マーカーか開いている要素ならば、Advance step へ
+
+      // Advance step
+      if self.is_marker_or_open_element(entry) {
+        // エントリを1つ後に進める
+        index += 1;
+        // Create step へ
+        break;
+      }
+    }
+
+    // Create step
+    loop {
+      let element = match &self.active_formatting_elements[index] {
+        Entry::Element(node) => node.clone(),
+        Entry::Marker => panic!("Unexpected marker while building DOM tree!"),
+      };
+      let element = element.as_element();
+
+      let new_element = self.insert_html_element(Token::Tag {
+        is_end_tag: false,
+        self_closing: false,
+        self_closing_acknowledged: false,
+        tag_name: element.tag_name(),
+        attributes: element
+          .attributes()
+          .borrow()
+          .iter()
+          .map(|(name, value)| Attribute {
+            name: name.clone(),
+            value: value.clone(),
+          })
+          .collect(),
+      });
+
+      // 新しい要素に置き換え
+      self.active_formatting_elements[last_index] = Entry::Element(new_element);
+
+      // 最後のエントリまで来たら終了
+      if index == last_index {
+        break;
+      }
+
+      // Advance step
+      index += 1;
+    }
   }
 
   /* attribute ---------------------------------- */

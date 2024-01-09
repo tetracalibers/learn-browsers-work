@@ -1,4 +1,7 @@
-use std::ops::{Deref, DerefMut};
+use std::{
+  ops::{Deref, DerefMut},
+  rc::Rc,
+};
 
 use dom::node::NodePtr;
 
@@ -50,6 +53,10 @@ impl StackOfOpenElements {
 
   pub fn contains_in(&self, tag_names: &[&str]) -> bool {
     self.any(|node| tag_names.contains(&node.as_element().tag_name().as_str()))
+  }
+
+  pub fn contains_node(&self, node: &NodePtr) -> bool {
+    self.any(|node_2| Rc::ptr_eq(node_2, node))
   }
 
   pub fn remove_first_matching_node<F>(&mut self, test: F)
