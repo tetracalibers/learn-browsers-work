@@ -609,7 +609,291 @@ impl<T: Tokenizing> TreeBuilder<T> {
       return self.process(token);
     }
 
-    todo!("process_in_body: any other tag");
+    if token.is_start_tag()
+      && token.match_tag_name_in(&[
+        "address",
+        "article",
+        "aside",
+        "blockquote",
+        "center",
+        "details",
+        "dialog",
+        "dir",
+        "div",
+        "dl",
+        "fieldset",
+        "figcaption",
+        "figure",
+        "footer",
+        "header",
+        "hgroup",
+        "main",
+        "menu",
+        "nav",
+        "ol",
+        "p",
+        "section",
+        "summary",
+        "ul",
+      ])
+    {
+      if self.open_elements.has_element_in_button_scope("p") {
+        self.close_p_element();
+      }
+
+      self.insert_html_element(token);
+      return;
+    }
+
+    if token.is_start_tag()
+      && token.match_tag_name_in(&["h1", "h2", "h3", "h4", "h5", "h6"])
+    {
+      if self.open_elements.has_element_in_button_scope("p") {
+        self.close_p_element();
+      }
+
+      let current_node = self.open_elements.current_node().unwrap();
+      let current_element = current_node.as_element();
+
+      if current_element
+        .match_tag_name_in(&["h1", "h2", "h3", "h4", "h5", "h6"])
+      {
+        self.unexpected(&token);
+        self.open_elements.pop();
+      }
+
+      self.insert_html_element(token);
+      return;
+    }
+
+    if token.is_start_tag() && token.match_tag_name_in(&["pre", "listing"]) {
+      if self.open_elements.has_element_in_button_scope("p") {
+        self.close_p_element();
+      }
+
+      self.insert_html_element(token);
+      self.frameset_ok = false;
+
+      let next_token = self.tokenizer.next_token();
+
+      if let Token::Character(c) = next_token {
+        if c == '\n' {
+          return;
+        }
+        self.process(next_token);
+      }
+
+      return;
+    }
+
+    if token.is_start_tag() && token.tag_name() == "form" {
+      todo!("process_in_body: form start tag");
+    }
+
+    if token.is_start_tag() && token.tag_name() == "li" {
+      todo!("process_in_body: li start tag");
+    }
+
+    if token.is_start_tag() && token.match_tag_name_in(&["dd", "dt"]) {
+      todo!("process_in_body: dd/dt start tag");
+    }
+
+    if token.is_start_tag() && token.tag_name() == "plaintext" {
+      todo!("process_in_body: plaintext start tag");
+    }
+
+    if token.is_start_tag() && token.tag_name() == "button" {
+      todo!("process_in_body: button start tag");
+    }
+
+    if token.is_end_tag()
+      && token.match_tag_name_in(&[
+        "address",
+        "article",
+        "aside",
+        "blockquote",
+        "button",
+        "center",
+        "details",
+        "dialog",
+        "dir",
+        "div",
+        "dl",
+        "fieldset",
+        "figcaption",
+        "figure",
+        "footer",
+        "header",
+        "hgroup",
+        "listing",
+        "main",
+        "menu",
+        "nav",
+        "ol",
+        "pre",
+        "section",
+        "summary",
+        "ul",
+      ])
+    {
+      todo!("process_in_body: block level end tag");
+    }
+
+    if token.is_end_tag() && token.tag_name() == "form" {
+      todo!("process_in_body: form end tag");
+    }
+
+    if token.is_end_tag() && token.tag_name() == "p" {
+      todo!("process_in_body: p end tag");
+    }
+
+    if token.is_end_tag() && token.tag_name() == "li" {
+      todo!("process_in_body: li end tag");
+    }
+
+    if token.is_end_tag() && token.match_tag_name_in(&["dd", "dt"]) {
+      todo!("process_in_body: dd/dt end tag");
+    }
+
+    if token.is_end_tag()
+      && token.match_tag_name_in(&["h1", "h2", "h3", "h4", "h5", "h6"])
+    {
+      todo!("process_in_body: h1-h6 end tag");
+    }
+
+    if token.is_start_tag() && token.tag_name() == "a" {
+      todo!("process_in_body: a start tag");
+    }
+
+    if token.is_start_tag()
+      && token.match_tag_name_in(&[
+        "b", "big", "code", "em", "font", "i", "s", "small", "strike",
+        "strong", "tt", "u",
+      ])
+    {
+      todo!("process_in_body: formatting start tag");
+    }
+
+    if token.is_start_tag() && token.tag_name() == "nobr" {
+      todo!("process_in_body: nobr start tag");
+    }
+
+    if token.is_end_tag()
+      && token.match_tag_name_in(&[
+        "a", "b", "big", "code", "em", "font", "i", "nobr", "s", "small",
+        "strike", "strong", "tt", "u",
+      ])
+    {
+      todo!("process_in_body: formatting end tag");
+    }
+
+    if token.is_start_tag()
+      && token.match_tag_name_in(&["applet", "marquee", "object"])
+    {
+      todo!("process_in_body: applet/marquee/object start tag");
+    }
+
+    if token.is_end_tag()
+      && token.match_tag_name_in(&["applet", "marquee", "object"])
+    {
+      todo!("process_in_body: applet/marquee/object end tag");
+    }
+
+    if token.is_start_tag() && token.tag_name() == "table" {
+      todo!("process_in_body: table start tag");
+    }
+
+    if token.is_end_tag() && token.tag_name() == "br" {
+      todo!("process_in_body: br end tag");
+    }
+
+    if token.is_start_tag()
+      && token
+        .match_tag_name_in(&["area", "br", "embed", "img", "keygen", "wbr"])
+    {
+      todo!("process_in_body: void element start tag");
+    }
+
+    if token.is_start_tag() && token.tag_name() == "input" {
+      todo!("process_in_body: input start tag");
+    }
+
+    if token.is_start_tag()
+      && token.match_tag_name_in(&["param", "source", "track"])
+    {
+      todo!("process_in_body: param/source/track start tag");
+    }
+
+    if token.is_start_tag() && token.tag_name() == "hr" {
+      todo!("process_in_body: hr start tag");
+    }
+
+    if token.is_start_tag() && token.tag_name() == "image" {
+      todo!("process_in_body: image start tag");
+    }
+
+    if token.is_start_tag() && token.tag_name() == "textarea" {
+      todo!("process_in_body: textarea start tag");
+    }
+
+    if token.is_start_tag() && token.tag_name() == "xmp" {
+      todo!("process_in_body: xmp start tag");
+    }
+
+    if token.is_start_tag() && token.tag_name() == "iframe" {
+      todo!("process_in_body: iframe start tag");
+    }
+
+    if token.is_start_tag() && token.tag_name() == "noembed" {
+      todo!("process_in_body: noembed start tag");
+    }
+
+    if token.is_start_tag() && token.tag_name() == "noscript" && self.scripting
+    {
+      todo!("process_in_body: noscript start tag");
+    }
+
+    if token.is_start_tag() && token.tag_name() == "select" {
+      todo!("process_in_body: select start tag");
+    }
+
+    if token.is_start_tag() && token.match_tag_name_in(&["optgroup", "option"])
+    {
+      todo!("process_in_body: optgroup/option start tag");
+    }
+
+    if token.is_start_tag() && token.match_tag_name_in(&["rb", "rtc"]) {
+      todo!("process_in_body: rb/rtc start tag");
+    }
+
+    if token.is_start_tag() && token.match_tag_name_in(&["rp", "rt"]) {
+      todo!("process_in_body: rp/rt start tag");
+    }
+
+    if token.is_start_tag() && token.tag_name() == "math" {
+      todo!("process_in_body: math start tag");
+    }
+
+    if token.is_start_tag() && token.tag_name() == "svg" {
+      todo!("process_in_body: svg start tag");
+    }
+
+    if token.is_start_tag()
+      && token.match_tag_name_in(&[
+        "caption", "col", "colgroup", "frame", "head", "tbody", "td", "tfoot",
+        "th", "thead", "tr",
+      ])
+    {
+      todo!("process_in_body: table related start tag");
+    }
+
+    if token.is_start_tag() {
+      todo!("process_in_body: any other start tag");
+    }
+
+    if token.is_end_tag() {
+      return any_other_end_tags(self, token);
+    }
   }
 
   fn process_after_body(&mut self, token: Token) {
@@ -692,6 +976,10 @@ impl<T: Tokenizing> TreeBuilder<T> {
 
   fn current_node(&self) -> NodePtr {
     self.open_elements.current_node().unwrap()
+  }
+
+  fn close_p_element(&mut self) {
+    todo!("close_p_element");
   }
 
   fn is_marker_or_open_element(&self, entry: &Entry) -> bool {

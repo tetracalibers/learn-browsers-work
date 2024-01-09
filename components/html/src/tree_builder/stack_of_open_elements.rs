@@ -99,6 +99,12 @@ impl StackOfOpenElements {
     self.has_element_in_specific_scope(tag_name, SCOPE_BASE_LIST.to_vec())
   }
 
+  pub fn has_element_in_button_scope(&self, tag_name: &str) -> bool {
+    let mut list = SCOPE_BASE_LIST.to_vec();
+    list.push("button");
+    self.has_element_in_specific_scope(tag_name, list)
+  }
+
   /* remove ------------------------------------- */
 
   pub fn remove_first_matching_node<F>(&mut self, test: F)
