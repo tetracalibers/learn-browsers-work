@@ -593,7 +593,20 @@ impl<T: Tokenizing> TreeBuilder<T> {
     }
 
     if token.is_end_tag() && token.tag_name() == "html" {
-      todo!("process_in_body: html end tag");
+      if self.open_elements.has_element_in_scope("body") {
+        self.unexpected(&token);
+        return;
+      }
+
+      if self.open_elements.contains_not_in(&[
+        "dd", "dt", "li", "optgroup", "option", "p", "rb", "rp", "rt", "rtc",
+        "tbody", "td", "tfoot", "th", "thead", "tr", "body", "html",
+      ]) {
+        self.unexpected(&token);
+      }
+
+      self.switch_to(InsertMode::AfterBody);
+      return self.process(token);
     }
 
     todo!("process_in_body: any other tag");
