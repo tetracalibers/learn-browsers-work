@@ -15,4 +15,6 @@ TRACE_HTML_TREE_BUILDER=true TRACE_TOKENIZER=true cargo run
 - 古いDOCTYPE
 - 文字参照
 - scriptタグ
+- framesetタグ
+- templateタグ
 - SVG
