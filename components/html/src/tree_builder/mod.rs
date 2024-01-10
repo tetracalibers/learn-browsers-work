@@ -755,7 +755,23 @@ impl<T: Tokenizing> TreeBuilder<T> {
         "ul",
       ])
     {
-      todo!("process_in_body: block level end tag");
+      if !self.open_elements.has_element_name_in_scope(&token.tag_name()) {
+        self.unexpected(&token);
+        return;
+      }
+
+      self.generate_implied_end_tags("");
+
+      let current_node = self.current_node();
+      let current_element = current_node.as_element();
+
+      if current_element.tag_name() != *token.tag_name() {
+        self.unexpected(&token);
+        return;
+      }
+
+      self.open_elements.pop_until(&token.tag_name());
+      return;
     }
 
     if token.is_end_tag() && token.tag_name() == "form" {
