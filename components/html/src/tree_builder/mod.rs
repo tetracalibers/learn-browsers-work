@@ -712,7 +712,17 @@ impl<T: Tokenizing> TreeBuilder<T> {
     }
 
     if token.is_start_tag() && token.tag_name() == "button" {
-      todo!("process_in_body: button start tag");
+      if self.open_elements.has_element_name_in_scope("button") {
+        self.unexpected(&token);
+        self.generate_implied_end_tags("");
+        self.open_elements.pop_until("button");
+      }
+
+      self.reconstruct_active_formatting_elements();
+      self.insert_html_element(token);
+      self.frameset_ok = false;
+
+      return;
     }
 
     if token.is_end_tag()
