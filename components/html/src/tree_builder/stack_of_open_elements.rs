@@ -78,6 +78,24 @@ impl StackOfOpenElements {
 
   pub fn has_element_in_specific_scope(
     &self,
+    target_node: &NodePtr,
+    list: Vec<&str>,
+  ) -> bool {
+    for node in self.0.iter().rev() {
+      if Rc::ptr_eq(node, target_node) {
+        return true;
+      }
+
+      if list.contains(&node.as_element().tag_name().as_str()) {
+        return false;
+      }
+    }
+
+    false
+  }
+
+  pub fn has_element_name_in_specific_scope(
+    &self,
     tag_name: &str,
     list: Vec<&str>,
   ) -> bool {
@@ -96,14 +114,18 @@ impl StackOfOpenElements {
     false
   }
 
-  pub fn has_element_in_scope(&self, tag_name: &str) -> bool {
-    self.has_element_in_specific_scope(tag_name, SCOPE_BASE_LIST.to_vec())
+  pub fn has_element_in_scope(&self, target_node: &NodePtr) -> bool {
+    self.has_element_in_specific_scope(target_node, SCOPE_BASE_LIST.to_vec())
+  }
+
+  pub fn has_element_name_in_scope(&self, tag_name: &str) -> bool {
+    self.has_element_name_in_specific_scope(tag_name, SCOPE_BASE_LIST.to_vec())
   }
 
   // すべてのtag_nameがscope内にない場合にtrueを返す
-  pub fn has_not_all_elements_in_scope(&self, tag_names: &[&str]) -> bool {
+  pub fn has_not_all_element_names_in_scope(&self, tag_names: &[&str]) -> bool {
     for tag_name in tag_names {
-      if self.has_element_in_scope(tag_name) {
+      if self.has_element_name_in_scope(tag_name) {
         return false;
       }
     }
@@ -111,10 +133,10 @@ impl StackOfOpenElements {
     true
   }
 
-  pub fn has_element_in_button_scope(&self, tag_name: &str) -> bool {
+  pub fn has_element_name_in_button_scope(&self, tag_name: &str) -> bool {
     let mut list = SCOPE_BASE_LIST.to_vec();
     list.push("button");
-    self.has_element_in_specific_scope(tag_name, list)
+    self.has_element_name_in_specific_scope(tag_name, list)
   }
 
   /* pop ---------------------------------------- */

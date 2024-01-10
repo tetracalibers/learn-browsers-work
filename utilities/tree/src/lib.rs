@@ -158,6 +158,13 @@ impl<T: TreeNodeHooks<T> + Debug> TreeNode<T> {
     self.prev_sibling.replace(None);
   }
 
+  pub fn transfer_children_to(&self, new_parent: TreeNode<T>) {
+    new_parent.first_child.replace(self.first_child());
+    new_parent.last_child.replace(self.last_child());
+    self.first_child.replace(None);
+    self.last_child.replace(None);
+  }
+
   pub fn find_first_anecestor<F>(&self, predicate: F) -> Option<TreeNode<T>>
   where
     F: Fn(TreeNode<T>) -> bool,
