@@ -764,7 +764,28 @@ impl<T: Tokenizing> TreeBuilder<T> {
     if token.is_end_tag()
       && token.match_tag_name_in(&["h1", "h2", "h3", "h4", "h5", "h6"])
     {
-      todo!("process_in_body: h1-h6 end tag");
+      if self
+        .open_elements
+        .has_not_all_elements_in_scope(&["h1", "h2", "h3", "h4", "h5", "h6"])
+      {
+        self.unexpected(&token);
+        return;
+      }
+
+      self.generate_implied_end_tags("");
+
+      let current_node = self.open_elements.current_node().unwrap();
+      let current_element = current_node.as_element();
+
+      if current_element.tag_name() != *token.tag_name() {
+        self.unexpected(&token);
+      }
+
+      self
+        .open_elements
+        .pop_until_some_in(&["h1", "h2", "h3", "h4", "h5", "h6"]);
+
+      return;
     }
 
     if token.is_start_tag() && token.tag_name() == "a" {

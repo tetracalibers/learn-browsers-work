@@ -100,6 +100,17 @@ impl StackOfOpenElements {
     self.has_element_in_specific_scope(tag_name, SCOPE_BASE_LIST.to_vec())
   }
 
+  // すべてのtag_nameがscope内にない場合にtrueを返す
+  pub fn has_not_all_elements_in_scope(&self, tag_names: &[&str]) -> bool {
+    for tag_name in tag_names {
+      if self.has_element_in_scope(tag_name) {
+        return false;
+      }
+    }
+
+    true
+  }
+
   pub fn has_element_in_button_scope(&self, tag_name: &str) -> bool {
     let mut list = SCOPE_BASE_LIST.to_vec();
     list.push("button");
@@ -112,6 +123,17 @@ impl StackOfOpenElements {
   pub fn pop_until(&mut self, tag_name: &str) {
     while let Some(node) = self.current_node() {
       if node.as_element().tag_name() == tag_name {
+        self.0.pop();
+        break;
+      }
+      self.0.pop();
+    }
+  }
+
+  // tag_namesのいずれかがpopされるまでpopする
+  pub fn pop_until_some_in(&mut self, tag_names: &[&str]) {
+    while let Some(node) = self.current_node() {
+      if tag_names.contains(&node.as_element().tag_name().as_str()) {
         self.0.pop();
         break;
       }
