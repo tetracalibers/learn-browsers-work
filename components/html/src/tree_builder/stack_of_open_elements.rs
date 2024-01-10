@@ -105,6 +105,19 @@ impl StackOfOpenElements {
     self.has_element_in_specific_scope(tag_name, list)
   }
 
+  /* pop ---------------------------------------- */
+
+  // tag_nameがpopされるまでpopする
+  pub fn pop_until(&mut self, tag_name: &str) {
+    while let Some(node) = self.current_node() {
+      if node.as_element().tag_name() == tag_name {
+        self.0.pop();
+        return;
+      }
+      self.0.pop();
+    }
+  }
+
   /* remove ------------------------------------- */
 
   pub fn remove_first_matching_node<F>(&mut self, test: F)

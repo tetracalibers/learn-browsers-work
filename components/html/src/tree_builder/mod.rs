@@ -983,8 +983,35 @@ impl<T: Tokenizing> TreeBuilder<T> {
     self.open_elements.current_node().unwrap()
   }
 
+  fn generate_implied_end_tags(&mut self, exclude: &str) {
+    while let Some(node) = self.open_elements.current_node() {
+      let element = node.as_element();
+
+      if element.tag_name() == exclude {
+        break;
+      }
+
+      if element.match_tag_name_in(&[
+        "dd", "dt", "li", "optgroup", "option", "p", "rb", "rt", "rtc", "rp",
+      ]) {
+        self.open_elements.pop();
+      } else {
+        break;
+      }
+    }
+  }
+
   fn close_p_element(&mut self) {
-    todo!("close_p_element");
+    self.generate_implied_end_tags("p");
+
+    let current_node = self.open_elements.current_node().unwrap();
+    let current_element = current_node.as_element();
+
+    if current_element.tag_name() != "p" {
+      emit_error!("Expected p element");
+    }
+
+    self.open_elements.pop_until("p");
   }
 
   fn is_marker_or_open_element(&self, entry: &Entry) -> bool {
