@@ -837,7 +837,14 @@ impl<T: Tokenizing> TreeBuilder<T> {
         "strike", "strong", "tt", "u",
       ])
     {
-      todo!("process_in_body: formatting end tag");
+      match self.adoption_agency_algorithm(&token) {
+        AdoptionAgencyAlgorithmOutcome::RunAnyOtherEndTagsSteps => {
+          any_other_end_tags(self, token)
+        }
+        AdoptionAgencyAlgorithmOutcome::DoNothing => {}
+      }
+
+      return;
     }
 
     if token.is_start_tag()
