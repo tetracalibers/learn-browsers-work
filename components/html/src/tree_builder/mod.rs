@@ -141,6 +141,7 @@ impl<T: Tokenizing> TreeBuilder<T> {
       InsertMode::AfterHead => self.process_after_head(token),
       InsertMode::InBody => self.process_in_body(token),
       InsertMode::AfterBody => self.process_after_body(token),
+      InsertMode::AfterAfterBody => self.process_after_after_body(token),
       InsertMode::Text => self.process_text(token),
     }
   }
@@ -902,7 +903,48 @@ impl<T: Tokenizing> TreeBuilder<T> {
   }
 
   fn process_after_body(&mut self, token: Token) {
-    todo!("process_after_body");
+    if let Token::Character(c) = token {
+      if c.is_whitespace() {
+        return self.process_in_body(token);
+      }
+    }
+
+    if let Token::Comment(text) = token {
+      let data = NodeData::Comment(Comment::new(text));
+      let comment = TreeNode::new(Node::new(data));
+      let first_open_element = self.open_elements.get(0);
+      first_open_element.append_child(comment);
+      return;
+    }
+
+    if let Token::DOCTYPE { .. } = token {
+      self.unexpected(&token);
+      return;
+    }
+
+    if token.is_start_tag() && token.tag_name() == "html" {
+      return self.process_in_body(token);
+    }
+
+    if token.is_end_tag() && token.tag_name() == "html" {
+      // TODO: フラグメント解析アルゴリズムをサポートするか決める
+
+      self.switch_to(InsertMode::AfterAfterBody);
+      return;
+    }
+
+    if token.is_eof() {
+      self.stop_parsing();
+      return;
+    }
+
+    self.unexpected(&token);
+    self.switch_to(InsertMode::InBody);
+    return self.process(token);
+  }
+
+  fn process_after_after_body(&mut self, token: Token) {
+    todo!("process_after_after_body");
   }
 
   fn process_text(&mut self, token: Token) {
