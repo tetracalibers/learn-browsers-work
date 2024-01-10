@@ -576,7 +576,7 @@ impl<T: Tokenizing> TreeBuilder<T> {
     }
 
     if token.is_end_tag() && token.tag_name() == "body" {
-      if self.open_elements.has_element_in_scope("body") {
+      if !self.open_elements.has_element_in_scope("body") {
         self.unexpected(&token);
         return;
       }

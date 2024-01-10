@@ -10,6 +10,7 @@ const SCOPE_BASE_LIST: [&str; 9] = [
   "template",
 ];
 
+#[derive(Debug)]
 pub struct StackOfOpenElements(pub Vec<NodePtr>);
 
 impl Deref for StackOfOpenElements {
@@ -112,7 +113,7 @@ impl StackOfOpenElements {
     while let Some(node) = self.current_node() {
       if node.as_element().tag_name() == tag_name {
         self.0.pop();
-        return;
+        break;
       }
       self.0.pop();
     }
