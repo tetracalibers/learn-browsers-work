@@ -1,3 +1,7 @@
+mod children_iterator;
+
+use self::children_iterator::ChildrenIterator;
+
 use std::cell::RefCell;
 use std::fmt::Debug;
 use std::ops::Deref;
@@ -220,6 +224,19 @@ impl<T: TreeNodeHooks<T> + Debug> TreeNode<T> {
       ref_child.prev_sibling.replace(Some(WeakTreeNode::from(child.clone())));
     } else {
       self.append_child(child);
+    }
+  }
+
+  pub fn iterate_children(&self) -> ChildrenIterator<T> {
+    ChildrenIterator::new(self.clone())
+  }
+
+  // 再帰的にツリー表示
+  pub fn print_tree(&self, depth: usize) {
+    let indent = "    ".repeat(depth);
+    println!("{}{:?}", indent, self.data);
+    for child in self.iterate_children() {
+      child.print_tree(depth + 1);
     }
   }
 }

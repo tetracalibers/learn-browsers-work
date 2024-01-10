@@ -23,6 +23,5 @@ fn main() {
 
   let document = tree_builder.run();
 
-  // documentの中身を一覧表示する
-  println!("{:#?}", document);
+  document.print_tree(0);
 }
