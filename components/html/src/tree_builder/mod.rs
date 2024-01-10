@@ -481,7 +481,7 @@ impl<T: Tokenizing> TreeBuilder<T> {
     anything_else(self, token);
   }
 
-  fn process_in_body(&mut self, token: Token) {
+  fn process_in_body(&mut self, mut token: Token) {
     fn any_other_end_tags<T: Tokenizing>(
       this: &mut TreeBuilder<T>,
       token: Token,
@@ -871,7 +871,12 @@ impl<T: Tokenizing> TreeBuilder<T> {
       && token
         .match_tag_name_in(&["area", "br", "embed", "img", "keygen", "wbr"])
     {
-      todo!("process_in_body: void element start tag");
+      self.reconstruct_active_formatting_elements();
+      token.acknowledge_self_closing_if_set();
+      self.insert_html_element(token);
+      self.open_elements.pop();
+      self.frameset_ok = false;
+      return;
     }
 
     if token.is_start_tag() && token.tag_name() == "input" {
