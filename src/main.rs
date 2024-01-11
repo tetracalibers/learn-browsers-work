@@ -6,10 +6,21 @@ fn main() {
   <html>
   <body>
   
-  <h2>HTML Buttons</h2>
-  <p>HTML buttons are defined with the button tag:</p>
+  <h2>An Unordered HTML List</h2>
   
-  <button>Click me</button>
+  <ul>
+    <li>Coffee</li>
+    <li>Tea</li>
+    <li>Milk</li>
+  </ul>
+  
+  <h2>An Ordered HTML List</h2>
+  
+  <ol>
+    <li>Coffee</li>
+    <li>Tea</li>
+    <li>Milk</li>
+  </ol>
   
   </body>
   </html>
