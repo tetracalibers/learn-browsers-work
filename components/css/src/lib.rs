@@ -1,14 +1,26 @@
-pub fn add(left: usize, right: usize) -> usize {
-  left + right
+pub mod parser;
+pub mod tokenizer;
+
+use nom::branch::alt;
+use nom::bytes::complete::{tag, take_until};
+use nom::multi::many0;
+use nom::sequence::delimited;
+use nom::IResult;
+
+macro_rules! emit_error {
+  ($err: expr) => {
+    println!("[ParseError][CSS] {}", $err);
+  };
 }
 
-#[cfg(test)]
-mod tests {
-  use super::*;
+// pub fn comment(s: &str) {
+//   let mut parse = delimited(tag("/*"), take_until("*/"), tag("*/"));
+//   let result = parse(s);
 
-  #[test]
-  fn it_works() {
-    let result = add(2, 2);
-    assert_eq!(result, 4);
-  }
-}
+//   match result {
+//     Ok((out, matched)) => {}
+//     Err(e) => {
+//       emit_error!("Unexpected EOF while consume_comments");
+//     }
+//   }
+// }

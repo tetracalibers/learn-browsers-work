@@ -6,7 +6,16 @@ edition = "2021"
 
 [workspace]
 
-members = ["components/html", "utilities/tree", "utilities/stream", "components/dom", "components/css"]
+members = [
+  "components/html",
+  "utilities/tree",
+  "utilities/stream",
+  "components/dom",
+  "components/css",
+  "utilities/parser_combinator",
+]
 
 [dependencies]
-html = { path = "./components/html" }
+html              = { path = "./components/html" }
+css               = { path = "./components/css" }
+parser_combinator = { path = "./utilities/parser_combinator" }

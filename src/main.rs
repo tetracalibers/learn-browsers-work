@@ -1,7 +1,9 @@
 use html::tokenizer;
 use html::tree_builder;
 
-fn main() {
+use css;
+
+fn run_html() {
   let target = r#"<!DOCTYPE html>
   <html>
   <body>
@@ -33,4 +35,12 @@ fn main() {
   let document = tree_builder.run();
 
   document.print_tree(0);
+}
+
+fn run_css() {
+  css::parser::selector::main();
+}
+
+fn main() {
+  run_css();
 }

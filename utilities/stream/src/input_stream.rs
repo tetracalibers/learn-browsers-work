@@ -1,4 +1,4 @@
-use std::collections::VecDeque;
+use std::{collections::VecDeque, iter::FromIterator};
 
 pub struct InputStream<T, I>
 where
@@ -48,6 +48,43 @@ where
     if let Some(item) = consumed {
       self.buffer.push_back(item);
     }
+  }
+
+  pub fn reconsume(&mut self) {
+    self.is_reconsume = true;
+  }
+
+  pub fn peek(&mut self) -> Option<I> {
+    if self.is_reconsume {
+      return self.last_consumed.clone();
+    }
+
+    self.consume_source_to_buffer();
+    self.buffer.front().map(|i| i.clone())
+  }
+
+  pub fn peek_next_repeat<S: FromIterator<I>>(
+    &mut self,
+    n: usize,
+  ) -> Option<S> {
+    self.consume_source_to_buffer();
+
+    if self.buffer.len() < n {
+      return None;
+    }
+
+    let n = if self.is_reconsume { n - 1 } else { n };
+
+    let mut result =
+      self.buffer.iter().take(n).map(|i| i.clone()).collect::<VecDeque<I>>();
+
+    if self.is_reconsume {
+      if let Some(current) = &self.last_consumed {
+        result.push_front(current.clone());
+      }
+    }
+
+    Some(result.iter().map(|i| i.clone()).collect())
   }
 
   pub fn peek_max(&mut self) -> Vec<I> {
