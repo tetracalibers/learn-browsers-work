@@ -10,6 +10,8 @@ use nom::{
   IResult,
 };
 
+type SelectorSequence = Vec<Selector>;
+
 #[derive(Debug, PartialEq, Clone)]
 struct Selector(Vec<SelectorData>);
 
@@ -88,7 +90,10 @@ fn identifier(input: &str) -> IResult<&str, &str> {
 
 fn till_next_start(input: &str) -> IResult<&str, &str> {
   take_till(|c: char| {
-    ['#', '.', '(', '{', '[', ':', '>', '+', '~', ')', '}', ']'].contains(&c)
+    [
+      '#', '.', '(', '{', '[', ':', '>', '+', '~', ')', '}', ']', ',',
+    ]
+    .contains(&c)
       || c.is_whitespace()
   })(input)
 }
@@ -217,7 +222,15 @@ fn combinator(input: &str) -> IResult<&str, Combinator> {
 }
 
 fn delimiter_string(input: &str) -> IResult<&str, &str> {
-  alt((tag(">"), tag("+"), tag("~"), tag(")"), tag("("), space1))(input)
+  alt((
+    tag(">"),
+    tag("+"),
+    tag("~"),
+    tag(")"),
+    tag("("),
+    tag(","),
+    space1,
+  ))(input)
 }
 
 // cobminatorで繋がれた2つのcompound_selectorをparseする
@@ -230,7 +243,7 @@ fn complex_selector(input: &str) -> IResult<&str, SelectorData> {
 
 fn selector(input: &str) -> IResult<&str, Selector> {
   let (input, (selectors, _)) =
-    many_till(complex_selector, alt((eof, peek(tag(")")))))(input)?;
+    many_till(complex_selector, alt((eof, tag(","), peek(tag(")")))))(input)?;
 
   // 空のcompound_selectorがある場合は削除する
   let selectors = selectors
@@ -241,11 +254,26 @@ fn selector(input: &str) -> IResult<&str, Selector> {
   Ok((input, Selector(selectors)))
 }
 
+fn selector_sequence(input: &str) -> IResult<&str, SelectorSequence> {
+  let splitted = input.split(",").collect::<Vec<&str>>();
+
+  let mut rest = input;
+  let mut selectors = Vec::new();
+
+  for s in splitted {
+    let (input, selector) = selector(s)?;
+    selectors.push(selector);
+    rest = input;
+  }
+
+  Ok((rest, selectors))
+}
+
 pub fn main() {
   let input =
     r#"#foo > .bar + div.k1.k2 [id="baz"]:hello(2):not(:where(#yolo))::before"#;
 
-  let result = selector(input);
+  let result = selector_sequence(input);
 
   println!("result: {:?}", result);
 }
@@ -510,5 +538,62 @@ mod tests {
         })
       ))
     );
+  }
+
+  #[test]
+  fn test_selector_sequence() {
+    assert_eq!(
+      selector_sequence("div, a, .class, #id"),
+      Ok((
+        "",
+        vec![
+          Selector(vec![(
+            CompoundSelector(vec![SimpleSelector::Type("div".to_string())]),
+            None
+          )]),
+          Selector(vec![(
+            CompoundSelector(vec![SimpleSelector::Type("a".to_string())]),
+            None
+          )]),
+          Selector(vec![(
+            CompoundSelector(vec![SimpleSelector::Class("class".to_string())]),
+            None
+          )]),
+          Selector(vec![(
+            CompoundSelector(vec![SimpleSelector::Id("id".to_string())]),
+            None
+          )]),
+        ]
+      ))
+    );
+    assert_eq!(
+      selector_sequence("div.class"),
+      Ok((
+        "",
+        vec![Selector(vec![(
+          CompoundSelector(vec![
+            SimpleSelector::Type("div".to_string()),
+            SimpleSelector::Class("class".to_string()),
+          ]),
+          None
+        )])]
+      ))
+    );
+    assert_eq!(
+      selector_sequence("div , a"),
+      Ok((
+        "",
+        vec![
+          Selector(vec![(
+            CompoundSelector(vec![SimpleSelector::Type("div".to_string())]),
+            None
+          )]),
+          Selector(vec![(
+            CompoundSelector(vec![SimpleSelector::Type("a".to_string())]),
+            None
+          )]),
+        ]
+      ))
+    )
   }
 }
