@@ -157,12 +157,9 @@ fn attribute_selector(input: &str) -> IResult<&str, SimpleSelector> {
 
 fn pseudo_class_selector(input: &str) -> IResult<&str, SimpleSelector> {
   let (input, _) = tag(":")(input)?;
-  println!("input: {}", input);
   let (input, name) = many0(alt((alpha1, tag("-"))))(input)?;
-  println!("input: {}", input);
   let (input, argument) = opt(parenthesized(alphanumeric1))(input)?;
   let (input, subtree) = opt(parenthesized(selector))(input)?;
-  println!("input: {}", input);
 
   Ok((
     input,
