@@ -162,9 +162,12 @@ fn attribute_selector(input: &str) -> IResult<&str, SimpleSelector> {
 
 fn pseudo_class_selector(input: &str) -> IResult<&str, SimpleSelector> {
   let (input, _) = tag(":")(input)?;
+  println!("input: {}", input);
   let (input, name) = many0(alt((alpha1, tag("-"))))(input)?;
+  println!("input: {}", input);
   let (input, argument) = opt(parenthesized(alphanumeric1))(input)?;
   let (input, subtree) = opt(parenthesized(selector))(input)?;
+  println!("input: {}", input);
 
   Ok((
     input,
@@ -200,7 +203,7 @@ fn compound_selector(input: &str) -> IResult<&str, CompoundSelector> {
       pseudo_class_selector,
       type_selector,
     )),
-    alt((peek(combinator_as_string), eof)),
+    alt((peek(delimiter_string), eof)),
   )(input)?;
 
   Ok((input, CompoundSelector(selectors)))
@@ -240,8 +243,16 @@ fn descendant_combinator_as_string(input: &str) -> IResult<&str, &str> {
   space1(input)
 }
 
-fn combinator_as_string(input: &str) -> IResult<&str, &str> {
-  alt((tag(">"), tag("+"), tag("~"), tag(":"), space1))(input)
+fn delimiter_string(input: &str) -> IResult<&str, &str> {
+  alt((
+    tag(">"),
+    tag("+"),
+    tag("~"),
+    tag(":"),
+    tag(")"),
+    tag("("),
+    space1,
+  ))(input)
 }
 
 // cobminatorで繋がれた2つのcompound_selectorをparseする
