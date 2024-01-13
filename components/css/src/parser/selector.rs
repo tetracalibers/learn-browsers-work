@@ -1,16 +1,13 @@
-use std::{
-  ops::{Deref, DerefMut},
-  vec,
-};
+use std::ops::{Deref, DerefMut};
 
 use nom::{
   branch::alt,
-  bytes::complete::{tag, take_till, take_until, take_while1},
+  bytes::complete::{tag, take_till, take_while1},
   character::complete::{space0, space1},
-  combinator::{all_consuming, eof, iterator, opt, peek, rest, value},
-  multi::{many0, many1, many_till},
-  sequence::{delimited, preceded, tuple},
-  IResult, Parser,
+  combinator::{eof, opt, peek, value},
+  multi::many_till,
+  sequence::{delimited, tuple},
+  IResult,
 };
 
 #[derive(Debug, PartialEq, Clone)]
@@ -205,14 +202,6 @@ fn compound_selector(input: &str) -> IResult<&str, CompoundSelector> {
 
   Ok((input, CompoundSelector(selectors)))
 }
-
-// fn flatten_compound_selector(selector: &CompoundSelector) -> Selector {
-//   if selector.len() == 1 {
-//     Selector::Simple(selector[0].clone())
-//   } else {
-//     Selector::Compound(selector.clone())
-//   }
-// }
 
 fn combinator(input: &str) -> IResult<&str, Combinator> {
   alt((
