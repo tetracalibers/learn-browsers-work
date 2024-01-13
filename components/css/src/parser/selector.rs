@@ -1,14 +1,11 @@
-use std::{
-  borrow::Borrow,
-  ops::{Deref, DerefMut},
-};
+use std::ops::{Deref, DerefMut};
 
 use nom::{
   branch::alt,
   bytes::complete::{tag, take_till, take_while1},
-  character::complete::{one_of, space0, space1},
+  character::complete::{space0, space1},
   combinator::{eof, opt, peek, value},
-  multi::{fold_many0, fold_many1, many0, many_till},
+  multi::many_till,
   sequence::{delimited, tuple},
   IResult,
 };
@@ -177,15 +174,6 @@ fn pseudo_element_selector(input: &str) -> IResult<&str, SimpleSelector> {
       name: name.to_string(),
     }),
   ))
-}
-
-fn delimited_space0<'a, F, O>(
-  f: F,
-) -> impl FnMut(&'a str) -> IResult<&'a str, O>
-where
-  F: Fn(&'a str) -> IResult<&'a str, O>,
-{
-  delimited(space0, f, space0)
 }
 
 fn compound_selector(input: &str) -> IResult<&str, CompoundSelector> {
