@@ -10,7 +10,7 @@ use nom::{
   combinator::{all_consuming, eof, iterator, opt, peek, rest, value},
   multi::{many0, many1, many_till},
   sequence::{delimited, preceded, tuple},
-  IResult,
+  IResult, Parser,
 };
 
 #[derive(Debug, PartialEq, Clone)]
@@ -189,6 +189,7 @@ where
 }
 
 fn compound_selector(input: &str) -> IResult<&str, CompoundSelector> {
+  let input = input.trim_start();
   // altは上から順にマッチするので、並べる順序が重要
   let (input, (selectors, _)) = many_till(
     alt((
@@ -199,7 +200,7 @@ fn compound_selector(input: &str) -> IResult<&str, CompoundSelector> {
       pseudo_class_selector,
       type_selector,
     )),
-    eof,
+    alt((combinator_as_string, eof)),
   )(input)?;
 
   Ok((input, CompoundSelector(selectors)))
@@ -231,10 +232,18 @@ fn combinator(input: &str) -> IResult<&str, Combinator> {
   ))(input)
 }
 
+fn combinator_as_string(input: &str) -> IResult<&str, &str> {
+  alt((tag(">"), tag("+"), tag("~"), space1))(input)
+}
+
 // cobminatorで繋がれた2つのcompound_selectorをparseする
 fn complex_selector(input: &str) -> IResult<&str, SelectorData> {
   let (input, selector) = compound_selector(input)?;
   let (input, combinator) = opt(combinator)(input)?;
+
+  if combinator.is_none() && !input.is_empty() {
+    return Ok((input, (selector, Some(Combinator::Descendant))));
+  }
 
   Ok((input, (selector, combinator)))
 }
@@ -249,7 +258,7 @@ fn selector(input: &str) -> IResult<&str, Selector> {
 pub fn main() {
   let input = "div.class #id";
 
-  let result = complex_selector(input);
+  let result = selector(input);
 
   println!("result: {:?}", result);
 }
