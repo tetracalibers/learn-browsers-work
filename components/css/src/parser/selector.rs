@@ -7,13 +7,16 @@ use nom::{
   branch::alt,
   bytes::complete::{tag, take_till, take_while1},
   character::complete::{space0, space1},
-  combinator::{opt, peek, value},
-  sequence::{delimited, preceded, tuple},
+  combinator::{eof, opt, peek, value},
+  multi::many_till,
+  sequence::{delimited, tuple},
   IResult,
 };
 
 #[derive(Debug, PartialEq, Clone)]
-struct Selector(Vec<(CompoundSelector, Option<Combinator>)>);
+struct Selector(Vec<SelectorData>);
+
+type SelectorData = (CompoundSelector, Option<Combinator>);
 
 #[derive(Debug, PartialEq, Clone)]
 enum SimpleSelector {
@@ -257,18 +260,24 @@ fn combinator(input: &str) -> IResult<&str, Combinator> {
 }
 
 // cobminatorで繋がれた2つのcompound_selectorをparseする
-fn complex_selector(input: &str) -> IResult<&str, Selector> {
+fn complex_selector(input: &str) -> IResult<&str, SelectorData> {
   let (input, selector) = compound_selector(input)?;
   let (input, combinator) = opt(combinator)(input)?;
 
-  Ok((input, Selector(vec![(selector, combinator)])))
+  Ok((input, (selector, combinator)))
+}
+
+fn selector(input: &str) -> IResult<&str, Selector> {
+  let (input, (selectors, _)) = many_till(complex_selector, peek(eof))(input)?;
+
+  Ok((input, Selector(selectors)))
 }
 
 // #foo > .bar + div.k1.k2 [id='baz']:hello(2):not(:where(#yolo))::before
 pub fn main() {
-  let input = "#foo.bar";
+  let input = "div.class #id";
 
-  let result = complex_selector(input);
+  let result = selector(input);
 
   println!("result: {:?}", result);
 }
