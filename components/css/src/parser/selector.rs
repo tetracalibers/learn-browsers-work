@@ -223,15 +223,7 @@ fn combinator(input: &str) -> IResult<&str, Combinator> {
 }
 
 fn delimiter_string(input: &str) -> IResult<&str, &str> {
-  alt((
-    tag(">"),
-    tag("+"),
-    tag("~"),
-    tag(":"),
-    tag(")"),
-    tag("("),
-    space1,
-  ))(input)
+  alt((tag(">"), tag("+"), tag("~"), tag(")"), tag("("), space1))(input)
 }
 
 // cobminatorで繋がれた2つのcompound_selectorをparseする
@@ -259,12 +251,9 @@ fn selector(input: &str) -> IResult<&str, Selector> {
 pub fn main() {
   let input = r#"input:not(:where(#yolo))"#;
 
-  //let result = selector(input);
+  let result = selector(input);
 
-  let tmp_result = selector(":where(#yolo)");
-  println!("tmp_result: {:?}", tmp_result);
-
-  //println!("result: {:?}", result);
+  println!("result: {:?}", result);
 }
 
 #[cfg(test)]
@@ -404,6 +393,56 @@ mod tests {
         ])
       ))
     );
+    assert_eq!(
+      selector(":where(#yoro)"),
+      Ok((
+        "",
+        Selector(vec![(
+          CompoundSelector(vec![SimpleSelector::PseudoClass(
+            PseudoClassSelector {
+              name: "where".to_string(),
+              argument: None,
+              subtree: Some(Selector(vec![(
+                CompoundSelector(vec![SimpleSelector::Id("yoro".to_string())]),
+                None
+              )]))
+            }
+          )]),
+          None
+        )])
+      ))
+    );
+    assert_eq!(
+      selector("input:not(:where(#yolo))"),
+      Ok((
+        "",
+        Selector(vec![(
+          CompoundSelector(vec![
+            SimpleSelector::Type("input".to_string()),
+            SimpleSelector::PseudoClass(PseudoClassSelector {
+              name: "not".to_string(),
+              argument: None,
+              subtree: Some(Selector(vec![(
+                CompoundSelector(vec![SimpleSelector::PseudoClass(
+                  PseudoClassSelector {
+                    name: "where".to_string(),
+                    argument: None,
+                    subtree: Some(Selector(vec![(
+                      CompoundSelector(vec![SimpleSelector::Id(
+                        "yolo".to_string()
+                      )]),
+                      None
+                    )]))
+                  }
+                )]),
+                None
+              )]))
+            })
+          ]),
+          None
+        )])
+      ))
+    )
   }
 
   #[test]
