@@ -1,11 +1,14 @@
-use std::ops::{Deref, DerefMut};
+use std::{
+  borrow::Borrow,
+  ops::{Deref, DerefMut},
+};
 
 use nom::{
   branch::alt,
   bytes::complete::{tag, take_till, take_while1},
-  character::complete::{space0, space1},
+  character::complete::{one_of, space0, space1},
   combinator::{eof, opt, peek, value},
-  multi::many_till,
+  multi::{fold_many0, fold_many1, many0, many_till},
   sequence::{delimited, tuple},
   IResult,
 };
@@ -186,7 +189,7 @@ where
 }
 
 fn compound_selector(input: &str) -> IResult<&str, CompoundSelector> {
-  let input = input.trim_start();
+  let input = input.trim();
   // altは上から順にマッチするので、並べる順序が重要
   let (input, (selectors, _)) = many_till(
     alt((
@@ -197,7 +200,7 @@ fn compound_selector(input: &str) -> IResult<&str, CompoundSelector> {
       pseudo_class_selector,
       type_selector,
     )),
-    alt((combinator_as_string, eof)),
+    alt((peek(combinator_as_string), eof)),
   )(input)?;
 
   Ok((input, CompoundSelector(selectors)))
@@ -221,8 +224,29 @@ fn combinator(input: &str) -> IResult<&str, Combinator> {
   ))(input)
 }
 
+fn child_combinator_as_string(input: &str) -> IResult<&str, &str> {
+  delimited(space0, tag(">"), take_till(|c| c == ' '))(input)
+}
+
+fn next_sibling_combinator_as_string(input: &str) -> IResult<&str, &str> {
+  delimited(space0, tag("+"), take_till(|c| c == ' '))(input)
+}
+
+fn subsequent_sibling_combinator_as_string(input: &str) -> IResult<&str, &str> {
+  delimited(space0, tag("~"), take_till(|c| c == ' '))(input)
+}
+
+fn descendant_combinator_as_string(input: &str) -> IResult<&str, &str> {
+  space1(input)
+}
+
 fn combinator_as_string(input: &str) -> IResult<&str, &str> {
-  alt((tag(">"), tag("+"), tag("~"), space1))(input)
+  alt((
+    child_combinator_as_string,
+    next_sibling_combinator_as_string,
+    subsequent_sibling_combinator_as_string,
+    descendant_combinator_as_string,
+  ))(input)
 }
 
 // cobminatorで繋がれた2つのcompound_selectorをparseする
@@ -230,22 +254,24 @@ fn complex_selector(input: &str) -> IResult<&str, SelectorData> {
   let (input, selector) = compound_selector(input)?;
   let (input, combinator) = opt(combinator)(input)?;
 
-  if combinator.is_none() && !input.is_empty() {
-    return Ok((input, (selector, Some(Combinator::Descendant))));
-  }
-
   Ok((input, (selector, combinator)))
 }
 
 fn selector(input: &str) -> IResult<&str, Selector> {
   let (input, (selectors, _)) = many_till(complex_selector, peek(eof))(input)?;
 
+  // 空のcompound_selectorがある場合は削除する
+  let selectors = selectors
+    .into_iter()
+    .filter(|(selector, _)| !selector.is_empty())
+    .collect();
+
   Ok((input, Selector(selectors)))
 }
 
 // #foo > .bar + div.k1.k2 [id='baz']:hello(2):not(:where(#yolo))::before
 pub fn main() {
-  let input = "div.class #id";
+  let input = "div.class + ~ #id";
 
   let result = selector(input);
 
@@ -328,5 +354,66 @@ mod tests {
     assert_eq!(combinator("+"), Ok(("", Combinator::NextSibling)));
     assert_eq!(combinator("~"), Ok(("", Combinator::SubsequentSibling)));
     assert_eq!(combinator(" > .bar"), Ok(("", Combinator::Child)));
+  }
+
+  #[test]
+  fn test_selector() {
+    assert_eq!(
+      selector("div.class #id"),
+      Ok((
+        "",
+        Selector(vec![
+          (
+            CompoundSelector(vec![
+              SimpleSelector::Type("div".to_string()),
+              SimpleSelector::Class("class".to_string()),
+            ]),
+            Some(Combinator::Descendant)
+          ),
+          (
+            CompoundSelector(vec![SimpleSelector::Id("id".to_string())]),
+            None
+          ),
+        ])
+      ))
+    );
+    assert_eq!(
+      selector("div.class > #id"),
+      Ok((
+        "",
+        Selector(vec![
+          (
+            CompoundSelector(vec![
+              SimpleSelector::Type("div".to_string()),
+              SimpleSelector::Class("class".to_string()),
+            ]),
+            Some(Combinator::Child)
+          ),
+          (
+            CompoundSelector(vec![SimpleSelector::Id("id".to_string())]),
+            None
+          ),
+        ])
+      ))
+    );
+    assert_eq!(
+      selector("div.class > > #id"),
+      Ok((
+        "",
+        Selector(vec![
+          (
+            CompoundSelector(vec![
+              SimpleSelector::Type("div".to_string()),
+              SimpleSelector::Class("class".to_string()),
+            ]),
+            Some(Combinator::Child)
+          ),
+          (
+            CompoundSelector(vec![SimpleSelector::Id("id".to_string())]),
+            None
+          ),
+        ])
+      ))
+    );
   }
 }
