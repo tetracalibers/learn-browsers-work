@@ -81,9 +81,6 @@ impl DerefMut for CompoundSelector {
 
 /* -------------------------------------------- */
 
-// 最終的に以下をparseできるようなものを作りたい
-// #foo > .bar + div.k1.k2 [id='baz']:hello(2):not(:where(#yolo))::before
-
 // クラス名やID名として有効なもの
 fn identifier(input: &str) -> IResult<&str, &str> {
   take_while1(|c: char| c.is_alphanumeric() || c == '-' || c == '_')(input)
