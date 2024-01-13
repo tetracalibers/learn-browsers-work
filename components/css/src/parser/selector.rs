@@ -3,9 +3,9 @@ use std::ops::{Deref, DerefMut};
 use nom::{
   branch::alt,
   bytes::complete::{tag, take_till, take_while1},
-  character::complete::{space0, space1},
+  character::complete::{alpha1, alphanumeric1, space0, space1},
   combinator::{eof, opt, peek, value},
-  multi::many_till,
+  multi::{many0, many_till},
   sequence::{delimited, tuple},
   IResult,
 };
@@ -56,6 +56,7 @@ enum Combinator {
 struct PseudoClassSelector {
   name: String,
   argument: Option<String>,
+  subtree: Option<Selector>,
 }
 
 #[derive(Debug, PartialEq, Clone)]
@@ -95,7 +96,7 @@ fn keyword(input: &str) -> IResult<&str, &str> {
 
 fn till_next_start(input: &str) -> IResult<&str, &str> {
   take_till(|c: char| {
-    ['#', '.', '(', '{', '[', ':', '>', '+', '~'].contains(&c)
+    ['#', '.', '(', '{', '[', ':', '>', '+', '~', ')', '}', ']'].contains(&c)
       || c.is_whitespace()
   })(input)
 }
@@ -105,6 +106,15 @@ fn double_quoted_string(input: &str) -> IResult<&str, &str> {
   let (input, name) = take_while1(|c: char| c != '"')(input)?;
   let (input, _) = tag("\"")(input)?;
   Ok((input, name))
+}
+
+fn parenthesized<'a, F, O>(
+  parser: F,
+) -> impl FnMut(&'a str) -> IResult<&'a str, O>
+where
+  F: FnMut(&'a str) -> IResult<&'a str, O>,
+{
+  delimited(tag("("), parser, tag(")"))
 }
 
 fn type_selector(input: &str) -> IResult<&str, SimpleSelector> {
@@ -152,14 +162,16 @@ fn attribute_selector(input: &str) -> IResult<&str, SimpleSelector> {
 
 fn pseudo_class_selector(input: &str) -> IResult<&str, SimpleSelector> {
   let (input, _) = tag(":")(input)?;
-  let (input, name) = till_next_start(input)?;
-  let (input, argument) = opt(delimited(tag("("), keyword, tag(")")))(input)?;
+  let (input, name) = many0(alt((alpha1, tag("-"))))(input)?;
+  let (input, argument) = opt(parenthesized(alphanumeric1))(input)?;
+  let (input, subtree) = opt(parenthesized(selector))(input)?;
 
   Ok((
     input,
     SimpleSelector::PseudoClass(PseudoClassSelector {
-      name: name.to_string(),
+      name: name.join("").to_string(),
       argument: argument.map(|v| v.to_string()),
+      subtree,
     }),
   ))
 }
@@ -229,12 +241,7 @@ fn descendant_combinator_as_string(input: &str) -> IResult<&str, &str> {
 }
 
 fn combinator_as_string(input: &str) -> IResult<&str, &str> {
-  alt((
-    child_combinator_as_string,
-    next_sibling_combinator_as_string,
-    subsequent_sibling_combinator_as_string,
-    descendant_combinator_as_string,
-  ))(input)
+  alt((tag(">"), tag("+"), tag("~"), tag(":"), space1))(input)
 }
 
 // cobminatorで繋がれた2つのcompound_selectorをparseする
@@ -246,7 +253,8 @@ fn complex_selector(input: &str) -> IResult<&str, SelectorData> {
 }
 
 fn selector(input: &str) -> IResult<&str, Selector> {
-  let (input, (selectors, _)) = many_till(complex_selector, peek(eof))(input)?;
+  let (input, (selectors, _)) =
+    many_till(complex_selector, alt((eof, peek(tag(")")))))(input)?;
 
   // 空のcompound_selectorがある場合は削除する
   let selectors = selectors
@@ -259,11 +267,14 @@ fn selector(input: &str) -> IResult<&str, Selector> {
 
 // #foo > .bar + div.k1.k2 [id='baz']:hello(2):not(:where(#yolo))::before
 pub fn main() {
-  let input = "div.class + ~ #id";
+  let input = r#"input:not(:where(#yolo))"#;
 
-  let result = selector(input);
+  //let result = selector(input);
 
-  println!("result: {:?}", result);
+  let tmp_result = selector(":where(#yolo)");
+  println!("tmp_result: {:?}", tmp_result);
+
+  //println!("result: {:?}", result);
 }
 
 #[cfg(test)]
@@ -341,7 +352,7 @@ mod tests {
     assert_eq!(combinator(">"), Ok(("", Combinator::Child)));
     assert_eq!(combinator("+"), Ok(("", Combinator::NextSibling)));
     assert_eq!(combinator("~"), Ok(("", Combinator::SubsequentSibling)));
-    assert_eq!(combinator(" > .bar"), Ok(("", Combinator::Child)));
+    assert_eq!(combinator(" > .bar"), Ok((" .bar", Combinator::Child)));
   }
 
   #[test]
@@ -401,6 +412,46 @@ mod tests {
             None
           ),
         ])
+      ))
+    );
+  }
+
+  #[test]
+  fn test_pseudo_class_selector() {
+    assert_eq!(
+      pseudo_class_selector(":hover"),
+      Ok((
+        "",
+        SimpleSelector::PseudoClass(PseudoClassSelector {
+          name: "hover".to_string(),
+          argument: None,
+          subtree: None,
+        })
+      ))
+    );
+    assert_eq!(
+      pseudo_class_selector(":nth-child(2)"),
+      Ok((
+        "",
+        SimpleSelector::PseudoClass(PseudoClassSelector {
+          name: "nth-child".to_string(),
+          argument: Some("2".to_string()),
+          subtree: None,
+        })
+      ))
+    );
+    assert_eq!(
+      pseudo_class_selector(":not(.class)"),
+      Ok((
+        "",
+        SimpleSelector::PseudoClass(PseudoClassSelector {
+          name: "not".to_string(),
+          argument: None,
+          subtree: Some(Selector(vec![(
+            CompoundSelector(vec![SimpleSelector::Class("class".to_string())]),
+            None
+          ),])),
+        })
       ))
     );
   }
