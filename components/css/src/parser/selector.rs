@@ -258,15 +258,15 @@ fn combinator(input: &str) -> IResult<&str, Combinator> {
 
 // cobminatorで繋がれた2つのcompound_selectorをparseする
 fn complex_selector(input: &str) -> IResult<&str, Selector> {
-  let (input, (left, combinator)) =
-    tuple((compound_selector, combinator))(input)?;
+  let (input, selector) = compound_selector(input)?;
+  let (input, combinator) = opt(combinator)(input)?;
 
-  Ok((input, Selector(vec![(left, Some(combinator))])))
+  Ok((input, Selector(vec![(selector, combinator)])))
 }
 
 // #foo > .bar + div.k1.k2 [id='baz']:hello(2):not(:where(#yolo))::before
 pub fn main() {
-  let input = "#foo .bar";
+  let input = "#foo.bar";
 
   let result = complex_selector(input);
 
