@@ -6,11 +6,10 @@ use std::{
 use nom::{
   branch::alt,
   bytes::complete::{tag, take_while1},
-  character::complete::{char, space0, space1},
-  combinator::{map, opt, value},
-  multi::separated_list0,
+  character::complete::{space0, space1},
+  combinator::{opt, value},
   sequence::{delimited, preceded, terminated, tuple},
-  IResult, Parser,
+  IResult,
 };
 
 #[derive(Debug, PartialEq, Clone)]
@@ -157,17 +156,29 @@ fn attribute_selector(input: &str) -> IResult<&str, SimpleSelector> {
 }
 
 fn pseudo_class_selector(input: &str) -> IResult<&str, SimpleSelector> {
-  todo!("pseudo_class_selector");
+  let (input, _) = tag(":")(input)?;
+  let (input, name) = keyword(input)?;
+  let (input, argument) = opt(delimited(tag("("), keyword, tag(")")))(input)?;
+
+  Ok((
+    input,
+    SimpleSelector::PseudoClass(PseudoClassSelector {
+      name: name.to_string(),
+      argument: argument.map(|v| v.to_string()),
+    }),
+  ))
 }
 
-fn simple_selector(input: &str) -> IResult<&str, SimpleSelector> {
-  alt((
-    id_selector,
-    class_selector,
-    attribute_selector,
-    pseudo_class_selector,
-    type_selector,
-  ))(input)
+fn pseudo_element_selector(input: &str) -> IResult<&str, SimpleSelector> {
+  let (input, _) = tag("::")(input)?;
+  let (input, name) = keyword(input)?;
+
+  Ok((
+    input,
+    SimpleSelector::PseudoElement(PseudoElementSelector {
+      name: name.to_string(),
+    }),
+  ))
 }
 
 fn compound_selector(input: &str) -> IResult<&str, CompoundSelector> {
