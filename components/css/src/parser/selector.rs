@@ -5,10 +5,10 @@ use std::{
 
 use nom::{
   branch::alt,
-  bytes::complete::{tag, take_while1},
+  bytes::complete::{tag, take_till, take_while1},
   character::complete::{space0, space1},
-  combinator::{opt, value},
-  sequence::{delimited, preceded, terminated, tuple},
+  combinator::{opt, peek, value},
+  sequence::{delimited, tuple},
   IResult,
 };
 
@@ -105,6 +105,13 @@ fn keyword(input: &str) -> IResult<&str, &str> {
   take_while1(|c: char| c.is_alphanumeric())(input)
 }
 
+fn till_next_start(input: &str) -> IResult<&str, &str> {
+  take_till(|c: char| {
+    ['#', '.', '(', '{', '[', ':', '>', '+', '~'].contains(&c)
+      || c.is_whitespace()
+  })(input)
+}
+
 fn double_quoted_string(input: &str) -> IResult<&str, &str> {
   let (input, _) = tag("\"")(input)?;
   let (input, name) = take_while1(|c: char| c != '"')(input)?;
@@ -113,19 +120,19 @@ fn double_quoted_string(input: &str) -> IResult<&str, &str> {
 }
 
 fn type_selector(input: &str) -> IResult<&str, SimpleSelector> {
-  let (input, name) = identifier(input)?;
+  let (input, name) = till_next_start(input)?;
   Ok((input, SimpleSelector::Type(name.to_string())))
 }
 
 fn id_selector(input: &str) -> IResult<&str, SimpleSelector> {
   let (input, _) = tag("#")(input)?;
-  let (input, name) = identifier(input)?;
+  let (input, name) = till_next_start(input)?; // ID名はクラス名や擬似クラス名などとして有効なもので終わる
   Ok((input, SimpleSelector::Id(name.to_string())))
 }
 
 fn class_selector(input: &str) -> IResult<&str, SimpleSelector> {
   let (input, _) = tag(".")(input)?;
-  let (input, name) = identifier(input)?;
+  let (input, name) = till_next_start(input)?;
   Ok((input, SimpleSelector::Class(name.to_string())))
 }
 
@@ -157,7 +164,7 @@ fn attribute_selector(input: &str) -> IResult<&str, SimpleSelector> {
 
 fn pseudo_class_selector(input: &str) -> IResult<&str, SimpleSelector> {
   let (input, _) = tag(":")(input)?;
-  let (input, name) = keyword(input)?;
+  let (input, name) = till_next_start(input)?;
   let (input, argument) = opt(delimited(tag("("), keyword, tag(")")))(input)?;
 
   Ok((
@@ -171,7 +178,7 @@ fn pseudo_class_selector(input: &str) -> IResult<&str, SimpleSelector> {
 
 fn pseudo_element_selector(input: &str) -> IResult<&str, SimpleSelector> {
   let (input, _) = tag("::")(input)?;
-  let (input, name) = keyword(input)?;
+  let (input, name) = till_next_start(input)?;
 
   Ok((
     input,
@@ -179,6 +186,15 @@ fn pseudo_element_selector(input: &str) -> IResult<&str, SimpleSelector> {
       name: name.to_string(),
     }),
   ))
+}
+
+fn delimited_space0<'a, F, O>(
+  f: F,
+) -> impl FnMut(&'a str) -> IResult<&'a str, O>
+where
+  F: Fn(&'a str) -> IResult<&'a str, O>,
+{
+  delimited(space0, f, space0)
 }
 
 fn compound_selector(input: &str) -> IResult<&str, CompoundSelector> {
@@ -208,10 +224,14 @@ fn compound_selector(input: &str) -> IResult<&str, CompoundSelector> {
           rest = input;
           list.push(selector);
         }
-        _ => {
+        // アルファベットの場合
+        c if c.is_alphabetic() => {
           let (input, selector) = type_selector(rest)?;
           rest = input;
           list.push(selector);
+        }
+        _ => {
+          break;
         }
       }
     } else {
@@ -230,30 +250,31 @@ fn flatten_compound_selector(selector: &CompoundSelector) -> Selector {
   }
 }
 
-fn delimited_space0<'a, F, O>(
-  f: F,
-) -> impl FnMut(&'a str) -> IResult<&'a str, O>
-where
-  F: Fn(&'a str) -> IResult<&'a str, O>,
-{
-  delimited(space0, f, space0)
-}
-
 fn combinator(input: &str) -> IResult<&str, Combinator> {
   alt((
-    value(Combinator::Child, delimited_space0(tag(">"))),
-    value(Combinator::NextSibling, delimited_space0(tag("+"))),
-    value(Combinator::SubsequentSibling, delimited_space0(tag("~"))),
-    value(Combinator::Descendant, space1), // 他の記号がスペースで囲まれている場合にマッチしないよう最後に置く
+    value(
+      Combinator::Child,
+      delimited(space0, tag(">"), tuple((space0, peek(compound_selector)))),
+    ),
+    value(
+      Combinator::NextSibling,
+      delimited(space0, tag("+"), tuple((space0, peek(compound_selector)))),
+    ),
+    value(
+      Combinator::SubsequentSibling,
+      delimited(space0, tag("~"), tuple((space0, peek(compound_selector)))),
+    ),
+    value(
+      Combinator::Descendant,
+      tuple((space1, opt(peek(compound_selector)))),
+    ), // 他の記号がスペースで囲まれている場合にマッチしないよう最後に置く
   ))(input)
 }
 
+// cobminatorで繋がれた2つのcompound_selectorをparseする
 fn complex_selector(input: &str) -> IResult<&str, ComplexSelector> {
-  let (input, (left, combinator, right)) = tuple((
-    terminated(compound_selector, space1),
-    combinator,
-    preceded(space1, compound_selector),
-  ))(input)?;
+  let (input, (left, combinator, right)) =
+    tuple((compound_selector, combinator, compound_selector))(input)?;
 
   Ok((
     input,
@@ -266,24 +287,12 @@ fn complex_selector(input: &str) -> IResult<&str, ComplexSelector> {
 }
 
 // #foo > .bar + div.k1.k2 [id='baz']:hello(2):not(:where(#yolo))::before
-fn selector(input: &str) {
-  let mut rest = input;
-
-  loop {
-    if let Some(c) = compound_selector(rest).ok() {
-      println!("complex_selector: {:?}", c);
-      rest = c.0;
-    } else if let Some(r) = combinator(rest).ok() {
-      println!("combinator: {:?}", r);
-      rest = r.0;
-    } else {
-      break;
-    }
-  }
-}
-
 pub fn main() {
-  let (rest, result) = compound_selector("div#foo.bar").unwrap();
+  let input = "#foo > .bar";
+
+  let result = complex_selector(input);
+
+  println!("result: {:?}", result);
 }
 
 #[cfg(test)]
@@ -361,5 +370,6 @@ mod tests {
     assert_eq!(combinator(">"), Ok(("", Combinator::Child)));
     assert_eq!(combinator("+"), Ok(("", Combinator::NextSibling)));
     assert_eq!(combinator("~"), Ok(("", Combinator::SubsequentSibling)));
+    assert_eq!(combinator(" > .bar"), Ok(("", Combinator::Child)));
   }
 }
