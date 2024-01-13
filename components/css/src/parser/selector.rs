@@ -89,11 +89,6 @@ fn identifier(input: &str) -> IResult<&str, &str> {
   take_while1(|c: char| c.is_alphanumeric() || c == '-' || c == '_')(input)
 }
 
-// 擬似クラスの名称などとして有効なもの
-fn keyword(input: &str) -> IResult<&str, &str> {
-  take_while1(|c: char| c.is_alphanumeric())(input)
-}
-
 fn till_next_start(input: &str) -> IResult<&str, &str> {
   take_till(|c: char| {
     ['#', '.', '(', '{', '[', ':', '>', '+', '~', ')', '}', ']'].contains(&c)
@@ -225,22 +220,6 @@ fn combinator(input: &str) -> IResult<&str, Combinator> {
     ),
     value(Combinator::Descendant, tuple((space1, till_next_start))), // 他の記号がスペースで囲まれている場合にマッチしないよう最後に置く
   ))(input)
-}
-
-fn child_combinator_as_string(input: &str) -> IResult<&str, &str> {
-  delimited(space0, tag(">"), take_till(|c| c == ' '))(input)
-}
-
-fn next_sibling_combinator_as_string(input: &str) -> IResult<&str, &str> {
-  delimited(space0, tag("+"), take_till(|c| c == ' '))(input)
-}
-
-fn subsequent_sibling_combinator_as_string(input: &str) -> IResult<&str, &str> {
-  delimited(space0, tag("~"), take_till(|c| c == ' '))(input)
-}
-
-fn descendant_combinator_as_string(input: &str) -> IResult<&str, &str> {
-  space1(input)
 }
 
 fn delimiter_string(input: &str) -> IResult<&str, &str> {
