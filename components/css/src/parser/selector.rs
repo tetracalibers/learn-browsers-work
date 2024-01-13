@@ -13,11 +13,7 @@ use nom::{
 };
 
 #[derive(Debug, PartialEq, Clone)]
-enum Selector {
-  Simple(SimpleSelector),
-  Complex(ComplexSelector),
-  Compound(CompoundSelector),
-}
+struct Selector(Vec<(CompoundSelector, Option<Combinator>)>);
 
 #[derive(Debug, PartialEq, Clone)]
 enum SimpleSelector {
@@ -27,14 +23,6 @@ enum SimpleSelector {
   Attribute(AttributeSelector),         // [attr] とか [attr="value"] とか
   PseudoClass(PseudoClassSelector),     // :hover とか
   PseudoElement(PseudoElementSelector), // ::before とか
-}
-
-// p > a とか p + a とか p ~ a とか p a とか
-#[derive(Debug, PartialEq, Clone)]
-struct ComplexSelector {
-  combinator: Combinator,
-  left: Box<Selector>,
-  right: Box<Selector>,
 }
 
 // p.class#id とか p:not(.class) とか
@@ -242,13 +230,13 @@ fn compound_selector(input: &str) -> IResult<&str, CompoundSelector> {
   Ok((rest, CompoundSelector(list)))
 }
 
-fn flatten_compound_selector(selector: &CompoundSelector) -> Selector {
-  if selector.len() == 1 {
-    Selector::Simple(selector[0].clone())
-  } else {
-    Selector::Compound(selector.clone())
-  }
-}
+// fn flatten_compound_selector(selector: &CompoundSelector) -> Selector {
+//   if selector.len() == 1 {
+//     Selector::Simple(selector[0].clone())
+//   } else {
+//     Selector::Compound(selector.clone())
+//   }
+// }
 
 fn combinator(input: &str) -> IResult<&str, Combinator> {
   alt((
@@ -269,18 +257,11 @@ fn combinator(input: &str) -> IResult<&str, Combinator> {
 }
 
 // cobminatorで繋がれた2つのcompound_selectorをparseする
-fn complex_selector(input: &str) -> IResult<&str, ComplexSelector> {
-  let (input, (left, combinator, right)) =
-    tuple((compound_selector, combinator, compound_selector))(input)?;
+fn complex_selector(input: &str) -> IResult<&str, Selector> {
+  let (input, (left, combinator)) =
+    tuple((compound_selector, combinator))(input)?;
 
-  Ok((
-    input,
-    ComplexSelector {
-      combinator,
-      left: Box::new(flatten_compound_selector(&left)),
-      right: Box::new(flatten_compound_selector(&right)),
-    },
-  ))
+  Ok((input, Selector(vec![(left, Some(combinator))])))
 }
 
 // #foo > .bar + div.k1.k2 [id='baz']:hello(2):not(:where(#yolo))::before
