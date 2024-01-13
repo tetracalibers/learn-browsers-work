@@ -5,11 +5,11 @@ use std::{
 
 use nom::{
   branch::alt,
-  bytes::complete::{tag, take_till, take_while1},
+  bytes::complete::{tag, take_till, take_until, take_while1},
   character::complete::{space0, space1},
-  combinator::{eof, opt, peek, value},
-  multi::many_till,
-  sequence::{delimited, tuple},
+  combinator::{all_consuming, eof, iterator, opt, peek, rest, value},
+  multi::{many0, many1, many_till},
+  sequence::{delimited, preceded, tuple},
   IResult,
 };
 
@@ -189,48 +189,20 @@ where
 }
 
 fn compound_selector(input: &str) -> IResult<&str, CompoundSelector> {
-  let mut rest = input.trim();
-  let mut list = vec![];
+  // altは上から順にマッチするので、並べる順序が重要
+  let (input, (selectors, _)) = many_till(
+    alt((
+      id_selector,
+      class_selector,
+      attribute_selector,
+      pseudo_element_selector,
+      pseudo_class_selector,
+      type_selector,
+    )),
+    eof,
+  )(input)?;
 
-  loop {
-    if let Some(next) = rest.chars().next() {
-      match next {
-        '.' => {
-          let (input, selector) = class_selector(rest)?;
-          rest = input;
-          list.push(selector);
-        }
-        '#' => {
-          let (input, selector) = id_selector(rest)?;
-          rest = input;
-          list.push(selector);
-        }
-        '[' => {
-          let (input, selector) = attribute_selector(rest)?;
-          rest = input;
-          list.push(selector);
-        }
-        ':' => {
-          let (input, selector) = pseudo_class_selector(rest)?;
-          rest = input;
-          list.push(selector);
-        }
-        // アルファベットの場合
-        c if c.is_alphabetic() => {
-          let (input, selector) = type_selector(rest)?;
-          rest = input;
-          list.push(selector);
-        }
-        _ => {
-          break;
-        }
-      }
-    } else {
-      break;
-    }
-  }
-
-  Ok((rest, CompoundSelector(list)))
+  Ok((input, CompoundSelector(selectors)))
 }
 
 // fn flatten_compound_selector(selector: &CompoundSelector) -> Selector {
@@ -277,7 +249,7 @@ fn selector(input: &str) -> IResult<&str, Selector> {
 pub fn main() {
   let input = "div.class #id";
 
-  let result = selector(input);
+  let result = complex_selector(input);
 
   println!("result: {:?}", result);
 }
