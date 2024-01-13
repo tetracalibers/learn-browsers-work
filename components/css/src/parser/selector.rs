@@ -249,7 +249,7 @@ fn selector(input: &str) -> IResult<&str, Selector> {
 
 // #foo > .bar + div.k1.k2 [id='baz']:hello(2):not(:where(#yolo))::before
 pub fn main() {
-  let input = r#"input:not(:where(#yolo))"#;
+  let input = r#"a:hover::before"#;
 
   let result = selector(input);
 
@@ -442,6 +442,26 @@ mod tests {
           None
         )])
       ))
+    );
+    assert_eq!(
+      selector("a:hover::before"),
+      Ok((
+        "",
+        Selector(vec![(
+          CompoundSelector(vec![
+            SimpleSelector::Type("a".to_string()),
+            SimpleSelector::PseudoClass(PseudoClassSelector {
+              name: "hover".to_string(),
+              argument: None,
+              subtree: None,
+            }),
+            SimpleSelector::PseudoElement(PseudoElementSelector {
+              name: "before".to_string(),
+            })
+          ]),
+          None
+        )])
+      ))
     )
   }
 
@@ -480,6 +500,19 @@ mod tests {
             CompoundSelector(vec![SimpleSelector::Class("class".to_string())]),
             None
           ),])),
+        })
+      ))
+    );
+  }
+
+  #[test]
+  fn test_pseudo_element_selector() {
+    assert_eq!(
+      pseudo_element_selector("::before"),
+      Ok((
+        "",
+        SimpleSelector::PseudoElement(PseudoElementSelector {
+          name: "before".to_string(),
         })
       ))
     );
