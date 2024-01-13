@@ -244,9 +244,9 @@ fn selector(input: &str) -> IResult<&str, Selector> {
   Ok((input, Selector(selectors)))
 }
 
-// #foo > .bar + div.k1.k2 [id='baz']:hello(2):not(:where(#yolo))::before
 pub fn main() {
-  let input = r#"a:hover::before"#;
+  let input =
+    r#"#foo > .bar + div.k1.k2 [id="baz"]:hello(2):not(:where(#yolo))::before"#;
 
   let result = selector(input);
 
