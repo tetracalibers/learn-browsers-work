@@ -8,7 +8,7 @@ use nom::{
   bytes::complete::{tag, take_till, take_while1},
   character::complete::{space0, space1},
   combinator::{opt, peek, value},
-  sequence::{delimited, tuple},
+  sequence::{delimited, preceded, tuple},
   IResult,
 };
 
@@ -198,7 +198,7 @@ where
 }
 
 fn compound_selector(input: &str) -> IResult<&str, CompoundSelector> {
-  let mut rest = input;
+  let mut rest = input.trim();
   let mut list = vec![];
 
   loop {
@@ -254,20 +254,17 @@ fn combinator(input: &str) -> IResult<&str, Combinator> {
   alt((
     value(
       Combinator::Child,
-      delimited(space0, tag(">"), tuple((space0, peek(compound_selector)))),
+      delimited(space0, tag(">"), take_till(|c| c == ' ')),
     ),
     value(
       Combinator::NextSibling,
-      delimited(space0, tag("+"), tuple((space0, peek(compound_selector)))),
+      delimited(space0, tag("+"), take_till(|c| c == ' ')),
     ),
     value(
       Combinator::SubsequentSibling,
-      delimited(space0, tag("~"), tuple((space0, peek(compound_selector)))),
+      delimited(space0, tag("~"), take_till(|c| c == ' ')),
     ),
-    value(
-      Combinator::Descendant,
-      tuple((space1, opt(peek(compound_selector)))),
-    ), // 他の記号がスペースで囲まれている場合にマッチしないよう最後に置く
+    value(Combinator::Descendant, tuple((space1, till_next_start))), // 他の記号がスペースで囲まれている場合にマッチしないよう最後に置く
   ))(input)
 }
 
@@ -288,7 +285,7 @@ fn complex_selector(input: &str) -> IResult<&str, ComplexSelector> {
 
 // #foo > .bar + div.k1.k2 [id='baz']:hello(2):not(:where(#yolo))::before
 pub fn main() {
-  let input = "#foo > .bar";
+  let input = "#foo .bar";
 
   let result = complex_selector(input);
 
