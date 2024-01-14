@@ -4,7 +4,7 @@ use std::{cell::RefCell, collections::HashMap};
 use super::elements::ElementData;
 use super::token_list::TokenList;
 
-#[derive(Clone)]
+#[derive(Debug, Clone)]
 pub struct AttributeMap(HashMap<String, String>);
 
 pub struct Element {
@@ -29,12 +29,19 @@ impl DerefMut for AttributeMap {
 
 impl core::fmt::Debug for Element {
   fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
-    write!(f, "Element({:?}", self.data)?;
-    let class_name = self.class_list.borrow().values();
-    if !class_name.is_empty() {
-      write!(f, "| Class: {}", class_name)?;
+    // id, attribute, class_list は空の場合は表示しない
+    let mut debug_struct = f.debug_struct("Element");
+    debug_struct.field("data", &self.data);
+    if let Some(id) = &*self.id.borrow() {
+      debug_struct.field("id", id);
     }
-    write!(f, ")")
+    if !self.attributes.borrow().is_empty() {
+      debug_struct.field("attributes", &self.attributes.borrow());
+    }
+    if !self.class_list.borrow().is_empty() {
+      debug_struct.field("class_list", &self.class_list.borrow());
+    }
+    debug_struct.finish()
   }
 }
 
@@ -79,11 +86,7 @@ impl Element {
         *self.class_list.borrow_mut() = TokenList::from(value);
       }
       _ => {
-        self
-          .attributes
-          .borrow_mut()
-          .insert(name.to_string(), value.to_string());
-
+        self.attributes.borrow_mut().insert(name.to_owned(), value.to_owned());
         self.data.handle_attribute_change(name, value);
       }
     }

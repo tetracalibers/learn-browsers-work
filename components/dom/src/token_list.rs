@@ -1,3 +1,6 @@
+use std::ops::Deref;
+
+#[derive(Debug)]
 pub struct TokenList {
   items: Vec<String>,
 }
@@ -11,6 +14,13 @@ impl From<&str> for TokenList {
         .map(String::from)
         .collect(),
     }
+  }
+}
+
+impl Deref for TokenList {
+  type Target = Vec<String>;
+  fn deref(&self) -> &Self::Target {
+    &self.items
   }
 }
 
