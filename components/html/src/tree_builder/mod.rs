@@ -113,7 +113,10 @@ impl<T: Tokenizing> TreeBuilder<T> {
   pub fn run(mut self) -> NodePtr {
     loop {
       let token = self.tokenizer.next_token();
-      println!("{:?}", token);
+
+      if is_trace() {
+        println!("{:?}", token);
+      }
 
       self.process(token);
 
