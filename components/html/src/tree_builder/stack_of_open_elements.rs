@@ -152,6 +152,13 @@ impl StackOfOpenElements {
     }
   }
 
+  // indexがpopsされる直前までpopする
+  pub fn pop_before_index(&mut self, index: usize) {
+    while self.0.len() > index {
+      self.0.pop();
+    }
+  }
+
   // tag_namesのいずれかがpopされるまでpopする
   pub fn pop_until_some_in(&mut self, tag_names: &[&str]) {
     while let Some(node) = self.current_node() {

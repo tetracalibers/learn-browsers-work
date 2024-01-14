@@ -482,7 +482,30 @@ impl<T: Tokenizing> TreeBuilder<T> {
       this: &mut TreeBuilder<T>,
       token: Token,
     ) {
-      todo!("any_other_end_tags");
+      let mut match_index = None;
+
+      for (index, node) in this.open_elements.iter().enumerate().rev() {
+        let node_tag_name = node.as_element().tag_name();
+
+        if node_tag_name == *token.tag_name() {
+          if !Rc::ptr_eq(&node, &this.current_node()) {
+            this.unexpected(&token);
+          }
+
+          match_index = Some(index);
+          break;
+        }
+
+        if is_special_element(&node_tag_name) {
+          this.unexpected(&token);
+          return;
+        }
+      }
+
+      if let Some(index) = match_index {
+        this.generate_implied_end_tags(token.tag_name());
+        this.open_elements.pop_before_index(index);
+      }
     }
 
     if let Token::Character(c) = token {
