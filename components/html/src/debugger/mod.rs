@@ -25,8 +25,28 @@ pub fn get_document_from_html(html: &str) -> NodePtr {
   document
 }
 
+fn print_dom_tree_core(root: &TreeNode<Node>, depth: usize) {
+  let indent = "    ".repeat(depth) + "|-";
+
+  let mut print_this = true;
+
+  if let Some(text_node) = root.as_maybe_text() {
+    if text_node.characters.get_data().trim().is_empty() {
+      print_this = false;
+    }
+  }
+
+  if print_this {
+    println!("{}{:?}", indent, root);
+  }
+
+  for child in root.iterate_children() {
+    print_dom_tree_core(&child, depth + 1);
+  }
+}
+
 pub fn print_dom_tree(document: &NodePtr) {
-  document.print_tree(0);
+  print_dom_tree_core(document, 0);
 }
 
 // 兄弟要素も含めて深さ優先で走査

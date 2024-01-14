@@ -237,13 +237,4 @@ impl<T: TreeNodeHooks<T> + Debug> TreeNode<T> {
   pub fn iterate_children(&self) -> ChildrenIterator<T> {
     ChildrenIterator::new(self.clone())
   }
-
-  // 再帰的にツリー表示
-  pub fn print_tree(&self, depth: usize) {
-    let indent = "    ".repeat(depth);
-    println!("{}{:?}", indent, self.data);
-    for child in self.iterate_children() {
-      child.print_tree(depth + 1);
-    }
-  }
 }
