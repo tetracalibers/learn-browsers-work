@@ -975,7 +975,9 @@ impl<T: Tokenizing> TreeBuilder<T> {
     }
 
     if token.is_start_tag() {
-      todo!("process_in_body: any other start tag");
+      self.reconstruct_active_formatting_elements();
+      self.insert_html_element(token);
+      return;
     }
 
     if token.is_end_tag() {
