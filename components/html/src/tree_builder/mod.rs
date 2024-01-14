@@ -1113,10 +1113,9 @@ impl<T: Tokenizing> TreeBuilder<T> {
 
     let element_ref =
       dom::create_element(WeakTreeNode::from(&self.document.0), &tag_name);
-    let element = element_ref.as_element();
 
     for attr in attributes {
-      element.set_attribute(&attr.name, &attr.value);
+      element_ref.as_element().set_attribute(&attr.name, &attr.value);
     }
 
     element_ref
