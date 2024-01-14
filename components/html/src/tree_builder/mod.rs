@@ -18,7 +18,7 @@ use super::tokenizer::token::{Attribute, Token};
 use super::tokenizer::Tokenizing;
 
 use dom::comment::Comment;
-use dom::document::{Document, DocumentType};
+use dom::document::DocumentType;
 use dom::node::{ChildrenUpdateContext, Node, NodeData, NodePtr};
 use dom::text::Text;
 
