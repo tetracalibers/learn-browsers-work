@@ -1,7 +1,7 @@
 mod char_data;
 pub mod comment;
 pub mod document;
-mod element;
+pub mod element;
 mod element_factory;
 mod elements;
 pub mod node;

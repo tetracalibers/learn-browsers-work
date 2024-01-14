@@ -32,8 +32,10 @@ name = "learn-browser-works"
 version = "0.1.0"
 dependencies = [
  "css",
+ "dom",
  "html",
  "parser_combinator",
+ "tree",
 ]
 
 [[package]]
