@@ -16,8 +16,5 @@ members = [
 ]
 
 [dependencies]
-html              = { path = "./components/html" }
-css               = { path = "./components/css" }
-dom               = { path = "./components/dom" }
-tree              = { path = "./utilities/tree" }
-parser_combinator = { path = "./utilities/parser_combinator" }
+html = { path = "./components/html" }
+css  = { path = "./components/css" }

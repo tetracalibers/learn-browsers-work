@@ -110,13 +110,6 @@ impl<T: Tokenizing> TreeBuilder<T> {
     self.document.clone()
   }
 
-  pub fn default(tokenizer: T) -> Self {
-    let document = NodePtr(TreeNode::new(Node::new(NodeData::Document(
-      Document::new(),
-    ))));
-    Self::new(tokenizer, document)
-  }
-
   pub fn run(mut self) -> NodePtr {
     loop {
       let token = self.tokenizer.next_token();
