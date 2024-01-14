@@ -753,7 +753,50 @@ impl<T: Tokenizing> TreeBuilder<T> {
     }
 
     if token.is_start_tag() && token.match_tag_name_in(&["dd", "dt"]) {
-      todo!("process_in_body: dd/dt start tag");
+      self.frameset_ok = false;
+
+      for node in self.open_elements.iter().rev() {
+        let element = node.as_element();
+        let tag_name = element.tag_name();
+
+        if tag_name == "dd" {
+          self.generate_implied_end_tags("dd");
+
+          if self.current_node().as_element().tag_name() != "dd" {
+            emit_error!("Expected 'dd' tag");
+          }
+
+          self.open_elements.pop_until("dd");
+
+          break;
+        }
+
+        if tag_name == "dt" {
+          self.generate_implied_end_tags("dt");
+
+          if self.current_node().as_element().tag_name() != "dt" {
+            emit_error!("Expected 'dt' tag");
+          }
+
+          self.open_elements.pop_until("dt");
+
+          break;
+        }
+
+        if is_special_element(&tag_name)
+          && !element.match_tag_name_in(&["address", "div", "p"])
+        {
+          break;
+        }
+      }
+
+      if self.open_elements.has_element_name_in_button_scope("p") {
+        self.close_p_element();
+      }
+
+      self.insert_html_element(token);
+
+      return;
     }
 
     if token.is_start_tag() && token.tag_name() == "plaintext" {
