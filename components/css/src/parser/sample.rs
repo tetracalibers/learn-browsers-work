@@ -2,9 +2,9 @@ use nom::{
   branch::alt,
   bytes::complete::{tag, take_until, take_while, take_while1},
   character::complete::{char, multispace0},
-  combinator::{map, opt, recognize, value},
-  multi::{many0, many1, separated_list1},
-  sequence::{delimited, pair, preceded, terminated, tuple},
+  combinator::{map, opt, value},
+  multi::{many0, separated_list1},
+  sequence::{preceded, terminated},
   IResult,
 };
 
