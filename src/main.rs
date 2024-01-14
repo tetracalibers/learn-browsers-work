@@ -8,8 +8,11 @@ fn run_html() {
   <html>
   <body>
   
-  <h2>An Unordered HTML List</h2>
-  <p href="main">This is a paragraph.</p>
+  <ul>
+    <li>item1</li>
+    <li>item2</li>
+    <li>item3</li>
+  </ul>
   
   </body>
   </html>
