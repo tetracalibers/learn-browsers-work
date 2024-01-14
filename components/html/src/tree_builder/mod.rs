@@ -897,7 +897,22 @@ impl<T: Tokenizing> TreeBuilder<T> {
     }
 
     if token.is_end_tag() && token.match_tag_name_in(&["dd", "dt"]) {
-      todo!("process_in_body: dd/dt end tag");
+      let tag_name = token.tag_name();
+
+      if !self.open_elements.has_element_name_in_scope(&tag_name) {
+        self.unexpected(&token);
+        return;
+      }
+
+      self.generate_implied_end_tags(&tag_name);
+
+      if self.current_node().as_element().tag_name() != *tag_name {
+        self.unexpected(&token);
+      }
+
+      self.open_elements.pop_until(&tag_name);
+
+      return;
     }
 
     if token.is_end_tag()

@@ -8,11 +8,12 @@ fn run_html() {
   <html>
   <body>
   
-  <ul>
-    <li>item1</li>
-    <li>item2</li>
-    <li>item3</li>
-  </ul>
+  <dl>
+    <dt>name1</dt>
+    <dd>desc1</dd>
+    <dt>name2</dt>
+    <dd>desc2</dd>
+  </dl>
   
   </body>
   </html>
