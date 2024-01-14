@@ -837,7 +837,20 @@ impl<T: Tokenizing> TreeBuilder<T> {
     }
 
     if token.is_end_tag() && token.tag_name() == "li" {
-      todo!("process_in_body: li end tag");
+      if !self.open_elements.has_element_name_in_list_item_scope("li") {
+        self.unexpected(&token);
+        return;
+      }
+
+      self.generate_implied_end_tags("li");
+
+      if self.current_node().as_element().tag_name() != "li" {
+        self.unexpected(&token);
+      }
+
+      self.open_elements.pop_until("li");
+
+      return;
     }
 
     if token.is_end_tag() && token.match_tag_name_in(&["dd", "dt"]) {

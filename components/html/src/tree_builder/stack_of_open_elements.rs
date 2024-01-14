@@ -139,6 +139,13 @@ impl StackOfOpenElements {
     self.has_element_name_in_specific_scope(tag_name, list)
   }
 
+  pub fn has_element_name_in_list_item_scope(&self, tag_name: &str) -> bool {
+    let mut list = SCOPE_BASE_LIST.to_vec();
+    list.push("ol");
+    list.push("ul");
+    self.has_element_name_in_specific_scope(tag_name, list)
+  }
+
   /* pop ---------------------------------------- */
 
   // tag_nameがpopされるまでpopする
