@@ -4,16 +4,11 @@ use html;
 use std::env;
 
 fn run_html() {
-  let target = r#"<!DOCTYPE html>
-  <html>
-  <body>
-  
-  <h1>This is heading</h1>
-  <p>This is paragraph</p>
-  <p>This <mark>keyword</mark> is important</p>
-  
-  </body>
-  </html>
+  let target = r#"<ul>
+  <li>item1</li>
+  <li>item2</li>
+  <li>item3</li>
+</ul>
   "#;
 
   let document = html::debugger::get_document_from_html(target);

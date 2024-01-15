@@ -14,6 +14,8 @@ use dom::node::NodePtr;
 
 use tree::TreeNode;
 
+/* -------------------------------------------- */
+
 pub fn get_document_from_html(html: &str) -> NodePtr {
   let target = html.chars();
 
@@ -28,6 +30,8 @@ pub fn get_document_from_html(html: &str) -> NodePtr {
 
   document
 }
+
+/* print DOM tree ----------------------------- */
 
 fn print_dom_tree_core(root: &TreeNode<Node>, depth: usize) {
   let indent = "    ".repeat(depth) + "|-";
@@ -52,6 +56,8 @@ fn print_dom_tree_core(root: &TreeNode<Node>, depth: usize) {
 pub fn print_dom_tree(document: &NodePtr) {
   print_dom_tree_core(document, 0);
 }
+
+/* DOM => (depth, node) list ------------------ */
 
 // 兄弟要素も含めて深さ優先で走査
 fn traverse(
@@ -81,9 +87,7 @@ fn traverse(
 }
 
 // build Vec<(usize, TreeNode<Node>)>
-pub fn get_dom_list_with_depth(
-  document: &NodePtr,
-) -> Vec<(usize, TreeNode<Node>)> {
+fn get_dom_list_with_depth(document: &NodePtr) -> Vec<(usize, TreeNode<Node>)> {
   let root = document.0.borrow();
 
   // build Vec<(usize, TreeNode<Node>)>
@@ -95,7 +99,7 @@ pub fn get_dom_list_with_depth(
   node_list_with_depth
 }
 
-pub fn get_dom_list_with_depth_in_body(
+fn get_dom_list_with_depth_in_body(
   document: &NodePtr,
 ) -> Vec<(usize, TreeNode<Node>)> {
   let root = document.0.borrow();
@@ -112,7 +116,9 @@ pub fn get_dom_list_with_depth_in_body(
   node_list_with_depth
 }
 
-pub fn dom_list_to_recursive_json(
+/* DOM => JSON -------------------------------- */
+
+fn dom_list_to_recursive_json(
   node_list_with_depth: &Vec<(usize, TreeNode<Node>)>,
 ) -> serde_json::Value {
   let mut json = json!({});
@@ -188,19 +194,29 @@ pub fn dom_list_to_recursive_json(
   json
 }
 
-pub fn dom_to_json(document: &NodePtr) -> String {
-  let node_list_with_depth = get_dom_list_with_depth(document);
-
+pub fn dom_to_json_obj(document: &NodePtr) -> serde_json::Value {
+  let node_list_with_depth = get_dom_list_with_depth(&document);
   let json_obj = dom_list_to_recursive_json(&node_list_with_depth);
+
+  json_obj
+}
+
+pub fn dom_in_body_to_json_obj(document: &NodePtr) -> serde_json::Value {
+  let node_list_with_depth = get_dom_list_with_depth_in_body(&document);
+  let json_obj = dom_list_to_recursive_json(&node_list_with_depth);
+
+  json_obj
+}
+
+pub fn dom_to_json(document: &NodePtr) -> String {
+  let json_obj = dom_to_json_obj(document);
   let json = serde_json::to_string_pretty(&json_obj).unwrap();
 
   json
 }
 
 pub fn dom_in_body_to_json(document: &NodePtr) -> String {
-  let node_list_with_depth = get_dom_list_with_depth_in_body(document);
-
-  let json_obj = dom_list_to_recursive_json(&node_list_with_depth);
+  let json_obj = dom_in_body_to_json_obj(document);
   let json = serde_json::to_string_pretty(&json_obj).unwrap();
 
   json
