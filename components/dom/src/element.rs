@@ -73,6 +73,14 @@ impl Element {
     self.attributes.clone()
   }
 
+  pub fn id(&self) -> RefCell<Option<String>> {
+    self.id.clone()
+  }
+
+  pub fn class_list(&self) -> RefCell<TokenList> {
+    self.class_list.clone()
+  }
+
   pub fn has_attribute(&self, name: &str) -> bool {
     self.attributes.borrow().contains_key(name)
   }

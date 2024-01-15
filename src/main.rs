@@ -8,12 +8,9 @@ fn run_html() {
   <html>
   <body>
   
-  <dl>
-    <dt>name1</dt>
-    <dd>desc1</dd>
-    <dt>name2</dt>
-    <dd>desc2</dd>
-  </dl>
+  <h1>This is heading</h1>
+  <p>This is paragraph</p>
+  <p>This <mark>keyword</mark> is important</p>
   
   </body>
   </html>
@@ -25,9 +22,9 @@ fn run_html() {
 
   println!("-------------------");
 
-  let structure = html::debugger::get_dom_list_with_depth(&document);
+  let json = html::debugger::dom_in_body_to_json(&document);
 
-  println!("{:?}", structure);
+  println!("{}", json);
 }
 
 fn run_css() {
