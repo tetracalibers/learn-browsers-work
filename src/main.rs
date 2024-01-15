@@ -4,12 +4,7 @@ use html;
 use std::env;
 
 fn run_html() {
-  let target = r#"<ul>
-  <li>item1</li>
-  <li>item2</li>
-  <li>item3</li>
-</ul>
-  "#;
+  let target = r#"<p>paragraph1<p>paragraph2"#;
 
   let document = html::debugger::get_document_from_html(target);
 
