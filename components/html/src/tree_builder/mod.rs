@@ -149,6 +149,7 @@ impl<T: Tokenizing> TreeBuilder<T> {
       InsertMode::AfterBody => self.process_after_body(token),
       InsertMode::AfterAfterBody => self.process_after_after_body(token),
       InsertMode::InTable => self.process_in_table(token),
+      InsertMode::InTableBody => self.process_in_table_body(token),
       InsertMode::InTableText => self.process_in_table_text(token),
       InsertMode::Text => self.process_text(token),
     }
@@ -1234,7 +1235,10 @@ impl<T: Tokenizing> TreeBuilder<T> {
     if token.is_start_tag()
       && token.match_tag_name_in(&["tbody", "tfoot", "thead"])
     {
-      todo!("process_in_table: tbody/tfoot/thead start tag");
+      self.open_elements.clear_back_to_table_context();
+      self.insert_html_element(token);
+      self.switch_to(InsertMode::InTableBody);
+      return;
     }
 
     if token.is_start_tag() && token.match_tag_name_in(&["td", "th", "tr"]) {
@@ -1284,6 +1288,10 @@ impl<T: Tokenizing> TreeBuilder<T> {
     self.foster_parenting = true;
     self.process_in_body(token);
     self.foster_parenting = false;
+  }
+
+  fn process_in_table_body(&mut self, token: Token) {
+    todo!("process_in_table_body");
   }
 
   fn process_in_table_text(&mut self, token: Token) {
