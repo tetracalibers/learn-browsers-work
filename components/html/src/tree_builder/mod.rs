@@ -146,6 +146,7 @@ impl<T: Tokenizing> TreeBuilder<T> {
       InsertMode::InBody => self.process_in_body(token),
       InsertMode::AfterBody => self.process_after_body(token),
       InsertMode::AfterAfterBody => self.process_after_after_body(token),
+      InsertMode::InTable => self.process_in_table(token),
       InsertMode::Text => self.process_text(token),
     }
   }
@@ -1006,7 +1007,16 @@ impl<T: Tokenizing> TreeBuilder<T> {
     }
 
     if token.is_start_tag() && token.tag_name() == "table" {
-      todo!("process_in_body: table start tag");
+      // TODO: quicksモードの場合、この処理は行わない
+      if self.open_elements.has_element_name_in_button_scope("p") {
+        self.close_p_element();
+      }
+
+      self.insert_html_element(token);
+      self.frameset_ok = false;
+      self.switch_to(InsertMode::InTable);
+
+      return;
     }
 
     if token.is_end_tag() && token.tag_name() == "br" {
@@ -1180,6 +1190,10 @@ impl<T: Tokenizing> TreeBuilder<T> {
     self.unexpected(&token);
     self.switch_to(InsertMode::InBody);
     return self.process(token);
+  }
+
+  fn process_in_table(&mut self, token: Token) {
+    todo!("process_in_table");
   }
 
   fn process_text(&mut self, token: Token) {
