@@ -1411,7 +1411,33 @@ impl<T: Tokenizing> TreeBuilder<T> {
   }
 
   fn process_in_cell(&mut self, token: Token) {
-    todo!("process_in_cell");
+    if token.is_end_tag() && token.match_tag_name_in(&["td", "th"]) {
+      todo!("process_in_cell: td/th end tag");
+    }
+
+    if token.is_start_tag()
+      && token.match_tag_name_in(&[
+        "caption", "col", "colgroup", "tbody", "td", "tfoot", "th", "thead",
+        "tr",
+      ])
+    {
+      todo!("process_in_cell: caption/col/colgroup/tbody/td/tfoot/th/thead/tr start tag");
+    }
+
+    if token.is_end_tag()
+      && token
+        .match_tag_name_in(&["body", "caption", "col", "colgroup", "html"])
+    {
+      todo!("process_in_cell: body/caption/col/colgroup/html end tag");
+    }
+
+    if token.is_end_tag()
+      && token.match_tag_name_in(&["table", "tbody", "tfoot", "thead", "tr"])
+    {
+      todo!("process_in_cell: table/tbody/tfoot/thead/tr end tag");
+    }
+
+    return self.process_in_body(token);
   }
 
   fn process_text(&mut self, token: Token) {
