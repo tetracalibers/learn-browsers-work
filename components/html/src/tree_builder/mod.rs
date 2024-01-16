@@ -1287,7 +1287,38 @@ impl<T: Tokenizing> TreeBuilder<T> {
   }
 
   fn process_in_table_text(&mut self, token: Token) {
-    todo!("process_in_table_text");
+    if let Token::Character(c) = token {
+      if c == '\0' {
+        self.unexpected(&token);
+        return;
+      }
+      self.pending_table_character_tokens.push(token);
+      return;
+    }
+
+    let has_not_whitespace_char =
+      self.pending_table_character_tokens.iter().any(|token| match token {
+        Token::Character(c) => !c.is_whitespace(),
+        _ => false,
+      });
+
+    if has_not_whitespace_char {
+      emit_error!("Non-whitespace in table text");
+      for pending_token in self.pending_table_character_tokens.clone() {
+        self.foster_parenting = true;
+        self.process_in_body(pending_token);
+        self.foster_parenting = false;
+      }
+    } else {
+      for pending_token in self.pending_table_character_tokens.clone() {
+        if let Token::Character(c) = pending_token {
+          self.insert_char(c);
+        }
+      }
+    }
+
+    self.switch_to(self.original_insert_mode.clone().unwrap());
+    self.process(token);
   }
 
   fn process_text(&mut self, token: Token) {
