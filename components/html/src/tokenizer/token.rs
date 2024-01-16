@@ -1,22 +1,24 @@
+use ecow::EcoString;
+
 #[derive(Debug, Clone)]
 pub struct Attribute {
-  pub name: String,
-  pub value: String,
+  pub name: EcoString,
+  pub value: EcoString,
 }
 
 #[derive(Debug, Clone)]
 pub enum Token {
   Tag {
-    tag_name: String,
+    tag_name: EcoString,
     attributes: Vec<Attribute>,
     self_closing: bool,
     self_closing_acknowledged: bool,
     is_end_tag: bool,
   },
-  Comment(String),
+  Comment(EcoString),
   Character(char),
   DOCTYPE {
-    name: Option<String>,
+    name: Option<EcoString>,
     force_quirks: bool,
   },
   EOF,
@@ -27,7 +29,7 @@ impl Token {
 
   pub fn new_start_tag() -> Self {
     Token::Tag {
-      tag_name: String::new(),
+      tag_name: EcoString::new(),
       is_end_tag: false,
       self_closing: false,
       self_closing_acknowledged: false,
@@ -37,7 +39,7 @@ impl Token {
 
   pub fn new_start_tag_of(name: &str) -> Self {
     Token::Tag {
-      tag_name: name.to_owned(),
+      tag_name: EcoString::from(name),
       is_end_tag: false,
       self_closing: false,
       self_closing_acknowledged: false,
@@ -47,7 +49,7 @@ impl Token {
 
   pub fn new_end_tag() -> Self {
     Token::Tag {
-      tag_name: String::new(),
+      tag_name: EcoString::new(),
       is_end_tag: true,
       self_closing: false,
       self_closing_acknowledged: false,
@@ -56,7 +58,7 @@ impl Token {
   }
 
   pub fn new_comment(data: &str) -> Self {
-    Token::Comment(data.to_owned())
+    Token::Comment(EcoString::from(data))
   }
 
   pub fn new_doctype() -> Self {
@@ -68,7 +70,7 @@ impl Token {
 
   /* getter ------------------------------------- */
 
-  pub fn tag_name(&self) -> &String {
+  pub fn tag_name(&self) -> &EcoString {
     if let Token::Tag { tag_name, .. } = self {
       tag_name
     } else {
@@ -98,7 +100,7 @@ impl Token {
 
   pub fn set_doctype_name_from_char(&mut self, ch: char) {
     if let Token::DOCTYPE { ref mut name, .. } = self {
-      let mut new_name = String::new();
+      let mut new_name = EcoString::new();
       new_name.push(ch);
       *name = Some(new_name);
     }
@@ -152,8 +154,8 @@ impl Token {
 impl Attribute {
   pub fn new() -> Self {
     Attribute {
-      name: String::new(),
-      value: String::new(),
+      name: EcoString::new(),
+      value: EcoString::new(),
     }
   }
 }

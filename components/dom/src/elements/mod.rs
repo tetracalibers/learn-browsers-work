@@ -1,5 +1,7 @@
 pub mod html_element;
 
+use ecow::EcoString;
+
 use html_element::HTMLElement;
 
 use super::node::NodeHooks;
@@ -23,7 +25,7 @@ impl ElementData {
     self.on_attribute_change(name, value);
   }
 
-  pub fn tag_name(&self) -> String {
+  pub fn tag_name(&self) -> EcoString {
     match self {
       ElementData::Unknown(element) => element.tag_name(),
     }

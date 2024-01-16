@@ -1,6 +1,8 @@
 pub mod state;
 pub mod token;
 
+use ecow::EcoString;
+
 use std::collections::HashSet;
 use std::collections::VecDeque;
 use std::env;
@@ -60,7 +62,7 @@ where
   current_token: Option<Token>,
   last_emitted_start_tag: Option<Token>,
 
-  tmp_buffer: String,
+  tmp_buffer: EcoString,
 }
 
 pub trait Tokenizing {
@@ -785,7 +787,7 @@ where
       current_token: None,
       last_emitted_start_tag: None,
 
-      tmp_buffer: String::new(),
+      tmp_buffer: EcoString::new(),
     }
   }
 

@@ -189,8 +189,15 @@ dependencies = [
 name = "dom"
 version = "0.1.0"
 dependencies = [
+ "ecow",
  "tree",
 ]
+
+[[package]]
+name = "ecow"
+version = "0.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "e6ea5e3f9cda726431da9d1a8d5a29785d544b31e98e1ca7a210906244002e02"
 
 [[package]]
 name = "either"
@@ -227,6 +234,7 @@ dependencies = [
  "assert-json-diff",
  "criterion",
  "dom",
+ "ecow",
  "serde_json",
  "stream",
  "tree",

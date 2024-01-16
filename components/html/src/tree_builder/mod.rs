@@ -1,3 +1,5 @@
+use ecow::EcoString;
+
 mod element_types;
 mod insert_mode;
 mod list_of_active_formatting_elements;
@@ -80,7 +82,7 @@ pub struct TreeBuilder<T: Tokenizing> {
   document: NodePtr,
   head_pointer: Option<NodePtr>,
   text_insertion_node: Option<NodePtr>,
-  text_insertion_string_data: String,
+  text_insertion_string_data: EcoString,
   should_stop: bool,
   foster_parenting: bool,
   scripting: bool,
@@ -99,7 +101,7 @@ impl<T: Tokenizing> TreeBuilder<T> {
       document,
       head_pointer: None,
       text_insertion_node: None,
-      text_insertion_string_data: String::new(),
+      text_insertion_string_data: EcoString::new(),
       should_stop: false,
       foster_parenting: false,
       scripting: false,
@@ -242,7 +244,7 @@ impl<T: Tokenizing> TreeBuilder<T> {
   fn process_before_head(&mut self, token: Token) {
     fn anything_else<T: Tokenizing>(this: &mut TreeBuilder<T>, token: Token) {
       let head_element = this.insert_html_element(Token::Tag {
-        tag_name: "head".to_owned(),
+        tag_name: EcoString::from("head"),
         attributes: vec![],
         is_end_tag: false,
         self_closing: false,
@@ -405,7 +407,7 @@ impl<T: Tokenizing> TreeBuilder<T> {
   fn process_after_head(&mut self, token: Token) {
     fn anything_else<T: Tokenizing>(this: &mut TreeBuilder<T>, token: Token) {
       this.insert_html_element(Token::Tag {
-        tag_name: "body".to_owned(),
+        tag_name: EcoString::from("body"),
         attributes: Vec::new(),
         is_end_tag: false,
         self_closing: false,
@@ -1488,7 +1490,7 @@ impl<T: Tokenizing> TreeBuilder<T> {
     {
       (tag_name, attributes)
     } else {
-      ("".to_string(), vec![])
+      (EcoString::from(""), vec![])
     };
 
     let element_ref =
@@ -1503,7 +1505,7 @@ impl<T: Tokenizing> TreeBuilder<T> {
 
   fn create_element_for_tag_name(&self, tag_name: &str) -> NodePtr {
     self.create_element(Token::Tag {
-      tag_name: tag_name.to_owned(),
+      tag_name: EcoString::from(tag_name),
       self_closing: false,
       self_closing_acknowledged: false,
       is_end_tag: false,
@@ -1892,7 +1894,7 @@ impl<T: Tokenizing> TreeBuilder<T> {
       }
     }
 
-    let text_node = Node::new(NodeData::Text(Text::new(String::new())));
+    let text_node = Node::new(NodeData::Text(Text::new(EcoString::new())));
     let text = NodePtr(TreeNode::new(text_node));
 
     text.set_document(WeakTreeNode::from(&self.document.0));
@@ -1923,7 +1925,7 @@ impl<T: Tokenizing> TreeBuilder<T> {
     return_ref
   }
 
-  fn insert_comment(&mut self, data: String) {
+  fn insert_comment(&mut self, data: EcoString) {
     let insert_position = self.get_appropriate_insert_position(None);
     let comment =
       TreeNode::new(Node::new(NodeData::Comment(Comment::new(data))));

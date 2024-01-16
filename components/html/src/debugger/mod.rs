@@ -141,19 +141,19 @@ fn dom_list_to_recursive_json(
     if let Some(text_node) = node.as_maybe_text() {
       simple_node = json!({
         "type": "text",
-        "data": text_node.characters.get_data(),
+        "data": text_node.characters.get_data().as_str(),
       });
     } else if let Some(element_node) = node.as_maybe_element() {
       simple_node = json!({
         "type": "element",
-        "tag": element_node.tag_name(),
+        "tag": element_node.tag_name().as_str(),
       });
 
       let mut attributes = element_node
         .attributes()
         .borrow()
         .iter()
-        .map(|(key, value)| (key.clone(), value.clone()))
+        .map(|(key, value)| (String::from(key), String::from(value)))
         .collect::<HashMap<String, String>>();
 
       let classes = element_node.class_list().borrow().join(" ");
@@ -163,7 +163,7 @@ fn dom_list_to_recursive_json(
       }
 
       if let Some(id) = element_node.id().borrow().as_ref() {
-        attributes.insert("id".to_string(), id.clone());
+        attributes.insert("id".to_string(), id.to_string());
       }
 
       if !attributes.is_empty() {

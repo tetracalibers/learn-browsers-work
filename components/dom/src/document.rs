@@ -1,18 +1,20 @@
+use ecow::EcoString;
+
 use std::cell::RefCell;
 
 pub struct Document {
-  title: RefCell<String>,
+  title: RefCell<EcoString>,
   doctype: RefCell<Option<DocumentType>>,
 }
 
 pub struct DocumentType {
-  pub name: String,
+  pub name: EcoString,
 }
 
 impl Document {
   pub fn new() -> Self {
     Document {
-      title: RefCell::new(String::new()),
+      title: RefCell::new(EcoString::new()),
       doctype: RefCell::new(None),
     }
   }
@@ -23,7 +25,7 @@ impl Document {
 }
 
 impl DocumentType {
-  pub fn new(name: String) -> Self {
+  pub fn new(name: EcoString) -> Self {
     DocumentType { name }
   }
 }

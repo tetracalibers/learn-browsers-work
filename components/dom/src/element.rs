@@ -1,3 +1,5 @@
+use ecow::EcoString;
+
 use std::ops::{Deref, DerefMut};
 use std::{cell::RefCell, collections::HashMap};
 
@@ -5,17 +7,17 @@ use super::elements::ElementData;
 use super::token_list::TokenList;
 
 #[derive(Debug, Clone)]
-pub struct AttributeMap(HashMap<String, String>);
+pub struct AttributeMap(HashMap<EcoString, EcoString>);
 
 pub struct Element {
   data: ElementData,
-  id: RefCell<Option<String>>,
+  id: RefCell<Option<EcoString>>,
   attributes: RefCell<AttributeMap>,
   class_list: RefCell<TokenList>,
 }
 
 impl Deref for AttributeMap {
-  type Target = HashMap<String, String>;
+  type Target = HashMap<EcoString, EcoString>;
   fn deref(&self) -> &Self::Target {
     &self.0
   }
@@ -61,7 +63,7 @@ impl Element {
     }
   }
 
-  pub fn tag_name(&self) -> String {
+  pub fn tag_name(&self) -> EcoString {
     self.data.tag_name()
   }
 
@@ -73,7 +75,7 @@ impl Element {
     self.attributes.clone()
   }
 
-  pub fn id(&self) -> RefCell<Option<String>> {
+  pub fn id(&self) -> RefCell<Option<EcoString>> {
     self.id.clone()
   }
 
@@ -88,13 +90,16 @@ impl Element {
   pub fn set_attribute(&self, name: &str, value: &str) {
     match name {
       "id" => {
-        *self.id.borrow_mut() = Some(value.to_string());
+        *self.id.borrow_mut() = Some(EcoString::from(value));
       }
       "class" => {
         *self.class_list.borrow_mut() = TokenList::from(value);
       }
       _ => {
-        self.attributes.borrow_mut().insert(name.to_owned(), value.to_owned());
+        self
+          .attributes
+          .borrow_mut()
+          .insert(EcoString::from(name), EcoString::from(value));
         self.data.handle_attribute_change(name, value);
       }
     }
