@@ -190,6 +190,12 @@ impl StackOfOpenElements {
     self.pop_while_not_in(&["table", "template", "html"]);
   }
 
+  pub fn clear_back_to_table_body_context(&mut self) {
+    self.pop_while_not_in(&[
+      "table", "tbody", "tfoot", "thead", "template", "html",
+    ]);
+  }
+
   /* remove ------------------------------------- */
 
   pub fn remove_first_matching_node<F>(&mut self, test: F)

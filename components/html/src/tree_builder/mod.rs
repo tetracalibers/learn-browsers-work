@@ -151,6 +151,7 @@ impl<T: Tokenizing> TreeBuilder<T> {
       InsertMode::InTable => self.process_in_table(token),
       InsertMode::InTableBody => self.process_in_table_body(token),
       InsertMode::InTableText => self.process_in_table_text(token),
+      InsertMode::InRow => self.process_in_row(token),
       InsertMode::Text => self.process_text(token),
     }
   }
@@ -1292,7 +1293,10 @@ impl<T: Tokenizing> TreeBuilder<T> {
 
   fn process_in_table_body(&mut self, token: Token) {
     if token.is_start_tag() && token.tag_name() == "tr" {
-      todo!("process_in_table_body: tr start tag");
+      self.open_elements.clear_back_to_table_body_context();
+      self.insert_html_element(token);
+      self.switch_to(InsertMode::InRow);
+      return;
     }
 
     if token.is_start_tag() && token.match_tag_name_in(&["th", "td"]) {
@@ -1361,6 +1365,10 @@ impl<T: Tokenizing> TreeBuilder<T> {
 
     self.switch_to(self.original_insert_mode.clone().unwrap());
     self.process(token);
+  }
+
+  fn process_in_row(&mut self, token: Token) {
+    todo!("process_in_row");
   }
 
   fn process_text(&mut self, token: Token) {
