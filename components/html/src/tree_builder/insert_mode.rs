@@ -16,4 +16,5 @@ pub enum InsertMode {
   InTableText,
   InTableBody,
   InRow,
+  InCell,
 }

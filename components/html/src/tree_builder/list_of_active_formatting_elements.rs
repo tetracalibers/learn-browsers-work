@@ -80,4 +80,8 @@ impl ListOfActiveFormattingElements {
       })
       .is_some()
   }
+
+  pub fn add_marker(&mut self) {
+    self.entries.push(Entry::Marker);
+  }
 }
