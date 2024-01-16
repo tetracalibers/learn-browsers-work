@@ -1,8 +1,10 @@
 use std::ops::Deref;
 
+use ecow::EcoVec;
+
 #[derive(Debug, Clone)]
 pub struct TokenList {
-  items: Vec<String>,
+  items: EcoVec<String>,
 }
 
 impl From<&str> for TokenList {
@@ -18,7 +20,7 @@ impl From<&str> for TokenList {
 }
 
 impl Deref for TokenList {
-  type Target = Vec<String>;
+  type Target = EcoVec<String>;
   fn deref(&self) -> &Self::Target {
     &self.items
   }
@@ -26,7 +28,9 @@ impl Deref for TokenList {
 
 impl TokenList {
   pub fn new() -> Self {
-    Self { items: Vec::new() }
+    Self {
+      items: EcoVec::new(),
+    }
   }
 
   pub fn values(&self) -> String {
