@@ -2,6 +2,7 @@ pub mod state;
 pub mod token;
 
 use ecow::EcoString;
+use ecow::EcoVec;
 
 use std::collections::HashSet;
 use std::collections::VecDeque;
@@ -875,8 +876,14 @@ where
       ref mut attributes, ..
     } = current_tag
     {
-      let attribute = attributes.last_mut().unwrap();
-      attribute.name.push(ch);
+      let attribute = attributes.pop();
+      if let Some(attribute) = attribute {
+        let new_name = attribute.name + EcoString::from(ch);
+        attributes.push(Attribute {
+          name: new_name,
+          ..attribute
+        });
+      }
     }
   }
 
@@ -886,8 +893,14 @@ where
       ref mut attributes, ..
     } = current_tag
     {
-      let attribute = attributes.last_mut().unwrap();
-      attribute.value.push(ch);
+      let attribute = attributes.pop();
+      if let Some(attribute) = attribute {
+        let new_value = attribute.value + EcoString::from(ch);
+        attributes.push(Attribute {
+          value: new_value,
+          ..attribute
+        });
+      }
     }
   }
 
@@ -941,10 +954,10 @@ where
 
   fn get_duplicate_attribute_index(
     &self,
-    attributes: &Vec<Attribute>,
-  ) -> Vec<usize> {
+    attributes: &EcoVec<Attribute>,
+  ) -> EcoVec<usize> {
     let mut seen = HashSet::new();
-    let mut remove_indexes = Vec::new();
+    let mut remove_indexes = EcoVec::new();
 
     for (index, attribute) in attributes.iter().enumerate() {
       if seen.contains(&attribute.name) {

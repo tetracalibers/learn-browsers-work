@@ -5,16 +5,18 @@ use std::{
 
 use dom::node::NodePtr;
 
+use ecow::EcoVec;
+
 const SCOPE_BASE_LIST: [&str; 9] = [
   "applet", "caption", "html", "table", "td", "th", "marquee", "object",
   "template",
 ];
 
 #[derive(Debug)]
-pub struct StackOfOpenElements(pub Vec<NodePtr>);
+pub struct StackOfOpenElements(pub EcoVec<NodePtr>);
 
 impl Deref for StackOfOpenElements {
-  type Target = Vec<NodePtr>;
+  type Target = EcoVec<NodePtr>;
   fn deref(&self) -> &Self::Target {
     &self.0
   }
@@ -28,7 +30,7 @@ impl DerefMut for StackOfOpenElements {
 
 impl StackOfOpenElements {
   pub fn new() -> Self {
-    Self(Vec::new())
+    Self(EcoVec::new())
   }
 
   /* getter ------------------------------------- */
@@ -79,7 +81,7 @@ impl StackOfOpenElements {
   pub fn has_element_in_specific_scope(
     &self,
     target_node: &NodePtr,
-    list: Vec<&str>,
+    list: EcoVec<&str>,
   ) -> bool {
     for node in self.0.iter().rev() {
       if Rc::ptr_eq(node, target_node) {
@@ -97,7 +99,7 @@ impl StackOfOpenElements {
   pub fn has_element_name_in_specific_scope(
     &self,
     tag_name: &str,
-    list: Vec<&str>,
+    list: EcoVec<&str>,
   ) -> bool {
     for node in self.0.iter().rev() {
       let element = node.as_element();
@@ -115,11 +117,15 @@ impl StackOfOpenElements {
   }
 
   pub fn has_element_in_scope(&self, target_node: &NodePtr) -> bool {
-    self.has_element_in_specific_scope(target_node, SCOPE_BASE_LIST.to_vec())
+    self
+      .has_element_in_specific_scope(target_node, EcoVec::from(SCOPE_BASE_LIST))
   }
 
   pub fn has_element_name_in_scope(&self, tag_name: &str) -> bool {
-    self.has_element_name_in_specific_scope(tag_name, SCOPE_BASE_LIST.to_vec())
+    self.has_element_name_in_specific_scope(
+      tag_name,
+      EcoVec::from(SCOPE_BASE_LIST),
+    )
   }
 
   // すべてのtag_nameがscope内にない場合にtrueを返す
@@ -134,13 +140,13 @@ impl StackOfOpenElements {
   }
 
   pub fn has_element_name_in_button_scope(&self, tag_name: &str) -> bool {
-    let mut list = SCOPE_BASE_LIST.to_vec();
+    let mut list = EcoVec::from(SCOPE_BASE_LIST);
     list.push("button");
     self.has_element_name_in_specific_scope(tag_name, list)
   }
 
   pub fn has_element_name_in_list_item_scope(&self, tag_name: &str) -> bool {
-    let mut list = SCOPE_BASE_LIST.to_vec();
+    let mut list = EcoVec::from(SCOPE_BASE_LIST);
     list.push("ol");
     list.push("ul");
     self.has_element_name_in_specific_scope(tag_name, list)

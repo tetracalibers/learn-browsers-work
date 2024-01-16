@@ -1,4 +1,5 @@
 use ecow::EcoString;
+use ecow::EcoVec;
 
 mod element_types;
 mod insert_mode;
@@ -87,7 +88,7 @@ pub struct TreeBuilder<T: Tokenizing> {
   foster_parenting: bool,
   scripting: bool,
   frameset_ok: bool,
-  pending_table_character_tokens: Vec<Token>,
+  pending_table_character_tokens: EcoVec<Token>,
 }
 
 impl<T: Tokenizing> TreeBuilder<T> {
@@ -106,7 +107,7 @@ impl<T: Tokenizing> TreeBuilder<T> {
       foster_parenting: false,
       scripting: false,
       frameset_ok: true,
-      pending_table_character_tokens: Vec::new(),
+      pending_table_character_tokens: EcoVec::new(),
     }
   }
 
@@ -245,7 +246,7 @@ impl<T: Tokenizing> TreeBuilder<T> {
     fn anything_else<T: Tokenizing>(this: &mut TreeBuilder<T>, token: Token) {
       let head_element = this.insert_html_element(Token::Tag {
         tag_name: EcoString::from("head"),
-        attributes: vec![],
+        attributes: EcoVec::new(),
         is_end_tag: false,
         self_closing: false,
         self_closing_acknowledged: false,
@@ -408,7 +409,7 @@ impl<T: Tokenizing> TreeBuilder<T> {
     fn anything_else<T: Tokenizing>(this: &mut TreeBuilder<T>, token: Token) {
       this.insert_html_element(Token::Tag {
         tag_name: EcoString::from("body"),
-        attributes: Vec::new(),
+        attributes: EcoVec::new(),
         is_end_tag: false,
         self_closing: false,
         self_closing_acknowledged: false,
@@ -1490,7 +1491,7 @@ impl<T: Tokenizing> TreeBuilder<T> {
     {
       (tag_name, attributes)
     } else {
-      (EcoString::from(""), vec![])
+      (EcoString::new(), EcoVec::new())
     };
 
     let element_ref =
@@ -1509,7 +1510,7 @@ impl<T: Tokenizing> TreeBuilder<T> {
       self_closing: false,
       self_closing_acknowledged: false,
       is_end_tag: false,
-      attributes: vec![],
+      attributes: EcoVec::new(),
     })
   }
 
@@ -1633,7 +1634,10 @@ impl<T: Tokenizing> TreeBuilder<T> {
         self.insert_html_element(self.create_tag_token_cloned_from(&element));
 
       // 新しい要素に置き換え
-      self.active_formatting_elements[last_index] = Entry::Element(new_element);
+      self.active_formatting_elements.remove(last_index);
+      self
+        .active_formatting_elements
+        .insert(last_index, Entry::Element(new_element));
 
       // 最後のエントリまで来たら終了
       if index == last_index {
@@ -1801,9 +1805,14 @@ impl<T: Tokenizing> TreeBuilder<T> {
         let node_index_in_formatting =
           self.active_formatting_elements.get_index_of_node(&node).unwrap();
 
-        self.open_elements[node_index] = new_element.clone();
-        self.active_formatting_elements[node_index_in_formatting] =
-          Entry::Element(new_element.clone());
+        self.open_elements.remove(node_index);
+        self.open_elements.insert(node_index, new_element.clone());
+
+        self.active_formatting_elements.remove(node_index_in_formatting);
+        self.active_formatting_elements.insert(
+          node_index_in_formatting,
+          Entry::Element(new_element.clone()),
+        );
 
         node = new_element;
 
@@ -1825,8 +1834,11 @@ impl<T: Tokenizing> TreeBuilder<T> {
       furthest_block.append_child(new_element.0.clone());
 
       self.active_formatting_elements.remove_element(&formatting_element);
-      self.active_formatting_elements[bookmark] =
-        Entry::Element(new_element.clone());
+
+      self.active_formatting_elements.remove(bookmark);
+      self
+        .active_formatting_elements
+        .insert(bookmark, Entry::Element(new_element.clone()));
 
       self
         .open_elements

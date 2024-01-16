@@ -1,4 +1,8 @@
+use std::ops::Deref;
+use std::ops::DerefMut;
+
 use ecow::EcoString;
+use ecow::EcoVec;
 
 #[derive(Debug, Clone)]
 pub struct Attribute {
@@ -10,7 +14,7 @@ pub struct Attribute {
 pub enum Token {
   Tag {
     tag_name: EcoString,
-    attributes: Vec<Attribute>,
+    attributes: EcoVec<Attribute>,
     self_closing: bool,
     self_closing_acknowledged: bool,
     is_end_tag: bool,
@@ -33,7 +37,7 @@ impl Token {
       is_end_tag: false,
       self_closing: false,
       self_closing_acknowledged: false,
-      attributes: Vec::new(),
+      attributes: EcoVec::new(),
     }
   }
 
@@ -43,7 +47,7 @@ impl Token {
       is_end_tag: false,
       self_closing: false,
       self_closing_acknowledged: false,
-      attributes: Vec::new(),
+      attributes: EcoVec::new(),
     }
   }
 
@@ -53,7 +57,7 @@ impl Token {
       is_end_tag: true,
       self_closing: false,
       self_closing_acknowledged: false,
-      attributes: Vec::new(),
+      attributes: EcoVec::new(),
     }
   }
 
@@ -78,7 +82,7 @@ impl Token {
     }
   }
 
-  pub fn attributes(&self) -> &Vec<Attribute> {
+  pub fn attributes(&self) -> &EcoVec<Attribute> {
     if let Token::Tag { attributes, .. } = self {
       attributes
     } else {
@@ -157,5 +161,19 @@ impl Attribute {
       name: EcoString::new(),
       value: EcoString::new(),
     }
+  }
+}
+
+impl Deref for Attribute {
+  type Target = Attribute;
+
+  fn deref(&self) -> &Self::Target {
+    self
+  }
+}
+
+impl DerefMut for Attribute {
+  fn deref_mut(&mut self) -> &mut Self::Target {
+    self
   }
 }

@@ -3,21 +3,23 @@ use std::{
   rc::Rc,
 };
 
+use ecow::EcoVec;
+
 use dom::node::NodePtr;
 
 #[derive(Debug)]
 pub struct ListOfActiveFormattingElements {
-  entries: Vec<Entry>,
+  entries: EcoVec<Entry>,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum Entry {
   Marker,
   Element(NodePtr),
 }
 
 impl Deref for ListOfActiveFormattingElements {
-  type Target = Vec<Entry>;
+  type Target = EcoVec<Entry>;
 
   fn deref(&self) -> &Self::Target {
     &self.entries
@@ -33,7 +35,7 @@ impl DerefMut for ListOfActiveFormattingElements {
 impl ListOfActiveFormattingElements {
   pub fn new() -> Self {
     Self {
-      entries: Vec::new(),
+      entries: EcoVec::new(),
     }
   }
 
