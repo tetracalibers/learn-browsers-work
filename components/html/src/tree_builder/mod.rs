@@ -85,6 +85,7 @@ pub struct TreeBuilder<T: Tokenizing> {
   foster_parenting: bool,
   scripting: bool,
   frameset_ok: bool,
+  pending_table_character_tokens: Vec<Token>,
 }
 
 impl<T: Tokenizing> TreeBuilder<T> {
@@ -103,6 +104,7 @@ impl<T: Tokenizing> TreeBuilder<T> {
       foster_parenting: false,
       scripting: false,
       frameset_ok: true,
+      pending_table_character_tokens: Vec::new(),
     }
   }
 
@@ -147,6 +149,7 @@ impl<T: Tokenizing> TreeBuilder<T> {
       InsertMode::AfterBody => self.process_after_body(token),
       InsertMode::AfterAfterBody => self.process_after_after_body(token),
       InsertMode::InTable => self.process_in_table(token),
+      InsertMode::InTableText => self.process_in_table_text(token),
       InsertMode::Text => self.process_text(token),
     }
   }
@@ -1193,7 +1196,98 @@ impl<T: Tokenizing> TreeBuilder<T> {
   }
 
   fn process_in_table(&mut self, token: Token) {
-    todo!("process_in_table");
+    if let Token::Character(_) = token {
+      if self
+        .current_node()
+        .as_element()
+        .match_tag_name_in(&["table", "tbody", "tfoot", "thead", "tr"])
+      {
+        self.pending_table_character_tokens.clear();
+        self.original_insert_mode = Some(self.insert_mode.clone());
+        self.switch_to(InsertMode::InTableText);
+        return self.process(token);
+      }
+    }
+
+    if let Token::Comment(text) = token {
+      self.insert_comment(text);
+      return;
+    }
+
+    if let Token::DOCTYPE { .. } = token {
+      self.unexpected(&token);
+      return;
+    }
+
+    if token.is_start_tag() && token.tag_name() == "caption" {
+      todo!("process_in_table: caption start tag");
+    }
+
+    if token.is_start_tag() && token.tag_name() == "colgroup" {
+      todo!("process_in_table: colgroup start tag");
+    }
+
+    if token.is_start_tag() && token.tag_name() == "col" {
+      todo!("process_in_table: col start tag");
+    }
+
+    if token.is_start_tag()
+      && token.match_tag_name_in(&["tbody", "tfoot", "thead"])
+    {
+      todo!("process_in_table: tbody/tfoot/thead start tag");
+    }
+
+    if token.is_start_tag() && token.match_tag_name_in(&["td", "th", "tr"]) {
+      todo!("process_in_table: td/th/tr start tag");
+    }
+
+    if token.is_start_tag() && token.tag_name() == "table" {
+      todo!("process_in_table: table start tag");
+    }
+
+    if token.is_end_tag() && token.tag_name() == "table" {
+      todo!("process_in_table: table end tag");
+    }
+
+    if token.is_end_tag()
+      && token.match_tag_name_in(&[
+        "body", "caption", "col", "colgroup", "html", "tbody", "td", "tfoot",
+        "th", "thead", "tr",
+      ])
+    {
+      todo!("process_in_table: body/caption/col/colgroup/html/tbody/td/tfoot/th/thead/tr end tag");
+    }
+
+    if token.is_start_tag()
+      && token.match_tag_name_in(&["style", "script", "template"])
+    {
+      todo!("process_in_table: style/script/template start tag");
+    }
+
+    if token.is_end_tag() && token.tag_name() == "template" {
+      todo!("process_in_table: template end tag");
+    }
+
+    if token.is_start_tag() && token.tag_name() == "input" {
+      todo!("process_in_table: input start tag");
+    }
+
+    if token.is_start_tag() && token.tag_name() == "form" {
+      todo!("process_in_table: form start tag");
+    }
+
+    if let Token::EOF = token {
+      return self.process_in_body(token);
+    }
+
+    self.unexpected(&token);
+    self.foster_parenting = true;
+    self.process_in_body(token);
+    self.foster_parenting = false;
+  }
+
+  fn process_in_table_text(&mut self, token: Token) {
+    todo!("process_in_table_text");
   }
 
   fn process_text(&mut self, token: Token) {
