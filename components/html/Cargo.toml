@@ -10,12 +10,13 @@ stream     = { path = "../../utilities/stream" }
 tree       = { path = "../../utilities/tree" }
 dom        = { path = "../dom" }
 serde_json = "1.0.111"
-ecow = "0.2.0"
+ecow       = "0.2.0"
 
 [dev-dependencies]
 assert-json-diff = "2.0.2"
 criterion        = { version = "0.5.1", features = ["html_reports"] }
 
 [[bench]]
-name    = "parse-html"
+name    = "parse_html"
+path    = "benches/parse_html.rs"
 harness = false
