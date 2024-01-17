@@ -6,8 +6,9 @@ mod insert_mode;
 mod list_of_active_formatting_elements;
 mod stack_of_open_elements;
 
-use std::env;
 use std::rc::Rc;
+
+use log::{debug, warn};
 
 use self::stack_of_open_elements::StackOfOpenElements;
 
@@ -28,27 +29,6 @@ use dom::text::Text;
 use tree::{TreeNode, WeakTreeNode};
 
 use insert_mode::InsertMode;
-
-fn is_trace() -> bool {
-  match env::var("TRACE_HTML_TREE_BUILDER") {
-    Ok(s) => s == "true",
-    _ => false,
-  }
-}
-
-macro_rules! trace {
-  ($err: expr) => {
-    println!("[ParseError][HTML TreeBuilding] {}", $err);
-  };
-}
-
-macro_rules! emit_error {
-  ($err: expr) => {
-    if is_trace() {
-      trace!($err);
-    }
-  };
-}
 
 pub enum AdjustedInsertionLocation {
   LastChild(NodePtr),
@@ -119,9 +99,7 @@ impl<T: Tokenizing> TreeBuilder<T> {
     loop {
       let token = self.tokenizer.next_token();
 
-      if is_trace() {
-        println!("{:?}", token);
-      }
+      debug!("{:?}", token);
 
       self.process(token);
 
@@ -520,7 +498,7 @@ impl<T: Tokenizing> TreeBuilder<T> {
 
     if let Token::Character(c) = token {
       if c == '\0' {
-        emit_error!("Unexpected null character");
+        warn!("Unexpected null character");
         return;
       }
 
@@ -542,12 +520,12 @@ impl<T: Tokenizing> TreeBuilder<T> {
     }
 
     if let Token::DOCTYPE { .. } = token {
-      emit_error!("Unexpected DOCTYPE");
+      warn!("Unexpected DOCTYPE");
       return;
     }
 
     if token.is_start_tag() && token.tag_name() == "html" {
-      emit_error!("Unexpected HTML tag");
+      warn!("Unexpected HTML tag");
 
       if self.open_elements.contains("template") {
         return;
@@ -739,7 +717,7 @@ impl<T: Tokenizing> TreeBuilder<T> {
           self.generate_implied_end_tags("li");
 
           if self.current_node().as_element().tag_name() != "li" {
-            emit_error!("Expected 'li' tag");
+            warn!("Expected 'li' tag");
           }
 
           self.open_elements.pop_until("li");
@@ -773,7 +751,7 @@ impl<T: Tokenizing> TreeBuilder<T> {
           self.generate_implied_end_tags("dd");
 
           if self.current_node().as_element().tag_name() != "dd" {
-            emit_error!("Expected 'dd' tag");
+            warn!("Expected 'dd' tag");
           }
 
           self.open_elements.pop_until("dd");
@@ -785,7 +763,7 @@ impl<T: Tokenizing> TreeBuilder<T> {
           self.generate_implied_end_tags("dt");
 
           if self.current_node().as_element().tag_name() != "dt" {
-            emit_error!("Expected 'dt' tag");
+            warn!("Expected 'dt' tag");
           }
 
           self.open_elements.pop_until("dt");
@@ -1353,7 +1331,7 @@ impl<T: Tokenizing> TreeBuilder<T> {
       });
 
     if has_not_whitespace_char {
-      emit_error!("Non-whitespace in table text");
+      warn!("Non-whitespace in table text");
       for pending_token in self.pending_table_character_tokens.clone() {
         self.foster_parenting = true;
         self.process_in_body(pending_token);
@@ -1474,9 +1452,7 @@ impl<T: Tokenizing> TreeBuilder<T> {
   }
 
   fn switch_to(&mut self, mode: InsertMode) {
-    if is_trace() {
-      println!("-- Builder State: switch to {:#?}", mode);
-    }
+    debug!("Builder State: switch to {:#?}", mode);
     self.insert_mode = mode;
   }
 
@@ -1572,7 +1548,7 @@ impl<T: Tokenizing> TreeBuilder<T> {
     let current_element = current_node.as_element();
 
     if current_element.tag_name() != "p" {
-      emit_error!("Expected p element");
+      warn!("Expected p element");
     }
 
     self.open_elements.pop_until("p");
@@ -2023,19 +1999,19 @@ impl<T: Tokenizing> TreeBuilder<T> {
         ..
       } => {
         if *is_end_tag {
-          emit_error!(format!("Unexpected end tag: {}", tag_name))
+          warn!("Unexpected end tag: {}", tag_name);
         } else {
-          emit_error!(format!("Unexpected start tag: {}", tag_name))
+          warn!("Unexpected start tag: {}", tag_name);
         }
       }
       Token::DOCTYPE { .. } => {
         todo!("unexpected: Token::DOCTYPE");
       }
       Token::Comment(data) => {
-        emit_error!(format!("Unexpected comment: {}", data))
+        warn!("Unexpected comment: {}", data);
       }
       Token::Character(ch) => {
-        emit_error!(format!("Unexpected character: {}", ch))
+        warn!("Unexpected character: {}", ch);
       }
       Token::EOF => {
         todo!("unexpected: Token::EOF");

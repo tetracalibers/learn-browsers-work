@@ -11,6 +11,8 @@ tree       = { path = "../../utilities/tree" }
 dom        = { path = "../dom" }
 serde_json = "1.0.111"
 ecow       = "0.2.0"
+log = "0.4.20"
+env_logger = "0.10.1"
 
 [dev-dependencies]
 assert-json-diff = "2.0.2"

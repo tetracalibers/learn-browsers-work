@@ -18,3 +18,4 @@ members = [
 [dependencies]
 html = { path = "./components/html" }
 css  = { path = "./components/css" }
+env_logger = "0.10.1"

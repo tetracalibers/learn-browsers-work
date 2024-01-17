@@ -13,7 +13,7 @@ cargo run -- html
 パーサーの状態遷移など、より細かいログを見たい場合は、次のように環境変数を添えてください。
 
 ```bash
-TRACE_HTML_TREE_BUILDER=true TRACE_TOKENIZER=true cargo run -- html
+RUST_LOG=trace cargo run -- html
 ```
 
 ### サポートしない予定のもの

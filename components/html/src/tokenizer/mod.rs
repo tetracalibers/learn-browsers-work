@@ -6,7 +6,8 @@ use ecow::EcoVec;
 
 use std::collections::HashSet;
 use std::collections::VecDeque;
-use std::env;
+
+use log::{debug, warn};
 
 use state::State;
 
@@ -14,27 +15,6 @@ use token::Attribute;
 use token::Token;
 
 use stream::input_stream::CharInputStream;
-
-fn is_trace() -> bool {
-  match env::var("TRACE_TOKENIZER") {
-    Ok(s) => s == "true",
-    _ => false,
-  }
-}
-
-macro_rules! trace {
-  ($err: expr) => {
-    println!("[ParseError][Tokenizer] {}", $err);
-  };
-}
-
-macro_rules! emit_error {
-  ($err: expr) => {
-    if is_trace() {
-      trace!($err);
-    }
-  };
-}
 
 const REPLACEMENT_CHARACTER: char = '\u{FFFD}';
 
@@ -94,7 +74,7 @@ where
               self.switch_to(State::TagOpen);
             }
             Char::null => {
-              emit_error!("unexpected-null-character");
+              warn!("unexpected-null-character");
               return self.emit_current_char();
             }
             Char::eof => {
@@ -118,7 +98,7 @@ where
               self.switch_to(State::RCDATALessThanSign);
             }
             Char::null => {
-              emit_error!("unexpected-null-character");
+              warn!("unexpected-null-character");
               return self.emit_char(REPLACEMENT_CHARACTER);
             }
             Char::eof => {
@@ -149,17 +129,17 @@ where
               self.reconsume_in(State::TagName);
             }
             Char::ch('?') => {
-              emit_error!("unexpected-question-mark-instead-of-tag-name");
+              warn!("unexpected-question-mark-instead-of-tag-name");
               self.new_token(Token::new_comment(""));
               self.reconsume_in(State::BogusComment);
             }
             Char::eof => {
-              emit_error!("eof-before-tag-name");
+              warn!("eof-before-tag-name");
               self.will_emit(Token::Character('<'));
               return self.emit_eof();
             }
             _ => {
-              emit_error!("invalid-first-character-of-tag-name");
+              warn!("invalid-first-character-of-tag-name");
               self.will_emit(Token::Character('<'));
               self.reconsume_in(State::Data);
             }
@@ -175,17 +155,17 @@ where
               self.reconsume_in(State::TagName);
             }
             Char::ch('>') => {
-              emit_error!("missing-end-tag-name");
+              warn!("missing-end-tag-name");
               self.switch_to(State::Data);
             }
             Char::eof => {
-              emit_error!("eof-before-tag-name");
+              warn!("eof-before-tag-name");
               self.will_emit(Token::Character('<'));
               self.will_emit(Token::Character('/'));
               return self.emit_eof();
             }
             _ => {
-              emit_error!("invalid-first-character-of-tag-name");
+              warn!("invalid-first-character-of-tag-name");
               self.new_token(Token::new_comment(""));
               self.reconsume_in(State::BogusComment);
             }
@@ -210,11 +190,11 @@ where
               self.append_char_to_tag_name(c.to_ascii_lowercase());
             }
             Char::null => {
-              emit_error!("unexpected-null-character");
+              warn!("unexpected-null-character");
               self.append_char_to_tag_name(REPLACEMENT_CHARACTER);
             }
             Char::eof => {
-              emit_error!("eof-in-tag");
+              warn!("eof-in-tag");
               return self.emit_eof();
             }
             _ => {
@@ -319,11 +299,11 @@ where
               return self.emit_current_token();
             }
             Char::eof => {
-              emit_error!("eof-in-tag");
+              warn!("eof-in-tag");
               return self.emit_eof();
             }
             _ => {
-              emit_error!("unexpected-solidus-in-tag");
+              warn!("unexpected-solidus-in-tag");
               self.reconsume_in(State::BeforeAttributeName);
             }
           }
@@ -338,7 +318,7 @@ where
               self.reconsume_in(State::AfterAttributeName);
             }
             Char::ch('=') => {
-              emit_error!("unexpected-equals-sign-before-attribute-name");
+              warn!("unexpected-equals-sign-before-attribute-name");
               let mut attribute = Attribute::new();
               attribute.name.push(self.current_character);
               self.new_attribute(attribute);
@@ -366,11 +346,11 @@ where
               self.append_char_to_attribute_name(c.to_ascii_lowercase());
             }
             Char::null => {
-              emit_error!("unexpected-null-character");
+              warn!("unexpected-null-character");
               self.append_char_to_attribute_name(REPLACEMENT_CHARACTER);
             }
             Char::ch('"') | Char::ch('\'') | Char::ch('<') => {
-              emit_error!("unexpected-character-in-attribute-name");
+              warn!("unexpected-character-in-attribute-name");
               self.append_char_to_attribute_name(self.current_character);
             }
             _ => {
@@ -395,7 +375,7 @@ where
               return self.emit_current_token();
             }
             Char::eof => {
-              emit_error!("eof-in-tag");
+              warn!("eof-in-tag");
               return self.emit_eof();
             }
             _ => {
@@ -418,7 +398,7 @@ where
               self.switch_to(State::AttributeValueSingleQuoted);
             }
             Char::ch('>') => {
-              emit_error!("missing-attribute-value");
+              warn!("missing-attribute-value");
               self.switch_to(State::Data);
               return self.emit_current_token();
             }
@@ -440,11 +420,11 @@ where
               self.switch_to(State::CharacterReference);
             }
             Char::null => {
-              emit_error!("unexpected-null-character");
+              warn!("unexpected-null-character");
               self.append_char_to_attribute_value(REPLACEMENT_CHARACTER);
             }
             Char::eof => {
-              emit_error!("eof-in-tag");
+              warn!("eof-in-tag");
               return self.emit_eof();
             }
             _ => {
@@ -465,11 +445,11 @@ where
               self.switch_to(State::CharacterReference);
             }
             Char::null => {
-              emit_error!("unexpected-null-character");
+              warn!("unexpected-null-character");
               self.append_char_to_attribute_value(REPLACEMENT_CHARACTER);
             }
             Char::eof => {
-              emit_error!("eof-in-tag");
+              warn!("eof-in-tag");
               return self.emit_eof();
             }
             _ => {
@@ -494,7 +474,7 @@ where
               return self.emit_current_token();
             }
             Char::null => {
-              emit_error!("unexpected-null-character");
+              warn!("unexpected-null-character");
               self.append_char_to_attribute_value(REPLACEMENT_CHARACTER);
             }
             Char::ch('"')
@@ -502,11 +482,11 @@ where
             | Char::ch('<')
             | Char::ch('=')
             | Char::ch('`') => {
-              emit_error!("unexpected-character-in-unquoted-attribute-value");
+              warn!("unexpected-character-in-unquoted-attribute-value");
               self.append_char_to_attribute_value(self.current_character);
             }
             Char::eof => {
-              emit_error!("eof-in-tag");
+              warn!("eof-in-tag");
               return self.emit_eof();
             }
             _ => {
@@ -530,11 +510,11 @@ where
               return self.emit_current_token();
             }
             Char::eof => {
-              emit_error!("eof-in-tag");
+              warn!("eof-in-tag");
               return self.emit_eof();
             }
             _ => {
-              emit_error!("missing-whitespace-between-attributes");
+              warn!("missing-whitespace-between-attributes");
               self.reconsume_in(State::BeforeAttributeName);
             }
           }
@@ -553,7 +533,7 @@ where
               return self.emit_eof();
             }
             Char::null => {
-              emit_error!("unexpected-null-character");
+              warn!("unexpected-null-character");
               self.append_char_to_token_data(REPLACEMENT_CHARACTER);
             }
             _ => {
@@ -571,7 +551,7 @@ where
           } else if self.consume_if_match("[CDATA[", false) {
             unimplemented!("unsupported: CDATA");
           } else {
-            emit_error!("incorrectly-opened-comment");
+            warn!("incorrectly-opened-comment");
             self.new_token(Token::new_comment(""));
             self.switch_to(State::BogusComment);
           }
@@ -592,7 +572,7 @@ where
               self.reconsume_in(State::BeforeDOCTYPEName);
             }
             Char::eof => {
-              emit_error!("eof-in-doctype");
+              warn!("eof-in-doctype");
               let mut token = Token::new_doctype();
               token.set_force_quirks(true);
               self.new_token(token);
@@ -600,7 +580,7 @@ where
               return self.emit_eof();
             }
             _ => {
-              emit_error!("missing-whitespace-before-doctype-name");
+              warn!("missing-whitespace-before-doctype-name");
               self.reconsume_in(State::BeforeDOCTYPEName);
             }
           }
@@ -618,14 +598,14 @@ where
               self.switch_to(State::DOCTYPEName);
             }
             Char::null => {
-              emit_error!("unexpected-null-character");
+              warn!("unexpected-null-character");
               let mut token = Token::new_doctype();
               token.set_doctype_name_from_char(REPLACEMENT_CHARACTER);
               self.new_token(token);
               self.switch_to(State::DOCTYPEName);
             }
             Char::ch('>') => {
-              emit_error!("missing-doctype-name");
+              warn!("missing-doctype-name");
               let mut token = Token::new_doctype();
               token.set_force_quirks(true);
               self.new_token(token);
@@ -633,7 +613,7 @@ where
               return self.emit_current_token();
             }
             Char::eof => {
-              emit_error!("eof-in-doctype");
+              warn!("eof-in-doctype");
               let mut token = Token::new_doctype();
               token.set_force_quirks(true);
               self.new_token(token);
@@ -664,11 +644,11 @@ where
               self.append_char_to_doctype_name(c.to_ascii_lowercase());
             }
             Char::null => {
-              emit_error!("unexpected-null-character");
+              warn!("unexpected-null-character");
               self.append_char_to_doctype_name(REPLACEMENT_CHARACTER);
             }
             Char::eof => {
-              emit_error!("eof-in-doctype");
+              warn!("eof-in-doctype");
               let token = self.current_token.as_mut().unwrap();
               token.set_force_quirks(true);
               self.will_emit(self.current_token.clone().unwrap());
@@ -690,7 +670,7 @@ where
               return self.emit_current_token();
             }
             Char::eof => {
-              emit_error!("eof-in-doctype");
+              warn!("eof-in-doctype");
               let token = self.current_token.as_mut().unwrap();
               token.set_force_quirks(true);
               self.will_emit(self.current_token.clone().unwrap());
@@ -700,7 +680,7 @@ where
               // 本来ならここで PUBLIC や SYSTEM などの識別子を読み取り、適切な状態に遷移する
               // が、このパーサーでは対応しない
 
-              emit_error!("invalid-character-sequence-after-doctype-name");
+              warn!("invalid-character-sequence-after-doctype-name");
               let token = self.current_token.as_mut().unwrap();
               token.set_force_quirks(true);
               self.reconsume_in(State::BogusDOCTYPE);
@@ -717,7 +697,7 @@ where
               return self.emit_current_token();
             }
             Char::null => {
-              emit_error!("unexpected-null-character");
+              warn!("unexpected-null-character");
               continue;
             }
             Char::eof => {
@@ -763,9 +743,7 @@ where
   /* state -------------------------------------- */
 
   fn switch_to(&mut self, state: State) {
-    if is_trace() {
-      println!("-- Tokenizer State: switch to {:#?}", state);
-    }
+    debug!("Tokenizer State: switch to {:#?}", state);
     self.state = state;
   }
 }
@@ -961,7 +939,7 @@ where
 
     for (index, attribute) in attributes.iter().enumerate() {
       if seen.contains(&attribute.name) {
-        emit_error!("duplicate-attribute");
+        warn!("duplicate-attribute");
         remove_indexes.push(index);
       } else {
         seen.insert(attribute.name.clone());
