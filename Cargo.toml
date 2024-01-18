@@ -13,7 +13,7 @@ members = [
   "components/dom",
   "components/css",
   "utilities/parser_combinator",
-  "components/fast_html",
+  "components/fast_html", "components/fast_dom",
 ]
 
 [dependencies]
