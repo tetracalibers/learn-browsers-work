@@ -12,6 +12,10 @@ pub struct Attribute {
 
 #[derive(Debug, Clone)]
 pub enum Token {
+  DOCTYPE {
+    name: Option<EcoString>,
+    force_quirks: bool,
+  },
   Tag {
     tag_name: EcoString,
     attributes: EcoVec<Attribute>,
@@ -20,6 +24,7 @@ pub enum Token {
     is_end_tag: bool,
   },
   Text(EcoString),
+  Comment(EcoString),
   EOF,
 }
 

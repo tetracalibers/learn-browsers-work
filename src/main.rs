@@ -5,35 +5,29 @@ use html;
 use std::env;
 
 fn run_html() {
-  let target = r#"<h1>こんにちは</h1>"#;
+  let target = r#"<h1>This is heading</h1>
+  <p>This is paragraph</p>
+  <p>This <mark>keyword</mark> is important</p>"#;
 
   let document = html::debugger::get_document_from_html(target);
 
   html::debugger::print_dom_tree(&document);
 
-  println!("-------------------");
+  //println!("-------------------");
 
-  let json = html::debugger::dom_in_body_to_json(&document);
+  //let json = html::debugger::dom_in_body_to_json(&document);
 
-  println!("{}", json);
+  //println!("{}", json);
 }
 
 fn run_fast_html() {
-  let target = r#"<h1>こんにちは</h1>"#;
+  let target = r#"<h1>This is heading</h1>
+  <p>This is paragraph</p>
+  <p>This <mark>keyword</mark> is important</p>"#;
 
-  let mut tokenizer = fast_html::tokenizer::Tokenizer::new(target.as_bytes());
+  let document = fast_html::debugger::get_document_from_html(target);
 
-  loop {
-    match tokenizer.next_token() {
-      fast_html::tokenizer::token::Token::EOF => {
-        println!("EOF");
-        break;
-      }
-      token => {
-        println!("{:?}", token);
-      }
-    }
-  }
+  fast_html::debugger::print_dom_tree(&document);
 }
 
 fn run_css() {
