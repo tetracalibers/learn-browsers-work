@@ -3,9 +3,12 @@ mod state;
 mod stream;
 pub mod token;
 
+use std::collections::HashSet;
+
 use self::byte_string::*;
 use self::state::State;
 use self::stream::Stream;
+use self::token::Attribute;
 use self::token::Token;
 
 use log::{debug, warn};
@@ -240,10 +243,39 @@ impl<'a> Tokenizer<'a> {
 
   /* -------------------------------------------- */
 
+  fn get_duplicate_attribute_index(
+    &self,
+    attributes: &EcoVec<Attribute>,
+  ) -> EcoVec<usize> {
+    let mut seen = HashSet::new();
+    let mut remove_indexes = EcoVec::new();
+
+    for (index, attribute) in attributes.iter().enumerate() {
+      if seen.contains(&attribute.name) {
+        warn!("duplicate-attribute");
+        remove_indexes.push(index);
+      } else {
+        seen.insert(attribute.name.clone());
+      }
+    }
+
+    remove_indexes
+  }
+
   fn will_emit(&mut self, token: Token) {
-    let token = token;
-    // todo: remove duplicate attribute
-    if let Token::Tag { is_end_tag, .. } = token {
+    let mut token = token;
+    if let Token::Tag {
+      is_end_tag,
+      ref mut attributes,
+      ..
+    } = token
+    {
+      if !attributes.is_empty() {
+        for index in self.get_duplicate_attribute_index(attributes) {
+          attributes.remove(index);
+        }
+      }
+
       if !is_end_tag {
         self.last_emitted_start_tag = Some(token.clone());
       }
