@@ -229,6 +229,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "fast_html"
+version = "0.1.0"
+dependencies = [
+ "criterion",
+ "dom",
+ "ecow",
+ "log",
+ "tree",
+]
+
+[[package]]
 name = "half"
 version = "1.8.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -302,6 +313,7 @@ version = "0.1.0"
 dependencies = [
  "css",
  "env_logger",
+ "fast_html",
  "html",
 ]
 

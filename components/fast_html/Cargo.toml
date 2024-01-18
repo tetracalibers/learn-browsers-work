@@ -1,0 +1,20 @@
+[package]
+name    = "fast_html"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+tree = { path = "../../utilities/tree" }
+dom  = { path = "../dom" }
+ecow = "0.2.0"
+log  = "0.4.20"
+
+[dev-dependencies]
+criterion = { version = "0.5.1", features = ["html_reports"] }
+
+[[bench]]
+name    = "tokenizer"
+path    = "benches/tokenizer.rs"
+harness = false
