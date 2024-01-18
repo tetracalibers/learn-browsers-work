@@ -84,7 +84,7 @@ impl<'a> Tokenizer<'a> {
         self.switch_to(State::TagOpen);
       }
       b'&' => {
-        todo!("process_data_state: &");
+        unimplemented!("undefined State::CharacterReference");
       }
       b'\0' => {
         warn!("unexpected-null-character");
