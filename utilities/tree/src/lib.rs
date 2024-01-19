@@ -30,7 +30,7 @@ pub trait TreeNodeHooks<T: TreeNodeHooks<T> + Debug> {
 
 impl<T: TreeNodeHooks<T> + Debug> WeakTreeNode<T> {
   pub fn upgrade(&self) -> Option<TreeNode<T>> {
-    self.0.upgrade().map(|rc| TreeNode::from(rc))
+    self.0.upgrade().map(TreeNode::from)
   }
 }
 
@@ -123,14 +123,14 @@ impl<T: TreeNodeHooks<T> + Debug> TreeNode<T> {
 
   pub fn prev_sibling(&self) -> NullableNode<T> {
     match self.prev_sibling.borrow().deref() {
-      Some(node) => node.upgrade().map(|rc| TreeNode::from(rc)),
+      Some(node) => node.upgrade(),
       _ => None,
     }
   }
 
   pub fn parent(&self) -> NullableNode<T> {
     match self.parent.borrow().deref() {
-      Some(node) => node.upgrade().map(|rc| TreeNode::from(rc)),
+      Some(node) => node.upgrade(),
       _ => None,
     }
   }
@@ -146,9 +146,9 @@ impl<T: TreeNodeHooks<T> + Debug> TreeNode<T> {
       let first_child = self.first_child().unwrap();
       let last_child = self.last_child().unwrap();
 
-      if Rc::ptr_eq(&self, &first_child) {
+      if Rc::ptr_eq(self, &first_child) {
         parent.first_child.replace(self.next_sibling());
-      } else if Rc::ptr_eq(&self, &last_child) {
+      } else if Rc::ptr_eq(self, &last_child) {
         parent.last_child.replace(self.prev_sibling());
       }
     }

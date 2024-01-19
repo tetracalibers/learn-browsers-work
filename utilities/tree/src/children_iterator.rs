@@ -29,7 +29,7 @@ impl<T: TreeNodeHooks<T> + Debug> Iterator for ChildrenIterator<T> {
     }
 
     let current = self.current_node.clone();
-    let next = current.clone().map(|node| node.next_sibling()).flatten();
+    let next = current.clone().and_then(|node| node.next_sibling());
 
     self.current_node = next;
 
