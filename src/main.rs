@@ -11,15 +11,13 @@ fn run_html() {
 
   println!("-------------------");
 
-  let json = html::debugger::dom_to_json(&document);
+  let json = html::debugger::dom_in_body_to_json(&document);
 
   println!("{}", json);
 }
 
 fn run_fast_html() {
-  let target = r#"<h1>This is heading</h1>
-  <p>This is paragraph</p>
-  <p>This <mark>keyword</mark> is important</p>"#;
+  let target = r#"<p>paragraph1<p>paragraph2"#;
 
   let document = fast_html::debugger::get_document_from_html(target);
 
@@ -27,7 +25,7 @@ fn run_fast_html() {
 
   println!("-------------------");
 
-  let json = fast_html::debugger::dom_to_json_string(&document);
+  let json = fast_html::debugger::dom_body_to_json_string(&document);
   println!("{}", json);
 }
 
