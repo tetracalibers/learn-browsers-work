@@ -362,7 +362,30 @@ impl<'a> Tokenizer<'a> {
   }
 
   fn process_after_attribute_value_quoted_state(&mut self) -> Option<Token> {
-    todo!("process_after_attribute_value_quoted_state");
+    let c = self.read_next();
+
+    match c {
+      _ if c.is_ascii_whitespace() => {
+        self.switch_to(State::BeforeAttributeName);
+      }
+      b'/' => {
+        unimplemented!("self.switch_to(State::SelfClosingStartTag);");
+      }
+      b'>' => {
+        self.switch_to(State::Data);
+        return Some(self.emit_current_token());
+      }
+      _ if self.stream.is_eof() => {
+        warn!("eof-in-tag");
+        return Some(self.emit_eof());
+      }
+      _ => {
+        warn!("missing-whitespace-between-attributes");
+        self.reconsume_in_state(State::BeforeAttributeName);
+      }
+    }
+
+    None
   }
 
   /* -------------------------------------------- */
