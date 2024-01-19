@@ -37,6 +37,15 @@ impl<'a, T: Eq + Copy> Stream<'a, T> {
   pub fn expect_and_skip_cond(&mut self, expect: T) -> bool {
     self.expect_and_skip(expect).is_some()
   }
+
+  pub fn skip_while(&mut self, predicate: impl Fn(T) -> bool) {
+    while let Some(c) = self.current_cpy() {
+      if !predicate(c) {
+        break;
+      }
+      self.advance();
+    }
+  }
 }
 
 impl<'a, T> Stream<'a, T> {

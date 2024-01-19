@@ -226,7 +226,25 @@ impl<'a> Tokenizer<'a> {
   }
 
   fn process_before_attribute_name_state(&mut self) -> Option<Token> {
-    todo!("process_before_attribute_name_state");
+    let c = self.read_next_skipped_whitespace();
+
+    match c {
+      b'/' | b'>' => {
+        self.reconsume_in_state(State::AfterAttributeName);
+      }
+      _ if self.stream.is_eof() => {
+        self.reconsume_in_state(State::AfterAttributeName);
+      }
+      b'=' => {
+        warn!("unexpected-equals-sign-before-attribute-name");
+        self.switch_to(State::AttributeName);
+      }
+      _ => {
+        self.reconsume_in_state(State::AttributeName);
+      }
+    }
+
+    None
   }
 
   fn process_attribute_name_state(&mut self) -> Option<Token> {
@@ -359,6 +377,12 @@ impl<'a> Tokenizer<'a> {
 
   fn read_next(&mut self) -> u8 {
     self.stream.advance();
+    self.stream.current_cpy().unwrap()
+  }
+
+  fn read_next_skipped_whitespace(&mut self) -> u8 {
+    self.stream.advance();
+    self.stream.skip_while(|b| b.is_ascii_whitespace());
     self.stream.current_cpy().unwrap()
   }
 
