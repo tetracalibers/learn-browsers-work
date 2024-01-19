@@ -13,7 +13,8 @@ log        = "0.4.20"
 serde_json = "1.0.111"
 
 [dev-dependencies]
-criterion = { version = "0.5.1", features = ["html_reports"] }
+assert-json-diff = "2.0.2"
+criterion        = { version = "0.5.1", features = ["html_reports"] }
 
 [[bench]]
 name    = "parse_html"
