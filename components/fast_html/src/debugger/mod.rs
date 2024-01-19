@@ -82,16 +82,16 @@ fn element_node_to_json(node: &Element) -> serde_json::Value {
   }
 
   if attributes.is_empty() {
-    return json!({
+    json!({
       "type": "element",
       "tag": node.tag_name().as_str(),
-    });
+    })
   } else {
-    return json!({
+    json!({
       "type": "element",
       "tag": node.tag_name().as_str(),
       "attributes": attributes,
-    });
+    })
   }
 }
 
@@ -118,19 +118,19 @@ fn dom_to_json_core(
 
   if let Some(text_node) = root.as_maybe_text() {
     if !text_node.value.borrow().trim().is_empty() {
-      json = text_node_to_json(&text_node);
+      json = text_node_to_json(text_node);
     }
   }
 
   if let Some(element_node) = root.as_maybe_element() {
-    json = element_node_to_json(&element_node);
+    json = element_node_to_json(element_node);
   }
 
-  if let Some(_) = root.as_maybe_document() {
+  if root.as_maybe_document().is_some() {
     json = document_node_to_json();
   }
 
-  if children.len() > 0 {
+  if !children.is_empty() {
     json["children"] = json!(children);
   }
 
