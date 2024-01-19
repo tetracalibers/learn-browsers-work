@@ -110,7 +110,7 @@ impl<'a> Tokenizer<'a> {
       return Some(self.emit_eof());
     }
 
-    if is_ascii_alphanumeric(c) {
+    if c.is_ascii_alphanumeric() {
       self.new_token(Token::new_start_tag());
       self.switch_to(State::TagName);
       return None;
@@ -141,7 +141,7 @@ impl<'a> Tokenizer<'a> {
     let bytes =
       self.read_to_many(&[b'/', b'>', b'\0', b'\t', b'\n', b' ', b'\x0C']);
 
-    if bytes.iter().all(|&b| is_ascii_alphanumeric(b)) {
+    if bytes.iter().all(|&b| b.is_ascii_alphanumeric()) {
       self.set_tag_name(bytes);
     }
 
@@ -185,7 +185,7 @@ impl<'a> Tokenizer<'a> {
       return Some(self.emit_eof());
     }
 
-    if is_ascii_alphanumeric(c) {
+    if c.is_ascii_alphanumeric() {
       self.new_token(Token::new_end_tag());
       self.switch_to(State::TagName);
       return None;
