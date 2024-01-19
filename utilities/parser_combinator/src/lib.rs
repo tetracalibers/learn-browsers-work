@@ -96,10 +96,7 @@ where
 }
 
 pub fn any_char(input: &str) -> ParseResult<char> {
-  match input.chars().next() {
-    Some(next) => Some((&input[next.len_utf8()..], next)),
-    _ => None,
-  }
+  input.chars().next().map(|next| (&input[next.len_utf8()..], next))
 }
 
 pub fn pred<'a, P, O, F>(parser: P, predicate: F) -> impl Parser<'a, O>
