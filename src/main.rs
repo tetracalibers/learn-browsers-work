@@ -1,9 +1,7 @@
 use std::env;
 
 fn run_html() {
-  let target = r#"<h1>This is heading</h1>
-  <p>This is paragraph</p>
-  <p>This <mark>keyword</mark> is important</p>"#;
+  let target = r#"<p>paragraph1<p>paragraph2"#;
 
   let document = html::debugger::get_document_from_html(target);
 
