@@ -143,6 +143,13 @@ impl Attribute {
       value: EcoString::new(),
     }
   }
+
+  pub fn new_name_of(name: &str) -> Self {
+    Attribute {
+      name: EcoString::from(name),
+      value: EcoString::new(),
+    }
+  }
 }
 
 impl Deref for Attribute {

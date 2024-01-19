@@ -4,6 +4,7 @@ mod stream;
 pub mod token;
 
 use std::collections::HashSet;
+use std::str::from_utf8;
 
 use self::byte_string::*;
 use self::state::State;
@@ -248,7 +249,46 @@ impl<'a> Tokenizer<'a> {
   }
 
   fn process_attribute_name_state(&mut self) -> Option<Token> {
-    todo!("process_attribute_name_state");
+    let bytes = self.read_to_whitespace_or_oneof(&[
+      b'/', b'>', b'=', b'\0', b'"', b'\'', b'<',
+    ]);
+
+    if !bytes.is_empty() {
+      self.set_attribute_name(bytes);
+    }
+
+    // read_currentに進む前にEOFチェック
+    if self.stream.is_eof() {
+      self.reconsume_in_state(State::AfterAttributeName);
+      return None;
+    }
+
+    let c = self.read_current();
+
+    match c {
+      _ if c.is_ascii_whitespace() => {
+        self.reconsume_in_state(State::AfterAttributeName);
+      }
+      b'/' | b'>' => {
+        self.reconsume_in_state(State::AfterAttributeName);
+      }
+      b'=' => {
+        self.switch_to(State::BeforeAttributeValue);
+      }
+      b'\0' => {
+        warn!("unexpected-null-character");
+        self.append_char_to_attribute_name(REPLACEMENT_CHARACTER);
+      }
+      b'"' | b'\'' | b'<' => {
+        warn!("unexpected-character-in-attribute-name");
+        self.append_char_to_attribute_name(c as char);
+      }
+      _ => {
+        noop!();
+      }
+    }
+
+    None
   }
 
   fn process_after_attribute_name_state(&mut self) -> Option<Token> {
@@ -300,12 +340,33 @@ impl<'a> Tokenizer<'a> {
     }
   }
 
+  fn append_char_to_attribute_name(&mut self, c: char) {
+    let current_tag = self.current_token.as_mut().unwrap();
+    if let Token::Tag { attributes, .. } = current_tag {
+      if let Some(mut last) = attributes.pop() {
+        last.name.push(c);
+        attributes.push(last);
+      }
+    }
+  }
+
   fn set_tag_name(&mut self, name: &[u8]) {
     let name = bytes_to_string(name);
     let current_tag = self.current_token.as_mut().unwrap();
     match current_tag {
       Token::Tag { tag_name, .. } => {
         *tag_name = name;
+      }
+      _ => unreachable!("No tag found"),
+    }
+  }
+
+  fn set_attribute_name(&mut self, name: &[u8]) {
+    let name = from_utf8(name).unwrap();
+    let current_tag = self.current_token.as_mut().unwrap();
+    match current_tag {
+      Token::Tag { attributes, .. } => {
+        attributes.push(Attribute::new_name_of(name));
       }
       _ => unreachable!("No tag found"),
     }
@@ -406,6 +467,19 @@ impl<'a> Tokenizer<'a> {
     let end = bytes
       .iter()
       .position(|&b| c.contains(&b))
+      .unwrap_or(self.stream.len() - start);
+
+    self.stream.advance_by(end);
+    self.stream.slice(start, start + end)
+  }
+
+  fn read_to_whitespace_or_oneof(&mut self, c: &[u8]) -> &'a [u8] {
+    let start = self.stream.idx;
+    let bytes = &self.stream.data()[start..];
+
+    let end = bytes
+      .iter()
+      .position(|&b| c.contains(&b) || b.is_ascii_whitespace())
       .unwrap_or(self.stream.len() - start);
 
     self.stream.advance_by(end);
