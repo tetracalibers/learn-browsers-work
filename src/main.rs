@@ -24,6 +24,11 @@ fn run_fast_html() {
   let document = fast_html::debugger::get_document_from_html(target);
 
   fast_html::debugger::print_dom_tree(&document);
+
+  println!("-------------------");
+
+  let json = fast_html::debugger::dom_to_json_string(&document);
+  println!("{}", json);
 }
 
 fn run_css() {
