@@ -9,11 +9,11 @@ fn run_html() {
 
   html::debugger::print_dom_tree(&document);
 
-  //println!("-------------------");
+  println!("-------------------");
 
-  //let json = html::debugger::dom_in_body_to_json(&document);
+  let json = html::debugger::dom_to_json(&document);
 
-  //println!("{}", json);
+  println!("{}", json);
 }
 
 fn run_fast_html() {
