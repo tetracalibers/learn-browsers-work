@@ -83,9 +83,9 @@ impl core::fmt::Debug for NodeData {
 }
 
 impl NodeHooks for NodeData {
-  fn on_inserted(&self, context: InsertContext) {}
+  fn on_inserted(&self, _context: InsertContext) {}
 
-  fn on_children_updated(&self, context: ChildrenUpdateContext) {}
+  fn on_children_updated(&self, _context: ChildrenUpdateContext) {}
 }
 
 impl NodeData {
@@ -99,11 +99,11 @@ impl NodeData {
 }
 
 impl TreeNodeHooks<Node> for Node {
-  fn on_inserted(&self, current: TreeNode<Node>, parent: TreeNode<Node>) {
+  fn on_inserted(&self, _current: TreeNode<Node>, _parent: TreeNode<Node>) {
     todo!("Node::on_inserted");
   }
 
-  fn on_children_updated(&self, current: TreeNode<Node>) {
+  fn on_children_updated(&self, _current: TreeNode<Node>) {
     todo!("Node::on_children_updated");
   }
 }

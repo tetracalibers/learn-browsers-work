@@ -12,7 +12,7 @@ impl From<&str> for TokenList {
     Self {
       items: data
         .split(' ')
-        .filter(|class| class.len() > 0)
+        .filter(|class| !class.is_empty())
         .map(String::from)
         .collect(),
     }
@@ -23,6 +23,12 @@ impl Deref for TokenList {
   type Target = EcoVec<String>;
   fn deref(&self) -> &Self::Target {
     &self.items
+  }
+}
+
+impl Default for TokenList {
+  fn default() -> Self {
+    Self::new()
   }
 }
 

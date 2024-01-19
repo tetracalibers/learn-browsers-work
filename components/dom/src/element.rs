@@ -47,6 +47,12 @@ impl core::fmt::Debug for Element {
   }
 }
 
+impl Default for AttributeMap {
+  fn default() -> Self {
+    Self::new()
+  }
+}
+
 impl AttributeMap {
   pub fn new() -> Self {
     Self(HashMap::new())
