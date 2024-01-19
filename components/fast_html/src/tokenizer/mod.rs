@@ -187,7 +187,7 @@ impl<'a> Tokenizer<'a> {
         self.append_replacement_char_to_tag_name();
       }
       b if b.is_ascii_whitespace() => {
-        unimplemented!("undefined State::BeforeAttributeName");
+        self.switch_to(State::BeforeAttributeName);
       }
       _ => {
         noop!();
