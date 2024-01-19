@@ -5,4 +5,14 @@ pub enum State {
   TagName,
   TagOpen,
   EndTagOpen,
+
+  BeforeAttributeName,
+  AttributeName,
+  AfterAttributeName,
+
+  BeforeAttributeValue,
+  AttributeValueDoubleQuoted,
+  AttributeValueSingleQuoted,
+  AttributeValueUnQuoted,
+  AfterAttributeValueQuoted,
 }

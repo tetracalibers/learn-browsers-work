@@ -53,6 +53,26 @@ impl<'a> Tokenizer<'a> {
         State::TagOpen => self.process_tag_open_state(),
         State::TagName => self.process_tag_name_state(),
         State::EndTagOpen => self.process_end_tag_open_state(),
+        State::BeforeAttributeName => {
+          self.process_before_attribute_name_state()
+        }
+        State::AttributeName => self.process_attribute_name_state(),
+        State::AfterAttributeName => self.process_after_attribute_name_state(),
+        State::BeforeAttributeValue => {
+          self.process_before_attribute_value_state()
+        }
+        State::AttributeValueDoubleQuoted => {
+          self.process_attribute_value_double_quoted_state()
+        }
+        State::AttributeValueSingleQuoted => {
+          self.process_attribute_value_single_quoted_state()
+        }
+        State::AttributeValueUnQuoted => {
+          self.process_attribute_value_unquoted_state()
+        }
+        State::AfterAttributeValueQuoted => {
+          self.process_after_attribute_value_quoted_state()
+        }
       };
 
       if let Some(token) = token {
@@ -203,6 +223,38 @@ impl<'a> Tokenizer<'a> {
     }
 
     None
+  }
+
+  fn process_before_attribute_name_state(&mut self) -> Option<Token> {
+    todo!("process_before_attribute_name_state");
+  }
+
+  fn process_attribute_name_state(&mut self) -> Option<Token> {
+    todo!("process_attribute_name_state");
+  }
+
+  fn process_after_attribute_name_state(&mut self) -> Option<Token> {
+    todo!("process_after_attribute_name_state");
+  }
+
+  fn process_before_attribute_value_state(&mut self) -> Option<Token> {
+    todo!("process_before_attribute_value_state");
+  }
+
+  fn process_attribute_value_double_quoted_state(&mut self) -> Option<Token> {
+    todo!("process_attribute_value_double_quoted_state");
+  }
+
+  fn process_attribute_value_single_quoted_state(&mut self) -> Option<Token> {
+    todo!("process_attribute_value_single_quoted_state");
+  }
+
+  fn process_attribute_value_unquoted_state(&mut self) -> Option<Token> {
+    todo!("process_attribute_value_unquoted_state");
+  }
+
+  fn process_after_attribute_value_quoted_state(&mut self) -> Option<Token> {
+    todo!("process_after_attribute_value_quoted_state");
   }
 
   /* -------------------------------------------- */
