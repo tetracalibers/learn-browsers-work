@@ -16,6 +16,8 @@ cargo run -- html
 RUST_LOG=trace cargo run -- html
 ```
 
+`-- html`ではなく、`-- fast_html`とすると、高速化バージョンを実行できます。
+
 ### サポートしない予定のもの
 
 - 古いDOCTYPE
