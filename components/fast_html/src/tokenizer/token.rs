@@ -130,6 +130,12 @@ impl Token {
   }
 }
 
+impl Default for Attribute {
+  fn default() -> Self {
+    Self::new()
+  }
+}
+
 impl Attribute {
   pub fn new() -> Self {
     Attribute {

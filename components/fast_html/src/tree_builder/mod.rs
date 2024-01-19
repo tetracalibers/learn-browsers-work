@@ -298,7 +298,7 @@ impl<'a> TreeBuilder<'a> {
     let mut furthest_block_index = None;
 
     for (index, element) in self.open_elements.iter().rev().enumerate() {
-      if Rc::ptr_eq(&element, formatting_element) {
+      if Rc::ptr_eq(element, formatting_element) {
         break;
       }
 
@@ -319,7 +319,7 @@ impl<'a> TreeBuilder<'a> {
     let mut found_element = None;
 
     for (index, el) in self.open_elements.iter().rev().enumerate() {
-      if Rc::ptr_eq(&el, &formatting_element) {
+      if Rc::ptr_eq(el, formatting_element) {
         if index < self.open_elements.len() - 1 {
           found_element = Some(self.open_elements.get(index - 1));
         }
@@ -337,11 +337,11 @@ impl<'a> TreeBuilder<'a> {
     let subject = token.tag_name();
     let current_node = self.current_node();
 
-    if current_node.as_element().tag_name() == *subject {
-      if !self.active_formatting_elements.contains_node(&current_node) {
-        self.open_elements.pop();
-        return AdoptionAgencyAlgorithmOutcome::DoNothing;
-      }
+    if current_node.as_element().tag_name() == *subject
+      && !self.active_formatting_elements.contains_node(&current_node)
+    {
+      self.open_elements.pop();
+      return AdoptionAgencyAlgorithmOutcome::DoNothing;
     }
 
     let mut external_loop_counter = 0;
@@ -362,18 +362,18 @@ impl<'a> TreeBuilder<'a> {
       let formatting_element = formatting_element.unwrap();
 
       if !self.open_elements.contains_node(&formatting_element) {
-        self.unexpected(&token);
+        self.unexpected(token);
         self.active_formatting_elements.remove_element(&formatting_element);
         return AdoptionAgencyAlgorithmOutcome::DoNothing;
       }
 
       if !self.open_elements.has_element_in_scope(&formatting_element) {
-        self.unexpected(&token);
+        self.unexpected(token);
         return AdoptionAgencyAlgorithmOutcome::DoNothing;
       }
 
       if !Rc::ptr_eq(&formatting_element, &current_node) {
-        self.unexpected(&token);
+        self.unexpected(token);
       }
 
       let (mut furthest_block, mut furthest_block_index) =
@@ -556,7 +556,7 @@ impl<'a> TreeBuilder<'a> {
   ) -> AdjustedInsertionLocation {
     let target = target.unwrap_or(self.current_node());
 
-    let adjust_location = if self.foster_parenting
+    if self.foster_parenting
       && target
         .as_element()
         .match_tag_name_in(&["table", "tbody", "tfoot", "thead", "tr"])
@@ -564,9 +564,7 @@ impl<'a> TreeBuilder<'a> {
       todo!("get_appropriate_insert_position: foster parenting");
     } else {
       AdjustedInsertionLocation::LastChild(target)
-    };
-
-    adjust_location
+    }
   }
 
   fn get_node_for_text_insertion(
@@ -639,17 +637,17 @@ impl<'a> TreeBuilder<'a> {
     let text_insertion_node = self.get_node_for_text_insertion(insert_position);
 
     match &self.text_insertion_node {
-      Some(node) if Rc::ptr_eq(&node, &text_insertion_node) => {
-        self.text_insertion_string_data.push_str(&str);
+      Some(node) if Rc::ptr_eq(node, &text_insertion_node) => {
+        self.text_insertion_string_data.push_str(str);
       }
       None => {
         self.text_insertion_node = Some(text_insertion_node);
-        self.text_insertion_string_data.push_str(&str);
+        self.text_insertion_string_data.push_str(str);
       }
       _ => {
         self.flush_text_insertion();
         self.text_insertion_node = Some(text_insertion_node);
-        self.text_insertion_string_data.push_str(&str);
+        self.text_insertion_string_data.push_str(str);
       }
     }
   }
@@ -658,9 +656,7 @@ impl<'a> TreeBuilder<'a> {
 
   fn handle_initial_mode(&mut self, token: Token) {
     match token {
-      Token::Text(str) if str.trim().is_empty() => {
-        return;
-      }
+      Token::Text(str) if str.trim().is_empty() => {}
       Token::DOCTYPE { ref name, .. } => {
         let name = name.clone().unwrap();
 
@@ -688,7 +684,7 @@ impl<'a> TreeBuilder<'a> {
   }
 
   fn handle_before_html_mode(&mut self, token: Token) {
-    fn anything_else<'a>(this: &mut TreeBuilder<'a>, token: Token) {
+    fn anything_else(this: &mut TreeBuilder<'_>, token: Token) {
       let element = this.create_element_for_tag_name("html");
       this.document.append_child(element.0.clone());
       this.open_elements.push(element.clone());
@@ -739,7 +735,7 @@ impl<'a> TreeBuilder<'a> {
   }
 
   fn handle_before_head_mode(&mut self, token: Token) {
-    fn anything_else<'a>(this: &mut TreeBuilder<'a>, token: Token) {
+    fn anything_else(this: &mut TreeBuilder<'_>, token: Token) {
       let head_element = this.insert_html_element(Token::Tag {
         tag_name: EcoString::from("head"),
         attributes: EcoVec::new(),
@@ -884,7 +880,7 @@ impl<'a> TreeBuilder<'a> {
   }
 
   fn handle_after_head_mode(&mut self, token: Token) {
-    fn anything_else<'a>(this: &mut TreeBuilder<'a>, token: Token) {
+    fn anything_else(this: &mut TreeBuilder<'_>, token: Token) {
       this.insert_html_element(Token::Tag {
         tag_name: EcoString::from("body"),
         attributes: EcoVec::new(),
@@ -966,14 +962,14 @@ impl<'a> TreeBuilder<'a> {
   }
 
   fn handle_in_body_mode(&mut self, mut token: Token) {
-    fn any_other_end_tags<'a>(this: &mut TreeBuilder<'a>, token: Token) {
+    fn any_other_end_tags(this: &mut TreeBuilder<'_>, token: Token) {
       let mut match_index = None;
 
       for (index, node) in this.open_elements.iter().enumerate().rev() {
         let node_tag_name = node.as_element().tag_name();
 
         if node_tag_name == *token.tag_name() {
-          if !Rc::ptr_eq(&node, &this.current_node()) {
+          if !Rc::ptr_eq(node, &this.current_node()) {
             this.unexpected(&token);
           }
 
@@ -1332,7 +1328,7 @@ impl<'a> TreeBuilder<'a> {
         "ul",
       ])
     {
-      if !self.open_elements.has_element_name_in_scope(&token.tag_name()) {
+      if !self.open_elements.has_element_name_in_scope(token.tag_name()) {
         self.unexpected(&token);
         return;
       }
@@ -1347,7 +1343,7 @@ impl<'a> TreeBuilder<'a> {
         return;
       }
 
-      self.open_elements.pop_until(&token.tag_name());
+      self.open_elements.pop_until(token.tag_name());
       return;
     }
 
@@ -1384,18 +1380,18 @@ impl<'a> TreeBuilder<'a> {
     if token.is_end_tag() && token.match_tag_name_in(&["dd", "dt"]) {
       let tag_name = token.tag_name();
 
-      if !self.open_elements.has_element_name_in_scope(&tag_name) {
+      if !self.open_elements.has_element_name_in_scope(tag_name) {
         self.unexpected(&token);
         return;
       }
 
-      self.generate_implied_end_tags(&tag_name);
+      self.generate_implied_end_tags(tag_name);
 
       if self.current_node().as_element().tag_name() != *tag_name {
         self.unexpected(&token);
       }
 
-      self.open_elements.pop_until(&tag_name);
+      self.open_elements.pop_until(tag_name);
 
       return;
     }
@@ -1599,7 +1595,7 @@ impl<'a> TreeBuilder<'a> {
     }
 
     if token.is_end_tag() {
-      return any_other_end_tags(self, token);
+      any_other_end_tags(self, token)
     }
   }
 }

@@ -69,7 +69,9 @@ impl ListOfActiveFormattingElements {
         Entry::Marker => false,
         Entry::Element(e) => Rc::ptr_eq(e, element),
       })
-      .expect(&format!("Unable to find active element: {:?}", element));
+      .unwrap_or_else(|| {
+        panic!("Unable to find active element: {:?}", element)
+      });
     self.entries.remove(index);
   }
 

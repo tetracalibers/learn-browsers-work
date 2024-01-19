@@ -11,6 +11,12 @@ pub struct DocumentType {
   pub name: EcoString,
 }
 
+impl Default for Document {
+  fn default() -> Self {
+    Self::new()
+  }
+}
+
 impl Document {
   pub fn new() -> Self {
     Document {

@@ -36,7 +36,7 @@ impl StackOfOpenElements {
   /* getter ------------------------------------- */
 
   pub fn get(&self, index: usize) -> NodePtr {
-    return self.0[index].clone();
+    self.0[index].clone()
   }
 
   pub fn current_node(&self) -> Option<NodePtr> {

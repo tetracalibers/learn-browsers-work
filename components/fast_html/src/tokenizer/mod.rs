@@ -76,7 +76,7 @@ impl<'a> Tokenizer<'a> {
     }
 
     if !bytes.is_empty() {
-      return Some(self.emit_text(&bytes));
+      return Some(self.emit_text(bytes));
     }
 
     let c = self.read_current();
@@ -91,14 +91,14 @@ impl<'a> Tokenizer<'a> {
       }
       b'\0' => {
         warn!("unexpected-null-character");
-        return Some(self.emit_text(&bytes));
+        return Some(self.emit_text(bytes));
       }
       _ => {
         noop!();
       }
     }
 
-    return None;
+    None
   }
 
   fn process_tag_open_state(&mut self) -> Option<Token> {
@@ -110,7 +110,7 @@ impl<'a> Tokenizer<'a> {
       return Some(self.emit_eof());
     }
 
-    if is_ascii_alphanumeric(c) {
+    if c.is_ascii_alphanumeric() {
       self.new_token(Token::new_start_tag());
       self.switch_to(State::TagName);
       return None;
@@ -134,15 +134,15 @@ impl<'a> Tokenizer<'a> {
       }
     }
 
-    return None;
+    None
   }
 
   fn process_tag_name_state(&mut self) -> Option<Token> {
     let bytes =
       self.read_to_many(&[b'/', b'>', b'\0', b'\t', b'\n', b' ', b'\x0C']);
 
-    if bytes.iter().all(|&b| is_ascii_alphanumeric(b)) {
-      self.set_tag_name(&bytes);
+    if bytes.iter().all(|&b| b.is_ascii_alphanumeric()) {
+      self.set_tag_name(bytes);
     }
 
     if self.stream.is_eof() {
@@ -165,7 +165,7 @@ impl<'a> Tokenizer<'a> {
         warn!("unexpected-null-character");
         self.append_replacement_char_to_tag_name();
       }
-      b if is_whitespace(b) => {
+      b if b.is_ascii_whitespace() => {
         unimplemented!("undefined State::BeforeAttributeName");
       }
       _ => {
@@ -185,7 +185,7 @@ impl<'a> Tokenizer<'a> {
       return Some(self.emit_eof());
     }
 
-    if is_ascii_alphanumeric(c) {
+    if c.is_ascii_alphanumeric() {
       self.new_token(Token::new_end_tag());
       self.switch_to(State::TagName);
       return None;

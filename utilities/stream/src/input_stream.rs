@@ -60,7 +60,7 @@ where
     }
 
     self.consume_source_to_buffer();
-    self.buffer.front().map(|i| i.clone())
+    self.buffer.front().cloned()
   }
 
   pub fn peek_next_repeat<S: FromIterator<I>>(
@@ -76,7 +76,7 @@ where
     let n = if self.is_reconsume { n - 1 } else { n };
 
     let mut result =
-      self.buffer.iter().take(n).map(|i| i.clone()).collect::<VecDeque<I>>();
+      self.buffer.iter().take(n).cloned().collect::<VecDeque<I>>();
 
     if self.is_reconsume {
       if let Some(current) = &self.last_consumed {
@@ -84,16 +84,15 @@ where
       }
     }
 
-    Some(result.iter().map(|i| i.clone()).collect())
+    Some(result.iter().cloned().collect())
   }
 
   pub fn peek_max(&mut self) -> Vec<I> {
-    while let Some(item) = self.source.next() {
+    for item in self.source.by_ref() {
       self.buffer.push_back(item);
     }
 
-    let mut result =
-      self.buffer.iter().map(|i| i.clone()).collect::<VecDeque<I>>();
+    let mut result = self.buffer.iter().cloned().collect::<VecDeque<I>>();
 
     if self.is_reconsume {
       if let Some(current) = &self.last_consumed {
@@ -101,6 +100,6 @@ where
       }
     }
 
-    result.iter().map(|i| i.clone()).collect()
+    result.iter().cloned().collect()
   }
 }
