@@ -13,7 +13,7 @@ use self::token::Token;
 
 use log::{debug, warn};
 
-use ecow::{EcoString, EcoVec};
+use ecow::EcoVec;
 
 macro_rules! noop {
   () => {};
@@ -71,12 +71,13 @@ impl<'a> Tokenizer<'a> {
   fn process_data_state(&mut self) -> Option<Token> {
     let bytes = self.read_to_many(&[b'<', b'&', b'\0']);
 
-    if self.stream.is_eof() {
-      return Some(self.emit_eof());
-    }
-
     if !bytes.is_empty() {
       return Some(self.emit_text(bytes));
+    }
+
+    // read_currentに進む前にEOFチェック
+    if self.stream.is_eof() {
+      return Some(self.emit_eof());
     }
 
     let c = self.read_current();
@@ -104,12 +105,6 @@ impl<'a> Tokenizer<'a> {
   fn process_tag_open_state(&mut self) -> Option<Token> {
     let c = self.read_next();
 
-    if self.stream.is_eof() {
-      warn!("eof-before-tag-name");
-      self.will_emit(Token::Text(EcoString::from("<")));
-      return Some(self.emit_eof());
-    }
-
     if c.is_ascii_alphanumeric() {
       self.new_token(Token::new_start_tag());
       self.switch_to(State::TagName);
@@ -126,6 +121,11 @@ impl<'a> Tokenizer<'a> {
       b'?' => {
         warn!("unexpected-question-mark-instead-of-tag-name");
         unimplemented!("undefined Token::Comment and State::BogusComment");
+      }
+      _ if self.stream.is_eof() => {
+        warn!("eof-before-tag-name");
+        self.will_emit(Token::new_text("<"));
+        return Some(self.emit_eof());
       }
       _ => {
         warn!("invalid-first-character-of-tag-name");
@@ -145,6 +145,7 @@ impl<'a> Tokenizer<'a> {
       self.set_tag_name(bytes);
     }
 
+    // read_currentに進む前にEOFチェック
     if self.stream.is_eof() {
       warn!("eof-in-tag");
       return Some(self.emit_eof());
@@ -179,12 +180,6 @@ impl<'a> Tokenizer<'a> {
   fn process_end_tag_open_state(&mut self) -> Option<Token> {
     let c = self.read_next();
 
-    if self.stream.is_eof() {
-      warn!("eof-before-tag-name");
-      self.will_emit(Token::new_text("</"));
-      return Some(self.emit_eof());
-    }
-
     if c.is_ascii_alphanumeric() {
       self.new_token(Token::new_end_tag());
       self.switch_to(State::TagName);
@@ -195,6 +190,11 @@ impl<'a> Tokenizer<'a> {
       b'>' => {
         warn!("missing-end-tag-name");
         self.switch_to(State::Data);
+      }
+      _ if self.stream.is_eof() => {
+        warn!("eof-before-tag-name");
+        self.will_emit(Token::new_text("</"));
+        return Some(self.emit_eof());
       }
       _ => {
         warn!("invalid-first-character-of-tag-name");
