@@ -13,7 +13,7 @@ use self::token::Token;
 
 use log::{debug, warn};
 
-use ecow::{EcoString, EcoVec};
+use ecow::EcoVec;
 
 macro_rules! noop {
   () => {};
@@ -75,6 +75,7 @@ impl<'a> Tokenizer<'a> {
       return Some(self.emit_text(bytes));
     }
 
+    // read_currentに進む前にEOFチェック
     if self.stream.is_eof() {
       return Some(self.emit_eof());
     }
@@ -121,17 +122,16 @@ impl<'a> Tokenizer<'a> {
         warn!("unexpected-question-mark-instead-of-tag-name");
         unimplemented!("undefined Token::Comment and State::BogusComment");
       }
+      _ if self.stream.is_eof() => {
+        warn!("eof-before-tag-name");
+        self.will_emit(Token::new_text("<"));
+        return Some(self.emit_eof());
+      }
       _ => {
         warn!("invalid-first-character-of-tag-name");
         self.will_emit(Token::new_text("<"));
         self.reconsume_in_state(State::Data);
       }
-    }
-
-    if self.stream.is_eof() {
-      warn!("eof-before-tag-name");
-      self.will_emit(Token::Text(EcoString::from("<")));
-      return Some(self.emit_eof());
     }
 
     None
@@ -145,6 +145,7 @@ impl<'a> Tokenizer<'a> {
       self.set_tag_name(bytes);
     }
 
+    // read_currentに進む前にEOFチェック
     if self.stream.is_eof() {
       warn!("eof-in-tag");
       return Some(self.emit_eof());
@@ -190,16 +191,15 @@ impl<'a> Tokenizer<'a> {
         warn!("missing-end-tag-name");
         self.switch_to(State::Data);
       }
+      _ if self.stream.is_eof() => {
+        warn!("eof-before-tag-name");
+        self.will_emit(Token::new_text("</"));
+        return Some(self.emit_eof());
+      }
       _ => {
         warn!("invalid-first-character-of-tag-name");
         unimplemented!("undefined State::BogusComment");
       }
-    }
-
-    if self.stream.is_eof() {
-      warn!("eof-before-tag-name");
-      self.will_emit(Token::new_text("</"));
-      return Some(self.emit_eof());
     }
 
     None
