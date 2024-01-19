@@ -239,10 +239,12 @@ dependencies = [
 name = "fast_html"
 version = "0.1.0"
 dependencies = [
+ "assert-json-diff",
  "criterion",
  "ecow",
  "fast_dom",
  "log",
+ "serde_json",
  "tree",
 ]
 
