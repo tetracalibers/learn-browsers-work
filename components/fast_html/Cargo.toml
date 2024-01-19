@@ -6,10 +6,11 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-tree     = { path = "../../utilities/tree" }
-fast_dom = { path = "../fast_dom" }
-ecow     = "0.2.0"
-log      = "0.4.20"
+tree       = { path = "../../utilities/tree" }
+fast_dom   = { path = "../fast_dom" }
+ecow       = "0.2.0"
+log        = "0.4.20"
+serde_json = "1.0.111"
 
 [dev-dependencies]
 criterion = { version = "0.5.1", features = ["html_reports"] }

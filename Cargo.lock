@@ -243,6 +243,7 @@ dependencies = [
  "ecow",
  "fast_dom",
  "log",
+ "serde_json",
  "tree",
 ]
 
