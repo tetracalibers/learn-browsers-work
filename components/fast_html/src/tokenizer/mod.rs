@@ -71,12 +71,12 @@ impl<'a> Tokenizer<'a> {
   fn process_data_state(&mut self) -> Option<Token> {
     let bytes = self.read_to_many(&[b'<', b'&', b'\0']);
 
-    if self.stream.is_eof() {
-      return Some(self.emit_eof());
-    }
-
     if !bytes.is_empty() {
       return Some(self.emit_text(bytes));
+    }
+
+    if self.stream.is_eof() {
+      return Some(self.emit_eof());
     }
 
     let c = self.read_current();
@@ -104,12 +104,6 @@ impl<'a> Tokenizer<'a> {
   fn process_tag_open_state(&mut self) -> Option<Token> {
     let c = self.read_next();
 
-    if self.stream.is_eof() {
-      warn!("eof-before-tag-name");
-      self.will_emit(Token::Text(EcoString::from("<")));
-      return Some(self.emit_eof());
-    }
-
     if c.is_ascii_alphanumeric() {
       self.new_token(Token::new_start_tag());
       self.switch_to(State::TagName);
@@ -132,6 +126,12 @@ impl<'a> Tokenizer<'a> {
         self.will_emit(Token::new_text("<"));
         self.reconsume_in_state(State::Data);
       }
+    }
+
+    if self.stream.is_eof() {
+      warn!("eof-before-tag-name");
+      self.will_emit(Token::Text(EcoString::from("<")));
+      return Some(self.emit_eof());
     }
 
     None
@@ -179,12 +179,6 @@ impl<'a> Tokenizer<'a> {
   fn process_end_tag_open_state(&mut self) -> Option<Token> {
     let c = self.read_next();
 
-    if self.stream.is_eof() {
-      warn!("eof-before-tag-name");
-      self.will_emit(Token::new_text("</"));
-      return Some(self.emit_eof());
-    }
-
     if c.is_ascii_alphanumeric() {
       self.new_token(Token::new_end_tag());
       self.switch_to(State::TagName);
@@ -200,6 +194,12 @@ impl<'a> Tokenizer<'a> {
         warn!("invalid-first-character-of-tag-name");
         unimplemented!("undefined State::BogusComment");
       }
+    }
+
+    if self.stream.is_eof() {
+      warn!("eof-before-tag-name");
+      self.will_emit(Token::new_text("</"));
+      return Some(self.emit_eof());
     }
 
     None
