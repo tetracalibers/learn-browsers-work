@@ -26,9 +26,7 @@ pub fn get_document_from_html(html: &str) -> NodePtr {
   let tokenizer = Tokenizer::new(target);
   let tree_builder = TreeBuilder::new(tokenizer, empty_document);
 
-  let document = tree_builder.run();
-
-  document
+  tree_builder.run()
 }
 
 /* print DOM tree ----------------------------- */
@@ -169,7 +167,7 @@ fn dom_list_to_recursive_json(
       if !attributes.is_empty() {
         simple_node["attributes"] = json!(attributes);
       }
-    } else if let Some(_) = node.as_maybe_document() {
+    } else if node.as_maybe_document().is_some() {
       simple_node = json!({
         "type": "document",
       });
@@ -195,29 +193,25 @@ fn dom_list_to_recursive_json(
 }
 
 pub fn dom_to_json_obj(document: &NodePtr) -> serde_json::Value {
-  let node_list_with_depth = get_dom_list_with_depth(&document);
-  let json_obj = dom_list_to_recursive_json(&node_list_with_depth);
+  let node_list_with_depth = get_dom_list_with_depth(document);
 
-  json_obj
+  dom_list_to_recursive_json(&node_list_with_depth)
 }
 
 pub fn dom_in_body_to_json_obj(document: &NodePtr) -> serde_json::Value {
-  let node_list_with_depth = get_dom_list_with_depth_in_body(&document);
-  let json_obj = dom_list_to_recursive_json(&node_list_with_depth);
+  let node_list_with_depth = get_dom_list_with_depth_in_body(document);
 
-  json_obj
+  dom_list_to_recursive_json(&node_list_with_depth)
 }
 
 pub fn dom_to_json(document: &NodePtr) -> String {
   let json_obj = dom_to_json_obj(document);
-  let json = serde_json::to_string_pretty(&json_obj).unwrap();
 
-  json
+  serde_json::to_string_pretty(&json_obj).unwrap()
 }
 
 pub fn dom_in_body_to_json(document: &NodePtr) -> String {
   let json_obj = dom_in_body_to_json_obj(document);
-  let json = serde_json::to_string_pretty(&json_obj).unwrap();
 
-  json
+  serde_json::to_string_pretty(&json_obj).unwrap()
 }
