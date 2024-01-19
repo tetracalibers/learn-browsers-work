@@ -76,7 +76,7 @@ impl<'a> Tokenizer<'a> {
     }
 
     if !bytes.is_empty() {
-      return Some(self.emit_text(&bytes));
+      return Some(self.emit_text(bytes));
     }
 
     let c = self.read_current();
@@ -91,14 +91,14 @@ impl<'a> Tokenizer<'a> {
       }
       b'\0' => {
         warn!("unexpected-null-character");
-        return Some(self.emit_text(&bytes));
+        return Some(self.emit_text(bytes));
       }
       _ => {
         noop!();
       }
     }
 
-    return None;
+    None
   }
 
   fn process_tag_open_state(&mut self) -> Option<Token> {
@@ -134,7 +134,7 @@ impl<'a> Tokenizer<'a> {
       }
     }
 
-    return None;
+    None
   }
 
   fn process_tag_name_state(&mut self) -> Option<Token> {
@@ -142,7 +142,7 @@ impl<'a> Tokenizer<'a> {
       self.read_to_many(&[b'/', b'>', b'\0', b'\t', b'\n', b' ', b'\x0C']);
 
     if bytes.iter().all(|&b| is_ascii_alphanumeric(b)) {
-      self.set_tag_name(&bytes);
+      self.set_tag_name(bytes);
     }
 
     if self.stream.is_eof() {

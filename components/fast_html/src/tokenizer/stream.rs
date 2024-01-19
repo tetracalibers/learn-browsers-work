@@ -49,7 +49,7 @@ impl<'a, T> Stream<'a, T> {
   }
 
   pub fn data(&self) -> &[T] {
-    &self.data
+    self.data
   }
 
   pub fn advance(&mut self) {
