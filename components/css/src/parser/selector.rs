@@ -255,7 +255,7 @@ fn selector(input: &str) -> IResult<&str, Selector> {
 }
 
 fn selector_sequence(input: &str) -> IResult<&str, SelectorSequence> {
-  let splitted = input.split(",").collect::<Vec<&str>>();
+  let splitted = input.split(',').collect::<Vec<&str>>();
 
   let mut rest = input;
   let mut selectors = Vec::new();
