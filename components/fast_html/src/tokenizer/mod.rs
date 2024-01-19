@@ -319,7 +319,38 @@ impl<'a> Tokenizer<'a> {
   }
 
   fn process_attribute_value_double_quoted_state(&mut self) -> Option<Token> {
-    todo!("process_attribute_value_double_quoted_state");
+    let bytes = self.read_to_many(&[b'"', b'&', b'\0']);
+
+    if !bytes.is_empty() {
+      self.set_attribute_value(bytes);
+    }
+
+    // read_currentに進む前にEOFチェック
+    if self.stream.is_eof() {
+      warn!("eof-in-tag");
+      return Some(self.emit_eof());
+    }
+
+    let c = self.read_current();
+
+    match c {
+      b'"' => {
+        self.switch_to(State::AfterAttributeValueQuoted);
+      }
+      b'&' => {
+        self.return_state = Some(State::AttributeValueDoubleQuoted);
+        unimplemented!("self.switch_to(State::CharacterReference);");
+      }
+      b'\0' => {
+        warn!("unexpected-null-character");
+        self.append_char_to_attribute_value(REPLACEMENT_CHARACTER);
+      }
+      _ => {
+        noop!();
+      }
+    }
+
+    None
   }
 
   fn process_attribute_value_single_quoted_state(&mut self) -> Option<Token> {
@@ -369,6 +400,16 @@ impl<'a> Tokenizer<'a> {
     }
   }
 
+  fn append_char_to_attribute_value(&mut self, c: char) {
+    let current_tag = self.current_token.as_mut().unwrap();
+    if let Token::Tag { attributes, .. } = current_tag {
+      if let Some(mut last) = attributes.pop() {
+        last.value.push(c);
+        attributes.push(last);
+      }
+    }
+  }
+
   fn set_tag_name(&mut self, name: &[u8]) {
     let name = bytes_to_string(name);
     let current_tag = self.current_token.as_mut().unwrap();
@@ -386,6 +427,20 @@ impl<'a> Tokenizer<'a> {
     match current_tag {
       Token::Tag { attributes, .. } => {
         attributes.push(Attribute::new_name_of(name));
+      }
+      _ => unreachable!("No tag found"),
+    }
+  }
+
+  fn set_attribute_value(&mut self, value: &[u8]) {
+    let value = bytes_to_string(value);
+    let current_tag = self.current_token.as_mut().unwrap();
+    match current_tag {
+      Token::Tag { attributes, .. } => {
+        if let Some(mut last) = attributes.pop() {
+          last.value = value;
+          attributes.push(last);
+        }
       }
       _ => unreachable!("No tag found"),
     }
