@@ -296,7 +296,26 @@ impl<'a> Tokenizer<'a> {
   }
 
   fn process_before_attribute_value_state(&mut self) -> Option<Token> {
-    todo!("process_before_attribute_value_state");
+    let c = self.read_next_skipped_whitespace();
+
+    match c {
+      b'"' => {
+        self.switch_to(State::AttributeValueDoubleQuoted);
+      }
+      b'\'' => {
+        self.switch_to(State::AttributeValueSingleQuoted);
+      }
+      b'>' => {
+        warn!("missing-attribute-value");
+        self.switch_to(State::Data);
+        return Some(self.emit_current_token());
+      }
+      _ => {
+        self.reconsume_in_state(State::AttributeValueUnQuoted);
+      }
+    }
+
+    None
   }
 
   fn process_attribute_value_double_quoted_state(&mut self) -> Option<Token> {
