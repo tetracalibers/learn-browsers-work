@@ -16,10 +16,6 @@ use log::{debug, warn};
 
 use ecow::EcoVec;
 
-macro_rules! noop {
-  () => {};
-}
-
 const REPLACEMENT_CHARACTER: char = '\u{FFFD}';
 
 pub struct Tokenizer<'a> {
@@ -116,7 +112,7 @@ impl<'a> Tokenizer<'a> {
         return Some(self.emit_text(bytes));
       }
       _ => {
-        noop!();
+        // noop
       }
     }
 
@@ -191,7 +187,7 @@ impl<'a> Tokenizer<'a> {
         self.switch_to(State::BeforeAttributeName);
       }
       _ => {
-        noop!();
+        // noop
       }
     }
 
@@ -285,7 +281,7 @@ impl<'a> Tokenizer<'a> {
         self.append_char_to_attribute_name(c as char);
       }
       _ => {
-        noop!();
+        // noop
       }
     }
 
@@ -349,7 +345,7 @@ impl<'a> Tokenizer<'a> {
         self.append_char_to_attribute_value(REPLACEMENT_CHARACTER);
       }
       _ => {
-        noop!();
+        // noop
       }
     }
 
