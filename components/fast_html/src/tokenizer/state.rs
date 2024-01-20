@@ -16,6 +16,7 @@ pub enum State {
   AttributeValueUnQuoted,
   AfterAttributeValueQuoted,
 
+  MarkupDeclarationOpen,
   DOCTYPE,
   BeforeDOCTYPEName,
   DOCTYPEName,

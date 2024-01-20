@@ -70,6 +70,9 @@ impl<'a> Tokenizer<'a> {
         State::AfterAttributeValueQuoted => {
           self.process_after_attribute_value_quoted_state()
         }
+        State::MarkupDeclarationOpen => {
+          self.process_markup_declaration_open_state()
+        }
         State::DOCTYPE => self.process_doctype_state(),
         State::BeforeDOCTYPEName => self.process_before_doctype_name_state(),
         State::DOCTYPEName => self.process_doctype_name_state(),
@@ -412,6 +415,10 @@ impl<'a> Tokenizer<'a> {
     }
 
     None
+  }
+
+  fn process_markup_declaration_open_state(&mut self) -> Option<Token> {
+    todo!("process_markup_declaration_open_state");
   }
 
   fn process_doctype_state(&mut self) -> Option<Token> {
