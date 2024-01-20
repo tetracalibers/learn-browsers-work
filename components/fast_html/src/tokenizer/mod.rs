@@ -436,7 +436,31 @@ impl<'a> Tokenizer<'a> {
   }
 
   fn process_doctype_state(&mut self) -> Option<Token> {
-    todo!("process_doctype_state");
+    let c = self.read_current();
+
+    trace!("-- DOCTYPE: {}", c as char);
+
+    match c {
+      _ if c.is_ascii_whitespace() => {
+        self.switch_to(State::BeforeDOCTYPEName);
+      }
+      b'>' => {
+        self.reconsume_in(State::BeforeDOCTYPEName);
+      }
+      _ if self.stream.is_eof() => {
+        warn!("eof-in-doctype");
+        let token = Token::new_doctype_with_force_quirks();
+        self.new_token(token);
+        self.will_emit(self.current_token.clone().unwrap());
+        return Some(self.emit_eof());
+      }
+      _ => {
+        warn!("missing-whitespace-before-doctype-name");
+        self.reconsume_in(State::BeforeDOCTYPEName);
+      }
+    }
+
+    None
   }
 
   fn process_before_doctype_name_state(&mut self) -> Option<Token> {
