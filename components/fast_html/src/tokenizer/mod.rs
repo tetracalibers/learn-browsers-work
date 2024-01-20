@@ -238,7 +238,7 @@ impl<'a> Tokenizer<'a> {
   }
 
   fn process_before_attribute_name_state(&mut self) -> Option<Token> {
-    let c = self.read_next_skipped_whitespace();
+    let c = self.read_current_skipped_whitespace();
 
     trace!("-- BeforeAttributeName: {}", c as char);
 
@@ -311,7 +311,7 @@ impl<'a> Tokenizer<'a> {
   }
 
   fn process_before_attribute_value_state(&mut self) -> Option<Token> {
-    let c = self.read_next_skipped_whitespace();
+    let c = self.read_current_skipped_whitespace();
 
     trace!("-- BeforeAttributeValue: {}", c as char);
 
@@ -547,7 +547,7 @@ impl<'a> Tokenizer<'a> {
     self.stream.current_cpy().unwrap()
   }
 
-  fn read_next_skipped_whitespace(&mut self) -> u8 {
+  fn read_current_skipped_whitespace(&mut self) -> u8 {
     let start = self.stream.idx;
     let rest = &self.stream.data()[start..];
 
