@@ -645,12 +645,14 @@ impl<'a> Tokenizer<'a> {
         pattern.iter().map(|&b| b.to_ascii_lowercase()).collect::<Vec<_>>();
 
       if peeked == pattern {
-        self.stream.advance_by(pattern_len);
+        // for _ in 0..pattern.len() { self.stream.advance(); } のイメージ
+        self.stream.advance_by(pattern_len - 1);
         return true;
       }
     } else {
       if peeked == pattern {
-        self.stream.advance_by(pattern_len);
+        // for _ in 0..pattern.len() { self.stream.advance(); } のイメージ
+        self.stream.advance_by(pattern_len - 1);
         return true;
       }
     }
