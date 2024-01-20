@@ -94,7 +94,7 @@ impl<'a> Tokenizer<'a> {
   /* -------------------------------------------- */
 
   fn process_data_state(&mut self) -> Option<Token> {
-    let bytes = self.read_to_many(&[b'<', b'&', b'\0']);
+    let bytes = self.read_to_oneof(&[b'<', b'&', b'\0']);
 
     trace!("-- Data: {}", bytes_to_string(bytes));
 
@@ -168,7 +168,7 @@ impl<'a> Tokenizer<'a> {
 
   fn process_tag_name_state(&mut self) -> Option<Token> {
     let bytes =
-      self.read_to_many(&[b'/', b'>', b'\0', b'\t', b'\n', b' ', b'\x0C']);
+      self.read_to_oneof(&[b'/', b'>', b'\0', b'\t', b'\n', b' ', b'\x0C']);
 
     trace!("-- TagName: {}", bytes_to_string(bytes));
 
@@ -336,7 +336,7 @@ impl<'a> Tokenizer<'a> {
   }
 
   fn process_attribute_value_double_quoted_state(&mut self) -> Option<Token> {
-    let bytes = self.read_to_many(&[b'"', b'&', b'\0']);
+    let bytes = self.read_to_oneof(&[b'"', b'&', b'\0']);
 
     trace!("-- AttributeValueDoubleQuoted: {}", bytes_to_string(bytes));
 
@@ -573,7 +573,7 @@ impl<'a> Tokenizer<'a> {
 
   // cに遭遇するまで読み進める
   // cを含む位置を返すので注意
-  fn read_to_many(&mut self, c: &[u8]) -> &'a [u8] {
+  fn read_to_oneof(&mut self, c: &[u8]) -> &'a [u8] {
     let start = self.stream.idx;
     let bytes = &self.stream.data()[start..];
 
