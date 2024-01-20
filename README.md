@@ -10,7 +10,13 @@ Challenge to build a toy browser in Rust
 cargo run -- html
 ```
 
-パーサーの状態遷移など、より細かいログを見たい場合は、次のように環境変数を添えてください。
+ログレベルを`debug`にすると、パーサーの状態遷移やトークン発行のログが表示されるようになります。
+
+```bash
+RUST_LOG=debug cargo run -- html
+```
+
+ログレベルを`trace`にすると、Tokenizerの各状態で検出した処理対象の文字も表示されるようになります。
 
 ```bash
 RUST_LOG=trace cargo run -- html

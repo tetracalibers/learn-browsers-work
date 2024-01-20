@@ -12,7 +12,7 @@ use self::stream::Stream;
 use self::token::Attribute;
 use self::token::Token;
 
-use log::{debug, warn};
+use log::{debug, trace, warn};
 
 use ecow::EcoVec;
 
@@ -88,6 +88,8 @@ impl<'a> Tokenizer<'a> {
   fn process_data_state(&mut self) -> Option<Token> {
     let bytes = self.read_to_many(&[b'<', b'&', b'\0']);
 
+    trace!("-- Data: {}", bytes_to_string(bytes));
+
     if !bytes.is_empty() {
       return Some(self.emit_text(bytes));
     }
@@ -121,6 +123,8 @@ impl<'a> Tokenizer<'a> {
 
   fn process_tag_open_state(&mut self) -> Option<Token> {
     let c = self.read_next();
+
+    trace!("-- TagOpen: {}", c as char);
 
     if c.is_ascii_alphanumeric() {
       self.new_token(Token::new_start_tag());
@@ -157,6 +161,8 @@ impl<'a> Tokenizer<'a> {
   fn process_tag_name_state(&mut self) -> Option<Token> {
     let bytes =
       self.read_to_many(&[b'/', b'>', b'\0', b'\t', b'\n', b' ', b'\x0C']);
+
+    trace!("-- TagName: {}", bytes_to_string(bytes));
 
     if bytes.iter().all(|&b| b.is_ascii_alphanumeric()) {
       self.set_tag_name(bytes);
@@ -197,6 +203,8 @@ impl<'a> Tokenizer<'a> {
   fn process_end_tag_open_state(&mut self) -> Option<Token> {
     let c = self.read_next();
 
+    trace!("-- EndTagOpen: {}", c as char);
+
     if c.is_ascii_alphanumeric() {
       self.new_token(Token::new_end_tag());
       self.switch_to(State::TagName);
@@ -225,6 +233,8 @@ impl<'a> Tokenizer<'a> {
   fn process_before_attribute_name_state(&mut self) -> Option<Token> {
     let c = self.read_next_skipped_whitespace();
 
+    trace!("-- BeforeAttributeName: {}", c as char);
+
     match c {
       b'/' | b'>' => {
         self.switch_to(State::AfterAttributeName);
@@ -248,6 +258,8 @@ impl<'a> Tokenizer<'a> {
     let bytes = self.read_to_whitespace_or_oneof(&[
       b'/', b'>', b'=', b'\0', b'"', b'\'', b'<',
     ]);
+
+    trace!("-- AttributeName: {}", bytes_to_string(bytes));
 
     if !bytes.is_empty() {
       self.set_attribute_name(bytes);
@@ -295,6 +307,8 @@ impl<'a> Tokenizer<'a> {
   fn process_before_attribute_value_state(&mut self) -> Option<Token> {
     let c = self.read_next_skipped_whitespace();
 
+    trace!("-- BeforeAttributeValue: {}", c as char);
+
     self.stream.advance();
 
     match c {
@@ -319,6 +333,8 @@ impl<'a> Tokenizer<'a> {
 
   fn process_attribute_value_double_quoted_state(&mut self) -> Option<Token> {
     let bytes = self.read_to_many(&[b'"', b'&', b'\0']);
+
+    trace!("-- AttributeValueDoubleQuoted: {}", bytes_to_string(bytes));
 
     if !bytes.is_empty() {
       self.set_attribute_value(bytes);
@@ -362,6 +378,8 @@ impl<'a> Tokenizer<'a> {
 
   fn process_after_attribute_value_quoted_state(&mut self) -> Option<Token> {
     let c = self.read_next();
+
+    trace!("-- AfterAttributeValueQuoted: {}", c as char);
 
     self.stream.advance();
 
