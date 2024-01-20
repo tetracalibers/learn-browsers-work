@@ -231,17 +231,17 @@ impl<'a> Tokenizer<'a> {
 
     match c {
       b'/' | b'>' => {
-        self.reconsume_in_state(State::AfterAttributeName);
+        self.switch_to(State::AfterAttributeName);
       }
       _ if self.stream.is_eof() => {
-        self.reconsume_in_state(State::AfterAttributeName);
+        self.switch_to(State::AfterAttributeName);
       }
       b'=' => {
         warn!("unexpected-equals-sign-before-attribute-name");
         self.switch_to(State::AttributeName);
       }
       _ => {
-        self.reconsume_in_state(State::AttributeName);
+        self.switch_to(State::AttributeName);
       }
     }
 
@@ -259,18 +259,19 @@ impl<'a> Tokenizer<'a> {
 
     // read_currentに進む前にEOFチェック
     if self.stream.is_eof() {
-      self.reconsume_in_state(State::AfterAttributeName);
+      self.switch_to(State::AfterAttributeName);
       return None;
     }
 
     let c = self.read_current();
+    self.stream.advance();
 
     match c {
       _ if c.is_ascii_whitespace() => {
-        self.reconsume_in_state(State::AfterAttributeName);
+        self.switch_to(State::AfterAttributeName);
       }
       b'/' | b'>' => {
-        self.reconsume_in_state(State::AfterAttributeName);
+        self.switch_to(State::AfterAttributeName);
       }
       b'=' => {
         self.switch_to(State::BeforeAttributeValue);
@@ -297,6 +298,8 @@ impl<'a> Tokenizer<'a> {
 
   fn process_before_attribute_value_state(&mut self) -> Option<Token> {
     let c = self.read_next_skipped_whitespace();
+
+    self.stream.advance();
 
     match c {
       b'"' => {
@@ -363,6 +366,8 @@ impl<'a> Tokenizer<'a> {
 
   fn process_after_attribute_value_quoted_state(&mut self) -> Option<Token> {
     let c = self.read_next();
+
+    self.stream.advance();
 
     match c {
       _ if c.is_ascii_whitespace() => {
@@ -539,7 +544,7 @@ impl<'a> Tokenizer<'a> {
   }
 
   fn read_next_skipped_whitespace(&mut self) -> u8 {
-    self.stream.advance();
+    //self.stream.advance();
     self.stream.skip_while(|b| b.is_ascii_whitespace());
     self.stream.current_cpy().unwrap()
   }
