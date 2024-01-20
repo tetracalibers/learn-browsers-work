@@ -613,8 +613,6 @@ impl<'a> Tokenizer<'a> {
 
     let peeked = self.stream.slice_len(pattern_len);
 
-    trace!("-- read_if_match: {}", bytes_to_string(peeked));
-
     if ignore_case {
       let peeked =
         peeked.iter().map(|&b| b.to_ascii_lowercase()).collect::<Vec<_>>();
