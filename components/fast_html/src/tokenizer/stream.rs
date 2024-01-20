@@ -76,7 +76,7 @@ impl<'a, T> Stream<'a, T> {
     &self.data[from..min(self.data.len(), to)]
   }
 
-  pub fn slice_len(&self, from: usize, len: usize) -> &'a [T] {
-    self.slice_checked(from, self.idx + len)
+  pub fn slice_len(&self, len: usize) -> &'a [T] {
+    self.slice_checked(self.idx, self.idx + len)
   }
 }

@@ -150,7 +150,7 @@ impl<'a> Tokenizer<'a> {
 
     match c {
       b'!' => {
-        unimplemented!("undefined State::MarkupDeclarationOpen");
+        self.switch_to(State::MarkupDeclarationOpen);
       }
       b'/' => {
         self.switch_to(State::EndTagOpen);
@@ -418,7 +418,21 @@ impl<'a> Tokenizer<'a> {
   }
 
   fn process_markup_declaration_open_state(&mut self) -> Option<Token> {
-    todo!("process_markup_declaration_open_state");
+    if self.read_if_match(b"--", false) {
+      unimplemented!("self.switch_to(State::CommentStart);");
+    }
+
+    if self.read_if_match(b"DOCTYPE", true) {
+      self.switch_to(State::DOCTYPE);
+      return None;
+    }
+
+    if self.read_if_match(b"[CDATA[", false) {
+      unimplemented!("self.switch_to(State::CDATASection);");
+    }
+
+    warn!("incorrectly-opened-comment");
+    unimplemented!("self.switch_to(State::BogusComment);");
   }
 
   fn process_doctype_state(&mut self) -> Option<Token> {
@@ -590,6 +604,36 @@ impl<'a> Tokenizer<'a> {
 
     self.stream.advance_by(end);
     self.stream.current_cpy().unwrap()
+  }
+
+  // patternに合致するなら、進める
+  // 合致して進めた場合、trueを返す
+  fn read_if_match(&mut self, pattern: &[u8], ignore_case: bool) -> bool {
+    let pattern_len = pattern.len();
+
+    let peeked = self.stream.slice_len(pattern_len);
+
+    trace!("-- read_if_match: {}", bytes_to_string(peeked));
+
+    if ignore_case {
+      let peeked =
+        peeked.iter().map(|&b| b.to_ascii_lowercase()).collect::<Vec<_>>();
+
+      let pattern =
+        pattern.iter().map(|&b| b.to_ascii_lowercase()).collect::<Vec<_>>();
+
+      if peeked == pattern {
+        self.stream.advance_by(pattern_len);
+        return true;
+      }
+    } else {
+      if peeked == pattern {
+        self.stream.advance_by(pattern_len);
+        return true;
+      }
+    }
+
+    false
   }
 
   fn read_to(&mut self, c: u8) -> &'a [u8] {
