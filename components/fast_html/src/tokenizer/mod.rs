@@ -70,6 +70,11 @@ impl<'a> Tokenizer<'a> {
         State::AfterAttributeValueQuoted => {
           self.process_after_attribute_value_quoted_state()
         }
+        State::DOCTYPE => self.process_doctype_state(),
+        State::BeforeDOCTYPEName => self.process_before_doctype_name_state(),
+        State::DOCTYPEName => self.process_doctype_name_state(),
+        State::AfterDOCTYPEName => self.process_after_doctype_name_state(),
+        State::BogusDOCTYPE => self.process_bogus_doctype_state(),
       };
 
       if let Some(token) = token {
@@ -407,6 +412,26 @@ impl<'a> Tokenizer<'a> {
     }
 
     None
+  }
+
+  fn process_doctype_state(&mut self) -> Option<Token> {
+    todo!("process_doctype_state");
+  }
+
+  fn process_before_doctype_name_state(&mut self) -> Option<Token> {
+    todo!("process_before_doctype_name_state");
+  }
+
+  fn process_doctype_name_state(&mut self) -> Option<Token> {
+    todo!("process_doctype_name_state");
+  }
+
+  fn process_after_doctype_name_state(&mut self) -> Option<Token> {
+    todo!("process_after_doctype_name_state");
+  }
+
+  fn process_bogus_doctype_state(&mut self) -> Option<Token> {
+    todo!("process_bogus_doctype_state");
   }
 
   /* -------------------------------------------- */
