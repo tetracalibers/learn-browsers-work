@@ -25,3 +25,8 @@ harness = false
 name    = "tokenizer"
 path    = "benches/tokenizer.rs"
 harness = false
+
+[[bench]]
+name    = "with_attributes"
+path    = "benches/with_attributes.rs"
+harness = false

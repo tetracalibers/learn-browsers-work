@@ -1,9 +1,10 @@
 use std::env;
 
-fn run_html() {
-  let target = r#"<p>paragraph1<p>paragraph2"#;
+const TARGET_HTML: &str =
+  r#"<a href="https://example.com" target="_blank">sample link</a>"#;
 
-  let document = html::debugger::get_document_from_html(target);
+fn run_html() {
+  let document = html::debugger::get_document_from_html(TARGET_HTML);
 
   html::debugger::print_dom_tree(&document);
 
@@ -15,9 +16,7 @@ fn run_html() {
 }
 
 fn run_fast_html() {
-  let target = r#"<p>paragraph1<p>paragraph2"#;
-
-  let document = fast_html::debugger::get_document_from_html(target);
+  let document = fast_html::debugger::get_document_from_html(TARGET_HTML);
 
   fast_html::debugger::print_dom_tree(&document);
 

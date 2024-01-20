@@ -4,6 +4,7 @@ mod stream;
 pub mod token;
 
 use std::collections::HashSet;
+use std::str::from_utf8;
 
 use self::byte_string::*;
 use self::state::State;
@@ -53,6 +54,26 @@ impl<'a> Tokenizer<'a> {
         State::TagOpen => self.process_tag_open_state(),
         State::TagName => self.process_tag_name_state(),
         State::EndTagOpen => self.process_end_tag_open_state(),
+        State::BeforeAttributeName => {
+          self.process_before_attribute_name_state()
+        }
+        State::AttributeName => self.process_attribute_name_state(),
+        State::AfterAttributeName => self.process_after_attribute_name_state(),
+        State::BeforeAttributeValue => {
+          self.process_before_attribute_value_state()
+        }
+        State::AttributeValueDoubleQuoted => {
+          self.process_attribute_value_double_quoted_state()
+        }
+        State::AttributeValueSingleQuoted => {
+          self.process_attribute_value_single_quoted_state()
+        }
+        State::AttributeValueUnQuoted => {
+          self.process_attribute_value_unquoted_state()
+        }
+        State::AfterAttributeValueQuoted => {
+          self.process_after_attribute_value_quoted_state()
+        }
       };
 
       if let Some(token) = token {
@@ -167,7 +188,7 @@ impl<'a> Tokenizer<'a> {
         self.append_replacement_char_to_tag_name();
       }
       b if b.is_ascii_whitespace() => {
-        unimplemented!("undefined State::BeforeAttributeName");
+        self.switch_to(State::BeforeAttributeName);
       }
       _ => {
         noop!();
@@ -205,6 +226,173 @@ impl<'a> Tokenizer<'a> {
     None
   }
 
+  fn process_before_attribute_name_state(&mut self) -> Option<Token> {
+    let c = self.read_next_skipped_whitespace();
+
+    match c {
+      b'/' | b'>' => {
+        self.switch_to(State::AfterAttributeName);
+      }
+      _ if self.stream.is_eof() => {
+        self.switch_to(State::AfterAttributeName);
+      }
+      b'=' => {
+        warn!("unexpected-equals-sign-before-attribute-name");
+        self.switch_to(State::AttributeName);
+      }
+      _ => {
+        self.switch_to(State::AttributeName);
+      }
+    }
+
+    None
+  }
+
+  fn process_attribute_name_state(&mut self) -> Option<Token> {
+    let bytes = self.read_to_whitespace_or_oneof(&[
+      b'/', b'>', b'=', b'\0', b'"', b'\'', b'<',
+    ]);
+
+    if !bytes.is_empty() {
+      self.set_attribute_name(bytes);
+    }
+
+    // read_currentに進む前にEOFチェック
+    if self.stream.is_eof() {
+      self.switch_to(State::AfterAttributeName);
+      return None;
+    }
+
+    let c = self.read_current();
+    self.stream.advance();
+
+    match c {
+      _ if c.is_ascii_whitespace() => {
+        self.switch_to(State::AfterAttributeName);
+      }
+      b'/' | b'>' => {
+        self.switch_to(State::AfterAttributeName);
+      }
+      b'=' => {
+        self.switch_to(State::BeforeAttributeValue);
+      }
+      b'\0' => {
+        warn!("unexpected-null-character");
+        self.append_char_to_attribute_name(REPLACEMENT_CHARACTER);
+      }
+      b'"' | b'\'' | b'<' => {
+        warn!("unexpected-character-in-attribute-name");
+        self.append_char_to_attribute_name(c as char);
+      }
+      _ => {
+        noop!();
+      }
+    }
+
+    None
+  }
+
+  fn process_after_attribute_name_state(&mut self) -> Option<Token> {
+    todo!("process_after_attribute_name_state");
+  }
+
+  fn process_before_attribute_value_state(&mut self) -> Option<Token> {
+    let c = self.read_next_skipped_whitespace();
+
+    self.stream.advance();
+
+    match c {
+      b'"' => {
+        self.switch_to(State::AttributeValueDoubleQuoted);
+      }
+      b'\'' => {
+        self.switch_to(State::AttributeValueSingleQuoted);
+      }
+      b'>' => {
+        warn!("missing-attribute-value");
+        self.switch_to(State::Data);
+        return Some(self.emit_current_token());
+      }
+      _ => {
+        self.reconsume_in_state(State::AttributeValueUnQuoted);
+      }
+    }
+
+    None
+  }
+
+  fn process_attribute_value_double_quoted_state(&mut self) -> Option<Token> {
+    let bytes = self.read_to_many(&[b'"', b'&', b'\0']);
+
+    if !bytes.is_empty() {
+      self.set_attribute_value(bytes);
+    }
+
+    // read_currentに進む前にEOFチェック
+    if self.stream.is_eof() {
+      warn!("eof-in-tag");
+      return Some(self.emit_eof());
+    }
+
+    let c = self.read_current();
+
+    match c {
+      b'"' => {
+        self.switch_to(State::AfterAttributeValueQuoted);
+      }
+      b'&' => {
+        self.return_state = Some(State::AttributeValueDoubleQuoted);
+        unimplemented!("self.switch_to(State::CharacterReference);");
+      }
+      b'\0' => {
+        warn!("unexpected-null-character");
+        self.append_char_to_attribute_value(REPLACEMENT_CHARACTER);
+      }
+      _ => {
+        noop!();
+      }
+    }
+
+    None
+  }
+
+  fn process_attribute_value_single_quoted_state(&mut self) -> Option<Token> {
+    todo!("process_attribute_value_single_quoted_state");
+  }
+
+  fn process_attribute_value_unquoted_state(&mut self) -> Option<Token> {
+    todo!("process_attribute_value_unquoted_state");
+  }
+
+  fn process_after_attribute_value_quoted_state(&mut self) -> Option<Token> {
+    let c = self.read_next();
+
+    self.stream.advance();
+
+    match c {
+      _ if c.is_ascii_whitespace() => {
+        self.switch_to(State::BeforeAttributeName);
+      }
+      b'/' => {
+        unimplemented!("self.switch_to(State::SelfClosingStartTag);");
+      }
+      b'>' => {
+        self.switch_to(State::Data);
+        return Some(self.emit_current_token());
+      }
+      _ if self.stream.is_eof() => {
+        warn!("eof-in-tag");
+        return Some(self.emit_eof());
+      }
+      _ => {
+        warn!("missing-whitespace-between-attributes");
+        self.reconsume_in_state(State::BeforeAttributeName);
+      }
+    }
+
+    None
+  }
+
   /* -------------------------------------------- */
 
   fn reconsume_in_state(&mut self, state: State) {
@@ -230,12 +418,57 @@ impl<'a> Tokenizer<'a> {
     }
   }
 
+  fn append_char_to_attribute_name(&mut self, c: char) {
+    let current_tag = self.current_token.as_mut().unwrap();
+    if let Token::Tag { attributes, .. } = current_tag {
+      if let Some(mut last) = attributes.pop() {
+        last.name.push(c);
+        attributes.push(last);
+      }
+    }
+  }
+
+  fn append_char_to_attribute_value(&mut self, c: char) {
+    let current_tag = self.current_token.as_mut().unwrap();
+    if let Token::Tag { attributes, .. } = current_tag {
+      if let Some(mut last) = attributes.pop() {
+        last.value.push(c);
+        attributes.push(last);
+      }
+    }
+  }
+
   fn set_tag_name(&mut self, name: &[u8]) {
     let name = bytes_to_string(name);
     let current_tag = self.current_token.as_mut().unwrap();
     match current_tag {
       Token::Tag { tag_name, .. } => {
         *tag_name = name;
+      }
+      _ => unreachable!("No tag found"),
+    }
+  }
+
+  fn set_attribute_name(&mut self, name: &[u8]) {
+    let name = from_utf8(name).unwrap();
+    let current_tag = self.current_token.as_mut().unwrap();
+    match current_tag {
+      Token::Tag { attributes, .. } => {
+        attributes.push(Attribute::new_name_of(name));
+      }
+      _ => unreachable!("No tag found"),
+    }
+  }
+
+  fn set_attribute_value(&mut self, value: &[u8]) {
+    let value = bytes_to_string(value);
+    let current_tag = self.current_token.as_mut().unwrap();
+    match current_tag {
+      Token::Tag { attributes, .. } => {
+        if let Some(mut last) = attributes.pop() {
+          last.value = value;
+          attributes.push(last);
+        }
       }
       _ => unreachable!("No tag found"),
     }
@@ -310,6 +543,19 @@ impl<'a> Tokenizer<'a> {
     self.stream.current_cpy().unwrap()
   }
 
+  fn read_next_skipped_whitespace(&mut self) -> u8 {
+    let start = self.stream.idx;
+    let rest = &self.stream.data()[start..];
+
+    let end = rest
+      .iter()
+      .position(|&b| !b.is_ascii_whitespace())
+      .unwrap_or(self.stream.len() - start);
+
+    self.stream.advance_by(end);
+    self.stream.current_cpy().unwrap()
+  }
+
   fn read_to(&mut self, c: u8) -> &'a [u8] {
     let start = self.stream.idx;
     let bytes = &self.stream.data()[start..];
@@ -330,6 +576,19 @@ impl<'a> Tokenizer<'a> {
     let end = bytes
       .iter()
       .position(|&b| c.contains(&b))
+      .unwrap_or(self.stream.len() - start);
+
+    self.stream.advance_by(end);
+    self.stream.slice(start, start + end)
+  }
+
+  fn read_to_whitespace_or_oneof(&mut self, c: &[u8]) -> &'a [u8] {
+    let start = self.stream.idx;
+    let bytes = &self.stream.data()[start..];
+
+    let end = bytes
+      .iter()
+      .position(|&b| c.contains(&b) || b.is_ascii_whitespace())
       .unwrap_or(self.stream.len() - start);
 
     self.stream.advance_by(end);
