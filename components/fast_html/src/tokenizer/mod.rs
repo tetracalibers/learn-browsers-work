@@ -12,7 +12,7 @@ use self::stream::Stream;
 use self::token::Attribute;
 use self::token::Token;
 
-use log::{debug, warn};
+use log::{debug, trace, warn};
 
 use ecow::EcoVec;
 
@@ -78,15 +78,25 @@ impl<'a> Tokenizer<'a> {
     }
   }
 
+  /* -------------------------------------------- */
+
   fn switch_to(&mut self, state: State) {
     debug!("Tokenizer State: switch to {:#?}", state);
+    self.state = state;
+    self.stream.advance();
+  }
+
+  fn reconsume_in(&mut self, state: State) {
+    debug!("Tokenizer State: reconsume in {:#?}", state);
     self.state = state;
   }
 
   /* -------------------------------------------- */
 
   fn process_data_state(&mut self) -> Option<Token> {
-    let bytes = self.read_to_many(&[b'<', b'&', b'\0']);
+    let bytes = self.read_to_oneof(&[b'<', b'&', b'\0']);
+
+    trace!("-- Data: {}", bytes_to_string(bytes));
 
     if !bytes.is_empty() {
       return Some(self.emit_text(bytes));
@@ -120,11 +130,13 @@ impl<'a> Tokenizer<'a> {
   }
 
   fn process_tag_open_state(&mut self) -> Option<Token> {
-    let c = self.read_next();
+    let c = self.read_current();
+
+    trace!("-- TagOpen: {}", c as char);
 
     if c.is_ascii_alphanumeric() {
       self.new_token(Token::new_start_tag());
-      self.switch_to(State::TagName);
+      self.reconsume_in(State::TagName);
       return None;
     }
 
@@ -147,7 +159,7 @@ impl<'a> Tokenizer<'a> {
       _ => {
         warn!("invalid-first-character-of-tag-name");
         self.will_emit(Token::new_text("<"));
-        self.reconsume_in_state(State::Data);
+        self.reconsume_in(State::Data);
       }
     }
 
@@ -156,7 +168,9 @@ impl<'a> Tokenizer<'a> {
 
   fn process_tag_name_state(&mut self) -> Option<Token> {
     let bytes =
-      self.read_to_many(&[b'/', b'>', b'\0', b'\t', b'\n', b' ', b'\x0C']);
+      self.read_to_oneof(&[b'/', b'>', b'\0', b'\t', b'\n', b' ', b'\x0C']);
+
+    trace!("-- TagName: {}", bytes_to_string(bytes));
 
     if bytes.iter().all(|&b| b.is_ascii_alphanumeric()) {
       self.set_tag_name(bytes);
@@ -169,7 +183,6 @@ impl<'a> Tokenizer<'a> {
     }
 
     let c = self.read_current();
-    self.stream.advance();
 
     match c {
       b'/' => {
@@ -195,11 +208,13 @@ impl<'a> Tokenizer<'a> {
   }
 
   fn process_end_tag_open_state(&mut self) -> Option<Token> {
-    let c = self.read_next();
+    let c = self.read_current();
+
+    trace!("-- EndTagOpen: {}", c as char);
 
     if c.is_ascii_alphanumeric() {
       self.new_token(Token::new_end_tag());
-      self.switch_to(State::TagName);
+      self.reconsume_in(State::TagName);
       return None;
     }
 
@@ -223,21 +238,23 @@ impl<'a> Tokenizer<'a> {
   }
 
   fn process_before_attribute_name_state(&mut self) -> Option<Token> {
-    let c = self.read_next_skipped_whitespace();
+    let c = self.read_current_skipped_whitespace();
+
+    trace!("-- BeforeAttributeName: {}", c as char);
 
     match c {
       b'/' | b'>' => {
-        self.switch_to(State::AfterAttributeName);
+        self.reconsume_in(State::AfterAttributeName);
       }
       _ if self.stream.is_eof() => {
-        self.switch_to(State::AfterAttributeName);
+        self.reconsume_in(State::AfterAttributeName);
       }
       b'=' => {
         warn!("unexpected-equals-sign-before-attribute-name");
         self.switch_to(State::AttributeName);
       }
       _ => {
-        self.switch_to(State::AttributeName);
+        self.reconsume_in(State::AttributeName);
       }
     }
 
@@ -248,6 +265,8 @@ impl<'a> Tokenizer<'a> {
     let bytes = self.read_to_whitespace_or_oneof(&[
       b'/', b'>', b'=', b'\0', b'"', b'\'', b'<',
     ]);
+
+    trace!("-- AttributeName: {}", bytes_to_string(bytes));
 
     if !bytes.is_empty() {
       self.set_attribute_name(bytes);
@@ -260,11 +279,10 @@ impl<'a> Tokenizer<'a> {
     }
 
     let c = self.read_current();
-    self.stream.advance();
 
     match c {
       _ if c.is_ascii_whitespace() => {
-        self.switch_to(State::AfterAttributeName);
+        self.reconsume_in(State::AfterAttributeName);
       }
       b'/' | b'>' => {
         self.switch_to(State::AfterAttributeName);
@@ -293,9 +311,9 @@ impl<'a> Tokenizer<'a> {
   }
 
   fn process_before_attribute_value_state(&mut self) -> Option<Token> {
-    let c = self.read_next_skipped_whitespace();
+    let c = self.read_current_skipped_whitespace();
 
-    self.stream.advance();
+    trace!("-- BeforeAttributeValue: {}", c as char);
 
     match c {
       b'"' => {
@@ -310,7 +328,7 @@ impl<'a> Tokenizer<'a> {
         return Some(self.emit_current_token());
       }
       _ => {
-        self.reconsume_in_state(State::AttributeValueUnQuoted);
+        self.reconsume_in(State::AttributeValueUnQuoted);
       }
     }
 
@@ -318,7 +336,9 @@ impl<'a> Tokenizer<'a> {
   }
 
   fn process_attribute_value_double_quoted_state(&mut self) -> Option<Token> {
-    let bytes = self.read_to_many(&[b'"', b'&', b'\0']);
+    let bytes = self.read_to_oneof(&[b'"', b'&', b'\0']);
+
+    trace!("-- AttributeValueDoubleQuoted: {}", bytes_to_string(bytes));
 
     if !bytes.is_empty() {
       self.set_attribute_value(bytes);
@@ -361,9 +381,9 @@ impl<'a> Tokenizer<'a> {
   }
 
   fn process_after_attribute_value_quoted_state(&mut self) -> Option<Token> {
-    let c = self.read_next();
+    let c = self.read_current();
 
-    self.stream.advance();
+    trace!("-- AfterAttributeValueQuoted: {}", c as char);
 
     match c {
       _ if c.is_ascii_whitespace() => {
@@ -382,18 +402,11 @@ impl<'a> Tokenizer<'a> {
       }
       _ => {
         warn!("missing-whitespace-between-attributes");
-        self.reconsume_in_state(State::BeforeAttributeName);
+        self.reconsume_in(State::BeforeAttributeName);
       }
     }
 
     None
-  }
-
-  /* -------------------------------------------- */
-
-  fn reconsume_in_state(&mut self, state: State) {
-    self.stream.reconsume();
-    self.switch_to(state);
   }
 
   /* -------------------------------------------- */
@@ -534,12 +547,7 @@ impl<'a> Tokenizer<'a> {
     self.stream.current_cpy().unwrap()
   }
 
-  fn read_next(&mut self) -> u8 {
-    self.stream.advance();
-    self.stream.current_cpy().unwrap()
-  }
-
-  fn read_next_skipped_whitespace(&mut self) -> u8 {
+  fn read_current_skipped_whitespace(&mut self) -> u8 {
     let start = self.stream.idx;
     let rest = &self.stream.data()[start..];
 
@@ -565,7 +573,7 @@ impl<'a> Tokenizer<'a> {
 
   // cに遭遇するまで読み進める
   // cを含む位置を返すので注意
-  fn read_to_many(&mut self, c: &[u8]) -> &'a [u8] {
+  fn read_to_oneof(&mut self, c: &[u8]) -> &'a [u8] {
     let start = self.stream.idx;
     let bytes = &self.stream.data()[start..];
 

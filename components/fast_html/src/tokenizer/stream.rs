@@ -60,10 +60,6 @@ impl<'a, T> Stream<'a, T> {
     self.idx += step;
   }
 
-  pub fn reconsume(&mut self) {
-    self.idx -= 1;
-  }
-
   pub fn current(&self) -> Option<&T> {
     self.data.get(self.idx)
   }
