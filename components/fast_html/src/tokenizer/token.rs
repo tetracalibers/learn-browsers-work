@@ -65,6 +65,13 @@ impl Token {
     Token::Text(EcoString::from(text))
   }
 
+  pub fn new_doctype_char_of(ch: char) -> Self {
+    Token::DOCTYPE {
+      name: Some(EcoString::from(ch)),
+      force_quirks: false,
+    }
+  }
+
   pub fn new_doctype_with_force_quirks() -> Self {
     Token::DOCTYPE {
       name: None,
