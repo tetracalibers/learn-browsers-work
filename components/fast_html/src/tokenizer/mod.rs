@@ -544,8 +544,15 @@ impl<'a> Tokenizer<'a> {
   }
 
   fn read_next_skipped_whitespace(&mut self) -> u8 {
-    //self.stream.advance();
-    self.stream.skip_while(|b| b.is_ascii_whitespace());
+    let start = self.stream.idx;
+    let rest = &self.stream.data()[start..];
+
+    let end = rest
+      .iter()
+      .position(|&b| !b.is_ascii_whitespace())
+      .unwrap_or(self.stream.len() - start);
+
+    self.stream.advance_by(end);
     self.stream.current_cpy().unwrap()
   }
 
