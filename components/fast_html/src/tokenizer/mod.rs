@@ -249,7 +249,34 @@ impl<'a> Tokenizer<'a> {
   }
 
   fn process_self_closing_start_tag_state(&mut self) -> Option<Token> {
-    todo!("process_self_closing_start_tag_state");
+    let b = self.read_current();
+
+    trace!("-- SelfClosingStartTag: {}", b as char);
+
+    match b {
+      b'>' => {
+        let current_token = self.current_token.as_mut().unwrap();
+        if let Token::Tag {
+          ref mut self_closing,
+          ..
+        } = current_token
+        {
+          *self_closing = true;
+        }
+        self.switch_to(State::Data);
+        return Some(self.emit_current_token());
+      }
+      _ if self.stream.is_eof() => {
+        warn!("eof-in-tag");
+        return Some(self.emit_eof());
+      }
+      _ => {
+        warn!("unexpected-solidus-in-tag");
+        self.reconsume_in(State::BeforeAttributeName);
+      }
+    }
+
+    None
   }
 
   fn process_before_attribute_name_state(&mut self) -> Option<Token> {
