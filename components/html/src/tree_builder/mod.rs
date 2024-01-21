@@ -956,7 +956,10 @@ impl<T: Tokenizing> TreeBuilder<T> {
         "strong", "tt", "u",
       ])
     {
-      todo!("process_in_body: formatting start tag");
+      self.reconstruct_active_formatting_elements();
+      let element = self.insert_html_element(token);
+      self.active_formatting_elements.push(Entry::Element(element));
+      return;
     }
 
     if token.is_start_tag() && token.tag_name() == "nobr" {
