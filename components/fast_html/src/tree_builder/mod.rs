@@ -13,6 +13,7 @@ use fast_dom::tree::WeakTreeNode;
 use fast_dom::{document::DocumentType, node::DOMNodeData};
 
 use ecow::{EcoString, EcoVec};
+
 use log::{debug, warn};
 
 use crate::tokenizer;
@@ -1557,7 +1558,14 @@ impl<'a> TreeBuilder<'a> {
     }
 
     if token.is_start_tag() && token.tag_name() == "hr" {
-      todo!("process_in_body: hr start tag");
+      if self.open_elements.has_element_name_in_button_scope("p") {
+        self.close_p_element();
+      }
+      token.acknowledge_self_closing_if_set();
+      self.insert_html_element(token);
+      self.open_elements.pop();
+      self.frameset_ok = false;
+      return;
     }
 
     if token.is_start_tag() && token.tag_name() == "image" {
