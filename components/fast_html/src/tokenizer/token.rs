@@ -4,13 +4,13 @@ use std::ops::DerefMut;
 use ecow::EcoString;
 use ecow::EcoVec;
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct Attribute {
   pub name: EcoString,
   pub value: EcoString,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub enum Token {
   DOCTYPE {
     name: Option<EcoString>,
@@ -65,6 +65,20 @@ impl Token {
     Token::Text(EcoString::from(text))
   }
 
+  pub fn new_doctype_char_of(ch: char) -> Self {
+    Token::DOCTYPE {
+      name: Some(EcoString::from(ch)),
+      force_quirks: false,
+    }
+  }
+
+  pub fn new_doctype_with_force_quirks() -> Self {
+    Token::DOCTYPE {
+      name: None,
+      force_quirks: true,
+    }
+  }
+
   /* getter ------------------------------------- */
 
   pub fn tag_name(&self) -> &EcoString {
@@ -95,6 +109,16 @@ impl Token {
       if *self_closing {
         *self_closing_acknowledged = true;
       }
+    }
+  }
+
+  pub fn set_force_quirks(&mut self, value: bool) {
+    if let Token::DOCTYPE {
+      ref mut force_quirks,
+      ..
+    } = self
+    {
+      *force_quirks = value;
     }
   }
 

@@ -70,6 +70,14 @@ impl<'a> Tokenizer<'a> {
         State::AfterAttributeValueQuoted => {
           self.process_after_attribute_value_quoted_state()
         }
+        State::MarkupDeclarationOpen => {
+          self.process_markup_declaration_open_state()
+        }
+        State::DOCTYPE => self.process_doctype_state(),
+        State::BeforeDOCTYPEName => self.process_before_doctype_name_state(),
+        State::DOCTYPEName => self.process_doctype_name_state(),
+        State::AfterDOCTYPEName => self.process_after_doctype_name_state(),
+        State::BogusDOCTYPE => self.process_bogus_doctype_state(),
       };
 
       if let Some(token) = token {
@@ -142,7 +150,7 @@ impl<'a> Tokenizer<'a> {
 
     match c {
       b'!' => {
-        unimplemented!("undefined State::MarkupDeclarationOpen");
+        self.switch_to(State::MarkupDeclarationOpen);
       }
       b'/' => {
         self.switch_to(State::EndTagOpen);
@@ -409,6 +417,136 @@ impl<'a> Tokenizer<'a> {
     None
   }
 
+  fn process_markup_declaration_open_state(&mut self) -> Option<Token> {
+    if self.read_if_match(b"--", false) {
+      unimplemented!("self.switch_to(State::CommentStart);");
+    }
+
+    if self.read_if_match(b"DOCTYPE", true) {
+      self.switch_to(State::DOCTYPE);
+      return None;
+    }
+
+    if self.read_if_match(b"[CDATA[", false) {
+      unimplemented!("self.switch_to(State::CDATASection);");
+    }
+
+    warn!("incorrectly-opened-comment");
+    unimplemented!("self.switch_to(State::BogusComment);");
+  }
+
+  fn process_doctype_state(&mut self) -> Option<Token> {
+    let c = self.read_current();
+
+    trace!("-- DOCTYPE: {}", c as char);
+
+    match c {
+      _ if c.is_ascii_whitespace() => {
+        self.switch_to(State::BeforeDOCTYPEName);
+      }
+      b'>' => {
+        self.reconsume_in(State::BeforeDOCTYPEName);
+      }
+      _ if self.stream.is_eof() => {
+        warn!("eof-in-doctype");
+        let token = Token::new_doctype_with_force_quirks();
+        self.new_token(token);
+        self.will_emit(self.current_token.clone().unwrap());
+        return Some(self.emit_eof());
+      }
+      _ => {
+        warn!("missing-whitespace-before-doctype-name");
+        self.reconsume_in(State::BeforeDOCTYPEName);
+      }
+    }
+
+    None
+  }
+
+  fn process_before_doctype_name_state(&mut self) -> Option<Token> {
+    let b = self.read_current_skipped_whitespace();
+
+    trace!("-- BeforeDOCTYPEName: {}", b as char);
+
+    match b {
+      b'>' => {
+        warn!("missing-doctype-name");
+        let token = Token::new_doctype_with_force_quirks();
+        self.new_token(token);
+        self.switch_to(State::Data);
+        return Some(self.emit_current_token());
+      }
+      b'\0' => {
+        warn!("unexpected-null-character");
+        let token = Token::new_doctype_char_of(REPLACEMENT_CHARACTER);
+        self.new_token(token);
+        self.switch_to(State::DOCTYPEName);
+      }
+      _ if self.stream.is_eof() => {
+        warn!("eof-in-doctype");
+        let token = Token::new_doctype_with_force_quirks();
+        self.new_token(token);
+        self.will_emit(self.current_token.clone().unwrap());
+        return Some(self.emit_eof());
+      }
+      _ => {
+        let token = Token::new_doctype_char_of(b as char);
+        self.new_token(token);
+        self.switch_to(State::DOCTYPEName);
+      }
+    }
+
+    None
+  }
+
+  fn process_doctype_name_state(&mut self) -> Option<Token> {
+    let bytes = self.read_to_whitespace_or_oneof(&[b'>', b'\0']);
+
+    trace!("-- DOCTYPEName: {}", bytes_to_string(bytes));
+
+    if !bytes.is_empty() {
+      self.concat_to_doctype_name(bytes);
+    }
+
+    // read_currentに進む前にEOFチェック
+    if self.stream.is_eof() {
+      warn!("eof-in-doctype");
+      let mut token = self.current_token.clone().unwrap();
+      token.set_force_quirks(true);
+      self.will_emit(token);
+      return Some(self.emit_eof());
+    }
+
+    let b = self.read_current();
+
+    match b {
+      _ if b.is_ascii_whitespace() => {
+        self.switch_to(State::AfterDOCTYPEName);
+      }
+      b'>' => {
+        self.switch_to(State::Data);
+        return Some(self.emit_current_token());
+      }
+      b'\0' => {
+        warn!("unexpected-null-character");
+        self.append_char_to_doctype_name(REPLACEMENT_CHARACTER);
+      }
+      _ => {
+        // noop
+      }
+    }
+
+    None
+  }
+
+  fn process_after_doctype_name_state(&mut self) -> Option<Token> {
+    todo!("process_after_doctype_name_state");
+  }
+
+  fn process_bogus_doctype_state(&mut self) -> Option<Token> {
+    todo!("process_bogus_doctype_state");
+  }
+
   /* -------------------------------------------- */
 
   fn new_token(&mut self, token: Token) {
@@ -443,6 +581,33 @@ impl<'a> Tokenizer<'a> {
       if let Some(mut last) = attributes.pop() {
         last.value.push(c);
         attributes.push(last);
+      }
+    }
+  }
+
+  fn append_char_to_doctype_name(&mut self, c: char) {
+    let current_tag = self.current_token.as_mut().unwrap();
+    if let Token::DOCTYPE {
+      name: ref mut old_name,
+      ..
+    } = current_tag
+    {
+      if let Some(ref mut old_name) = old_name {
+        old_name.push(c);
+      }
+    }
+  }
+
+  fn concat_to_doctype_name(&mut self, name: &[u8]) {
+    let name = bytes_to_string(name);
+    let current_tag = self.current_token.as_mut().unwrap();
+    if let Token::DOCTYPE {
+      name: ref mut old_name,
+      ..
+    } = current_tag
+    {
+      if let Some(ref mut old_name) = old_name {
+        old_name.push_str(&name);
       }
     }
   }
@@ -558,6 +723,34 @@ impl<'a> Tokenizer<'a> {
 
     self.stream.advance_by(end);
     self.stream.current_cpy().unwrap()
+  }
+
+  // patternに合致するなら、進める
+  // 合致して進めた場合、trueを返す
+  fn read_if_match(&mut self, pattern: &[u8], ignore_case: bool) -> bool {
+    let pattern_len = pattern.len();
+
+    let peeked = self.stream.slice_len(pattern_len);
+
+    if ignore_case {
+      let peeked =
+        peeked.iter().map(|&b| b.to_ascii_lowercase()).collect::<Vec<_>>();
+
+      let pattern =
+        pattern.iter().map(|&b| b.to_ascii_lowercase()).collect::<Vec<_>>();
+
+      if peeked == pattern {
+        // for _ in 0..pattern.len() { self.stream.advance(); } のイメージ
+        self.stream.advance_by(pattern_len - 1);
+        return true;
+      }
+    } else if peeked == pattern {
+      // for _ in 0..pattern.len() { self.stream.advance(); } のイメージ
+      self.stream.advance_by(pattern_len - 1);
+      return true;
+    }
+
+    false
   }
 
   fn read_to(&mut self, c: u8) -> &'a [u8] {
