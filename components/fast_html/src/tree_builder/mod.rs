@@ -13,7 +13,7 @@ use fast_dom::tree::WeakTreeNode;
 use fast_dom::{document::DocumentType, node::DOMNodeData};
 
 use ecow::{EcoString, EcoVec};
-use log::trace;
+
 use log::{debug, warn};
 
 use crate::tokenizer;
