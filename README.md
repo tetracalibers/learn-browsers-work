@@ -28,6 +28,7 @@ RUST_LOG=trace cargo run -- html
 
 - 古いDOCTYPE
 - 文字参照
+- コメント
 - scriptタグ
 - styleタグ
 - framesetタグ
