@@ -4,13 +4,13 @@ use std::ops::DerefMut;
 use ecow::EcoString;
 use ecow::EcoVec;
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct Attribute {
   pub name: EcoString,
   pub value: EcoString,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub enum Token {
   DOCTYPE {
     name: Option<EcoString>,
