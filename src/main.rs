@@ -1,7 +1,12 @@
 use std::env;
 
-const TARGET_HTML: &str =
-  r#"<a href="https://example.com" target="_blank">sample link</a>"#;
+const TARGET_HTML: &str = r#"<!DOCTYPE html>
+<html>
+<body>
+  <h1>heading</h1>
+  <p>paragraph</p>
+</body>
+</html>"#;
 
 fn run_html() {
   let document = html::debugger::get_document_from_html(TARGET_HTML);
@@ -10,7 +15,7 @@ fn run_html() {
 
   println!("-------------------");
 
-  let json = html::debugger::dom_in_body_to_json(&document);
+  let json = html::debugger::dom_to_json(&document);
 
   println!("{}", json);
 }
@@ -22,7 +27,7 @@ fn run_fast_html() {
 
   println!("-------------------");
 
-  let json = fast_html::debugger::dom_body_to_json_string(&document);
+  let json = fast_html::debugger::dom_to_json_string(&document);
   println!("{}", json);
 }
 
