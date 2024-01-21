@@ -197,7 +197,7 @@ impl<'a> Tokenizer<'a> {
 
     match c {
       b'/' => {
-        unimplemented!("undefined State::SelfClosingStartTag");
+        self.switch_to(State::SelfClosingStartTag);
       }
       b'>' => {
         self.switch_to(State::Data);
@@ -405,7 +405,7 @@ impl<'a> Tokenizer<'a> {
         self.switch_to(State::BeforeAttributeName);
       }
       b'/' => {
-        unimplemented!("self.switch_to(State::SelfClosingStartTag);");
+        self.switch_to(State::SelfClosingStartTag);
       }
       b'>' => {
         self.switch_to(State::Data);
