@@ -24,14 +24,15 @@ RUST_LOG=trace cargo run -- html
 
 `-- html`ではなく、`-- fast_html`とすると、高速化バージョンを実行できます。
 
-### サポートしない予定のもの
+### Maybe later...
 
 - 古いDOCTYPE
 - 文字参照
 - scriptタグ
+- styleタグ
 - framesetタグ
 - templateタグ
-- SVG
+- SVG関連タグ
 
 ## WIP: CSS Parser
 

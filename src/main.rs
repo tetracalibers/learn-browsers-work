@@ -8,8 +8,8 @@ const TARGET_HTML: &str = r#"<!DOCTYPE html>
 </body>
 </html>"#;
 
-fn run_html() {
-  let document = html::debugger::get_document_from_html(TARGET_HTML);
+fn run_html(html: &str) {
+  let document = html::debugger::get_document_from_html(html);
 
   html::debugger::print_dom_tree(&document);
 
@@ -20,8 +20,8 @@ fn run_html() {
   println!("{}", json);
 }
 
-fn run_fast_html() {
-  let document = fast_html::debugger::get_document_from_html(TARGET_HTML);
+fn run_fast_html(html: &str) {
+  let document = fast_html::debugger::get_document_from_html(html);
 
   fast_html::debugger::print_dom_tree(&document);
 
@@ -48,8 +48,24 @@ fn main() {
   let target = &args[1];
 
   match target.as_str() {
-    "html" => run_html(),
-    "fast_html" => run_fast_html(),
+    "html" => {
+      let html = if args.len() > 2 {
+        &args[2]
+      } else {
+        TARGET_HTML
+      };
+
+      run_html(html);
+    }
+    "fast_html" => {
+      let html = if args.len() > 2 {
+        &args[2]
+      } else {
+        TARGET_HTML
+      };
+
+      run_fast_html(html);
+    }
     "css" => run_css(),
     _ => println!("Please specify the target."),
   }
