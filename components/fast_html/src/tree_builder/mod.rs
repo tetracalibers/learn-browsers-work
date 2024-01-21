@@ -178,10 +178,10 @@ impl<'a> TreeBuilder<'a> {
 
     match algorithm {
       TextOnlyElementParsingAlgorithm::GenericRawText => {
-        self.tokenizer.switch_to(tokenizer::state::State::RAWTEXT);
+        self.tokenizer.reconsume_in(tokenizer::state::State::RAWTEXT);
       }
       TextOnlyElementParsingAlgorithm::GenericRCDataElement => {
-        self.tokenizer.switch_to(tokenizer::state::State::RCDATA);
+        self.tokenizer.reconsume_in(tokenizer::state::State::RCDATA);
       }
     }
 

@@ -100,7 +100,7 @@ impl<'a> Tokenizer<'a> {
     self.stream.advance();
   }
 
-  fn reconsume_in(&mut self, state: State) {
+  pub fn reconsume_in(&mut self, state: State) {
     debug!("Tokenizer State: reconsume in {:#?}", state);
     self.state = state;
   }
