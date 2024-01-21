@@ -84,15 +84,11 @@ impl<'a> TreeBuilder<'a> {
   }
 
   pub fn run(mut self) -> NodePtr {
-    loop {
+    while !self.should_stop {
       let token = self.tokenizer.next_token();
       debug!("{:?}", token);
 
       self.process(token);
-
-      if self.should_stop {
-        break;
-      }
     }
 
     self.flush_text_insertion();
