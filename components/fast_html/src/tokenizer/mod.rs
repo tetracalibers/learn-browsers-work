@@ -1,5 +1,5 @@
 mod byte_string;
-mod state;
+pub mod state;
 mod stream;
 pub mod token;
 
@@ -81,6 +81,8 @@ impl<'a> Tokenizer<'a> {
         State::DOCTYPEName => self.process_doctype_name_state(),
         State::AfterDOCTYPEName => self.process_after_doctype_name_state(),
         State::BogusDOCTYPE => self.process_bogus_doctype_state(),
+        State::RAWTEXT => self.process_rawtext_state(),
+        State::RCDATA => self.process_rcdata_state(),
       };
 
       if let Some(token) = token {
@@ -91,7 +93,7 @@ impl<'a> Tokenizer<'a> {
 
   /* -------------------------------------------- */
 
-  fn switch_to(&mut self, state: State) {
+  pub fn switch_to(&mut self, state: State) {
     debug!("Tokenizer State: switch to {:#?}", state);
     self.state = state;
     self.stream.advance();
@@ -603,6 +605,14 @@ impl<'a> Tokenizer<'a> {
 
   fn process_bogus_doctype_state(&mut self) -> Option<Token> {
     todo!("process_bogus_doctype_state");
+  }
+
+  fn process_rawtext_state(&mut self) -> Option<Token> {
+    todo!("process_rawtext_state");
+  }
+
+  fn process_rcdata_state(&mut self) -> Option<Token> {
+    todo!("process_rcdata_state");
   }
 
   /* -------------------------------------------- */

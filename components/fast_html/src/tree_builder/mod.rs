@@ -15,6 +15,8 @@ use fast_dom::{document::DocumentType, node::DOMNodeData};
 use ecow::{EcoString, EcoVec};
 use log::{debug, warn};
 
+use crate::tokenizer;
+
 use super::tokenizer::token::Attribute;
 use super::tokenizer::token::Token;
 use super::tokenizer::Tokenizer;
@@ -39,6 +41,11 @@ impl AdjustedInsertionLocation {
       AdjustedInsertionLocation::BeforeSibling(parent, _) => parent,
     }
   }
+}
+
+enum TextOnlyElementParsingAlgorithm {
+  GenericRawText,
+  GenericRCDataElement,
 }
 
 enum AdoptionAgencyAlgorithmOutcome {
@@ -106,6 +113,7 @@ impl<'a> TreeBuilder<'a> {
       InsertMode::InBody => self.handle_in_body_mode(token),
       InsertMode::AfterBody => self.handle_after_body_mode(token),
       InsertMode::AfterAfterBody => self.handle_after_after_body_mode(token),
+      InsertMode::Text => self.handle_text_mode(token),
     }
   }
 
@@ -159,6 +167,28 @@ impl<'a> TreeBuilder<'a> {
 
       self.text_insertion_string_data.clear();
     }
+  }
+
+  fn parse_text_only_element(
+    &mut self,
+    token: Token,
+    algorithm: TextOnlyElementParsingAlgorithm,
+  ) {
+    self.insert_html_element(token);
+
+    match algorithm {
+      TextOnlyElementParsingAlgorithm::GenericRawText => {
+        self.tokenizer.switch_to(tokenizer::state::State::RAWTEXT);
+      }
+      TextOnlyElementParsingAlgorithm::GenericRCDataElement => {
+        self.tokenizer.switch_to(tokenizer::state::State::RCDATA);
+      }
+    }
+
+    // テキストの解析が終わったら、元の挿入モードに戻りたいので保存しておく
+    self.original_insert_mode = Some(self.insert_mode.clone());
+    // テキストの解析に入る
+    self.switch_to(InsertMode::Text);
   }
 
   /* attribute ---------------------------------- */
@@ -826,7 +856,11 @@ impl<'a> TreeBuilder<'a> {
     }
 
     if token.is_start_tag() && token.tag_name() == "title" {
-      todo!("handle_in_head_mode: title");
+      self.parse_text_only_element(
+        token,
+        TextOnlyElementParsingAlgorithm::GenericRCDataElement,
+      );
+      return;
     }
 
     if token.is_start_tag() && token.tag_name() == "noscript" && !self.scripting
@@ -1667,5 +1701,9 @@ impl<'a> TreeBuilder<'a> {
     self.unexpected(&token);
     self.switch_to(InsertMode::InBody);
     self.process(token);
+  }
+
+  fn handle_text_mode(&mut self, token: Token) {
+    todo!("handle_text_mode");
   }
 }
