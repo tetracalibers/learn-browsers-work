@@ -26,6 +26,7 @@ pub struct Tokenizer<'a> {
   output: EcoVec<Token>,
   current_token: Option<Token>,
   last_emitted_start_tag: Option<Token>,
+  tmp_buffer: EcoVec<u8>,
 }
 
 impl<'a> Tokenizer<'a> {
@@ -37,6 +38,7 @@ impl<'a> Tokenizer<'a> {
       output: EcoVec::new(),
       current_token: None,
       last_emitted_start_tag: None,
+      tmp_buffer: EcoVec::new(),
     }
   }
 
@@ -86,7 +88,7 @@ impl<'a> Tokenizer<'a> {
         State::RCDATA => self.process_rcdata_state(),
         State::RCDATALessThanSign => self.process_rcdata_less_than_sign_state(),
         State::RCDATAEndTagOpen => self.process_rcdata_end_tag_open_state(),
-        State::RCDATAEndTagName => self.process_rcdata_ent_tag_name_state(),
+        State::RCDATAEndTagName => self.process_rcdata_end_tag_name_state(),
       };
 
       if let Some(token) = token {
@@ -656,7 +658,7 @@ impl<'a> Tokenizer<'a> {
 
     match b {
       b'/' => {
-        // TODO: self.tmp_buffer.clear(); が必要か検討
+        self.clear_tmp_buffer();
         self.switch_to(State::RCDATAEndTagOpen);
       }
       _ => {
@@ -687,8 +689,59 @@ impl<'a> Tokenizer<'a> {
     None
   }
 
-  fn process_rcdata_ent_tag_name_state(&mut self) -> Option<Token> {
-    todo!("process_rcdata_ent_tag_name_state");
+  fn process_rcdata_end_tag_name_state(&mut self) -> Option<Token> {
+    let bytes = self.read_to_whitespace_or_oneof(&[b'/', b'>', b'\0']);
+
+    trace!("-- RCDATAEndTagName: {}", bytes_to_string(bytes));
+
+    if !bytes.is_empty() {
+      self.concat_to_tag_name(bytes);
+      self.push_many_to_tmp_buffer(bytes);
+    }
+
+    fn invalid(this: &mut Tokenizer<'_>) {
+      this.will_emit(Token::new_text("</"));
+      this.emit_tmp_buffer();
+      this.reconsume_in(State::RCDATA);
+    }
+
+    // read_currentに進む前にEOFチェック
+    if self.stream.is_eof() {
+      invalid(self);
+      return None;
+    }
+
+    let b = self.read_current();
+
+    match b {
+      b'/' => {
+        if !self.is_appropriate_end_tag() {
+          invalid(self);
+        } else {
+          self.switch_to(State::SelfClosingStartTag);
+        }
+      }
+      b'>' => {
+        if !self.is_appropriate_end_tag() {
+          invalid(self);
+        } else {
+          self.switch_to(State::Data);
+          return Some(self.emit_current_token());
+        }
+      }
+      _ if b.is_ascii_whitespace() => {
+        if !self.is_appropriate_end_tag() {
+          invalid(self);
+        } else {
+          self.switch_to(State::BeforeAttributeName);
+        }
+      }
+      _ => {
+        invalid(self);
+      }
+    }
+
+    None
   }
 
   /* -------------------------------------------- */
@@ -742,6 +795,17 @@ impl<'a> Tokenizer<'a> {
     }
   }
 
+  fn concat_to_tag_name(&mut self, suffix: &[u8]) {
+    let suffix = bytes_to_string(suffix);
+    let current_tag = self.current_token.as_mut().unwrap();
+    match current_tag {
+      Token::Tag { tag_name, .. } => {
+        tag_name.push_str(&suffix);
+      }
+      _ => unreachable!("No tag found"),
+    }
+  }
+
   fn concat_to_doctype_name(&mut self, name: &[u8]) {
     let name = bytes_to_string(name);
     let current_tag = self.current_token.as_mut().unwrap();
@@ -790,6 +854,29 @@ impl<'a> Tokenizer<'a> {
       }
       _ => unreachable!("No tag found"),
     }
+  }
+
+  /* -------------------------------------------- */
+
+  fn is_appropriate_end_tag(&mut self) -> bool {
+    if self.last_emitted_start_tag.is_none() {
+      return false;
+    }
+
+    let current_tag = self.current_token.as_ref().unwrap();
+    let last_start_tag = self.last_emitted_start_tag.as_ref().unwrap();
+
+    if let Token::Tag { tag_name, .. } = current_tag {
+      let current_tag_name = tag_name;
+
+      if let Token::Tag { tag_name, .. } = last_start_tag {
+        let last_tag_name = tag_name;
+
+        return current_tag_name == last_tag_name;
+      }
+    }
+
+    false
   }
 
   /* -------------------------------------------- */
@@ -853,6 +940,25 @@ impl<'a> Tokenizer<'a> {
   fn emit_eof(&mut self) -> Token {
     self.new_token(Token::EOF);
     self.emit_current_token()
+  }
+
+  fn emit_tmp_buffer(&mut self) {
+    self.output.push(Token::Text(bytes_to_string(&self.tmp_buffer)));
+  }
+
+  /* tmp buffer --------------------------------- */
+
+  fn clear_tmp_buffer(&mut self) {
+    self.tmp_buffer.clear();
+    trace!("-- tmp_buffer_clear");
+  }
+
+  fn push_many_to_tmp_buffer(&mut self, bytes: &[u8]) {
+    self.tmp_buffer.extend_from_slice(bytes);
+    trace!(
+      "-- tmp_buffer: {:?}",
+      bytes_to_string(self.tmp_buffer.as_slice())
+    );
   }
 
   /* -------------------------------------------- */
