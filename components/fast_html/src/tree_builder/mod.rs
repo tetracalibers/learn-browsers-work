@@ -1638,6 +1638,34 @@ impl<'a> TreeBuilder<'a> {
   }
 
   fn handle_after_after_body_mode(&mut self, token: Token) {
-    todo!("handle_after_after_body_mode");
+    if token.is_eof() {
+      self.stop_parsing();
+      return;
+    }
+
+    if let Token::Comment(text) = token {
+      let data = DOMNodeData::Comment(text);
+      let comment = TreeNode::new(DOMNode::new(data));
+      self.document.append_child(comment);
+      return;
+    }
+
+    if let Token::DOCTYPE { .. } = token {
+      return self.handle_in_body_mode(token);
+    }
+
+    if let Token::Text(ref str) = token {
+      if str.trim().is_empty() {
+        return self.handle_in_body_mode(token);
+      }
+    }
+
+    if token.is_start_tag() && token.tag_name() == "html" {
+      return self.handle_in_body_mode(token);
+    }
+
+    self.unexpected(&token);
+    self.switch_to(InsertMode::InBody);
+    self.process(token);
   }
 }
