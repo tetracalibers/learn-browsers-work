@@ -109,6 +109,8 @@ impl<'a> TreeBuilder<'a> {
       InsertMode::InHead => self.handle_in_head_mode(token),
       InsertMode::AfterHead => self.handle_after_head_mode(token),
       InsertMode::InBody => self.handle_in_body_mode(token),
+      InsertMode::AfterBody => self.handle_after_body_mode(token),
+      InsertMode::AfterAfterBody => self.handle_after_after_body_mode(token),
     }
   }
 
@@ -1097,7 +1099,7 @@ impl<'a> TreeBuilder<'a> {
         self.unexpected(&token);
       }
 
-      unimplemented!("self.switch_to(InsertMode::AfterBody)");
+      self.switch_to(InsertMode::AfterBody);
       return;
     }
 
@@ -1114,8 +1116,8 @@ impl<'a> TreeBuilder<'a> {
         self.unexpected(&token);
       }
 
-      unimplemented!("self.switch_to(InsertMode::AfterBody)");
-      //return self.process(token);
+      self.switch_to(InsertMode::AfterBody);
+      return self.process(token);
     }
 
     if token.is_start_tag()
@@ -1597,5 +1599,13 @@ impl<'a> TreeBuilder<'a> {
     if token.is_end_tag() {
       any_other_end_tags(self, token)
     }
+  }
+
+  fn handle_after_body_mode(&mut self, token: Token) {
+    todo!("handle_after_body_mode");
+  }
+
+  fn handle_after_after_body_mode(&mut self, token: Token) {
+    todo!("handle_after_after_body_mode");
   }
 }
