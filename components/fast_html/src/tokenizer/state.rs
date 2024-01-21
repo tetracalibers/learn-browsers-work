@@ -5,6 +5,7 @@ pub enum State {
   TagName,
   TagOpen,
   EndTagOpen,
+  SelfClosingStartTag,
 
   BeforeAttributeName,
   AttributeName,

@@ -50,6 +50,9 @@ impl<'a> Tokenizer<'a> {
         State::TagOpen => self.process_tag_open_state(),
         State::TagName => self.process_tag_name_state(),
         State::EndTagOpen => self.process_end_tag_open_state(),
+        State::SelfClosingStartTag => {
+          self.process_self_closing_start_tag_state()
+        }
         State::BeforeAttributeName => {
           self.process_before_attribute_name_state()
         }
@@ -243,6 +246,10 @@ impl<'a> Tokenizer<'a> {
     }
 
     None
+  }
+
+  fn process_self_closing_start_tag_state(&mut self) -> Option<Token> {
+    todo!("process_self_closing_start_tag_state");
   }
 
   fn process_before_attribute_name_state(&mut self) -> Option<Token> {
