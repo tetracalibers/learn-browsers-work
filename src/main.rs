@@ -2,10 +2,10 @@ use std::env;
 
 const TARGET_HTML: &str = r#"<!DOCTYPE html>
 <html>
-<body>
-  <h1>heading</h1>
-  <p>paragraph</p>
-</body>
+<head>
+  <title>document title</title>
+</head>
+<body></body>
 </html>"#;
 
 fn run_html(html: &str) {

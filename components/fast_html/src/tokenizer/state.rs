@@ -2,6 +2,13 @@
 pub enum State {
   Data,
 
+  RCDATA,
+
+  RAWTEXT,
+  RCDATALessThanSign,
+  RCDATAEndTagOpen,
+  RCDATAEndTagName,
+
   TagName,
   TagOpen,
   EndTagOpen,
