@@ -83,22 +83,17 @@ impl<'a> TreeBuilder<'a> {
     }
   }
 
-  pub fn run(&mut self) -> NodePtr {
+  pub fn run(mut self) -> NodePtr {
     while !self.should_stop {
       let token = self.tokenizer.next_token();
       debug!("{:?}", token);
-
-      if token.is_eof() {
-        self.stop_parsing();
-        continue;
-      }
 
       self.process(token);
     }
 
     self.flush_text_insertion();
 
-    self.document.clone()
+    self.document
   }
 
   fn process(&mut self, token: Token) {
@@ -109,6 +104,8 @@ impl<'a> TreeBuilder<'a> {
       InsertMode::InHead => self.handle_in_head_mode(token),
       InsertMode::AfterHead => self.handle_after_head_mode(token),
       InsertMode::InBody => self.handle_in_body_mode(token),
+      InsertMode::AfterBody => self.handle_after_body_mode(token),
+      InsertMode::AfterAfterBody => self.handle_after_after_body_mode(token),
     }
   }
 
@@ -144,7 +141,7 @@ impl<'a> TreeBuilder<'a> {
         warn!("Unexpected text: {}", text);
       }
       Token::EOF => {
-        todo!("unexpected: Token::EOF");
+        warn!("Unexpected EOF");
       }
     }
   }
@@ -1097,7 +1094,7 @@ impl<'a> TreeBuilder<'a> {
         self.unexpected(&token);
       }
 
-      unimplemented!("self.switch_to(InsertMode::AfterBody)");
+      self.switch_to(InsertMode::AfterBody);
       return;
     }
 
@@ -1114,8 +1111,8 @@ impl<'a> TreeBuilder<'a> {
         self.unexpected(&token);
       }
 
-      unimplemented!("self.switch_to(InsertMode::AfterBody)");
-      //return self.process(token);
+      self.switch_to(InsertMode::AfterBody);
+      return self.process(token);
     }
 
     if token.is_start_tag()
@@ -1597,5 +1594,78 @@ impl<'a> TreeBuilder<'a> {
     if token.is_end_tag() {
       any_other_end_tags(self, token)
     }
+  }
+
+  fn handle_after_body_mode(&mut self, token: Token) {
+    if let Token::Text(ref str) = token {
+      if str.trim().is_empty() {
+        return self.handle_in_body_mode(token);
+      }
+    }
+
+    if let Token::Comment(text) = token {
+      let data = DOMNodeData::Comment(text);
+      let comment = TreeNode::new(DOMNode::new(data));
+      let first_open_element = self.open_elements.first().unwrap();
+      first_open_element.append_child(comment);
+      return;
+    }
+
+    if let Token::DOCTYPE { .. } = token {
+      self.unexpected(&token);
+      return;
+    }
+
+    if token.is_start_tag() && token.tag_name() == "html" {
+      return self.handle_in_body_mode(token);
+    }
+
+    if token.is_end_tag() && token.tag_name() == "html" {
+      // TODO: フラグメント解析アルゴリズムをサポートするか決める
+
+      self.switch_to(InsertMode::AfterAfterBody);
+      return;
+    }
+
+    if token.is_eof() {
+      self.stop_parsing();
+      return;
+    }
+
+    self.unexpected(&token);
+    self.switch_to(InsertMode::InBody);
+    self.process(token);
+  }
+
+  fn handle_after_after_body_mode(&mut self, token: Token) {
+    if token.is_eof() {
+      self.stop_parsing();
+      return;
+    }
+
+    if let Token::Comment(text) = token {
+      let data = DOMNodeData::Comment(text);
+      let comment = TreeNode::new(DOMNode::new(data));
+      self.document.append_child(comment);
+      return;
+    }
+
+    if let Token::DOCTYPE { .. } = token {
+      return self.handle_in_body_mode(token);
+    }
+
+    if let Token::Text(ref str) = token {
+      if str.trim().is_empty() {
+        return self.handle_in_body_mode(token);
+      }
+    }
+
+    if token.is_start_tag() && token.tag_name() == "html" {
+      return self.handle_in_body_mode(token);
+    }
+
+    self.unexpected(&token);
+    self.switch_to(InsertMode::InBody);
+    self.process(token);
   }
 }

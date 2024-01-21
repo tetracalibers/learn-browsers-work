@@ -24,7 +24,7 @@ pub fn get_document_from_html(html: &str) -> NodePtr {
   )));
 
   let tokenizer = Tokenizer::new(target);
-  let mut tree_builder = TreeBuilder::new(tokenizer, empty_document);
+  let tree_builder = TreeBuilder::new(tokenizer, empty_document);
 
   tree_builder.run()
 }
