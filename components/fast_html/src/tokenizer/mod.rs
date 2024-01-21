@@ -322,7 +322,31 @@ impl<'a> Tokenizer<'a> {
   }
 
   fn process_after_attribute_name_state(&mut self) -> Option<Token> {
-    todo!("process_after_attribute_name_state");
+    let b = self.read_current_skipped_whitespace();
+
+    trace!("-- AfterAttributeName: {}", b as char);
+
+    match b {
+      b'/' => {
+        self.switch_to(State::SelfClosingStartTag);
+      }
+      b'=' => {
+        self.switch_to(State::BeforeAttributeValue);
+      }
+      b'>' => {
+        self.switch_to(State::Data);
+        return Some(self.emit_current_token());
+      }
+      _ if self.stream.is_eof() => {
+        warn!("eof-in-tag");
+        return Some(self.emit_eof());
+      }
+      _ => {
+        self.reconsume_in(State::AttributeName);
+      }
+    }
+
+    None
   }
 
   fn process_before_attribute_value_state(&mut self) -> Option<Token> {
