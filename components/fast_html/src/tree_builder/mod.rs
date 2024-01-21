@@ -1704,6 +1704,25 @@ impl<'a> TreeBuilder<'a> {
   }
 
   fn handle_text_mode(&mut self, token: Token) {
-    todo!("handle_text_mode");
+    if let Token::Text(ref str) = token {
+      self.insert_str(str);
+      return;
+    }
+
+    if token.is_eof() {
+      self.unexpected(&token);
+      self.open_elements.pop();
+      self.switch_to(self.original_insert_mode.clone().unwrap());
+      return self.process(token);
+    }
+
+    if token.is_end_tag() && token.tag_name() == "script" {
+      todo!("handle_text_mode: script end tag");
+    }
+
+    if token.is_end_tag() {
+      self.open_elements.pop();
+      self.switch_to(self.original_insert_mode.clone().unwrap());
+    }
   }
 }
