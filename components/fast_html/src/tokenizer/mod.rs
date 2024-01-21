@@ -14,6 +14,7 @@ use self::token::Token;
 
 use log::{debug, trace, warn};
 
+use ecow::EcoString;
 use ecow::EcoVec;
 
 const REPLACEMENT_CHARACTER: char = '\u{FFFD}';
@@ -612,7 +613,37 @@ impl<'a> Tokenizer<'a> {
   }
 
   fn process_rcdata_state(&mut self) -> Option<Token> {
-    todo!("process_rcdata_state");
+    let bytes = self.read_to_oneof(&[b'&', b'<', b'\0']);
+
+    trace!("-- RCDATA: {}", bytes_to_string(bytes));
+
+    // read_currentに進む前にEOFチェック
+    if self.stream.is_eof() {
+      return Some(self.emit_eof());
+    }
+
+    let b = self.read_current();
+
+    match b {
+      b'&' => {
+        self.return_state = Some(State::RCDATA);
+        unimplemented!("self.switch_to(State::CharacterReference);");
+      }
+      b'<' => {
+        unimplemented!("self.switch_to(State::RCDATALessThanSign);");
+      }
+      b'\0' => {
+        warn!("unexpected-null-character");
+        return Some(self.emit_char(REPLACEMENT_CHARACTER));
+      }
+      _ => {
+        if !bytes.is_empty() {
+          return Some(self.emit_text(bytes));
+        }
+      }
+    }
+
+    None
   }
 
   /* -------------------------------------------- */
@@ -766,6 +797,11 @@ impl<'a> Tokenizer<'a> {
   fn emit_text(&mut self, s: &[u8]) -> Token {
     let text = bytes_to_string(s);
     self.new_token(Token::Text(text));
+    self.emit_current_token()
+  }
+
+  fn emit_char(&mut self, c: char) -> Token {
+    self.new_token(Token::Text(EcoString::from(c)));
     self.emit_current_token()
   }
 
