@@ -5,7 +5,13 @@ const TARGET_HTML: &str = r#"<!DOCTYPE html>
 <head>
   <title>document title</title>
 </head>
-<body></body>
+<body>
+<p>
+  The two most popular science courses offered by the school are <b class="term">chemistry</b> (the study of chemicals
+  and the composition of substances) and <b class="term">physics</b> (the study of the nature and properties of matter
+  and energy).
+</p>
+</body>
 </html>"#;
 
 fn run_html(html: &str) {
