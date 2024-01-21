@@ -622,6 +622,10 @@ impl<'a> Tokenizer<'a> {
 
     trace!("-- RCDATA: {}", bytes_to_string(bytes));
 
+    if !bytes.is_empty() {
+      return Some(self.emit_text(bytes));
+    }
+
     // read_currentに進む前にEOFチェック
     if self.stream.is_eof() {
       return Some(self.emit_eof());
@@ -642,9 +646,7 @@ impl<'a> Tokenizer<'a> {
         return Some(self.emit_char(REPLACEMENT_CHARACTER));
       }
       _ => {
-        if !bytes.is_empty() {
-          return Some(self.emit_text(bytes));
-        }
+        // noop
       }
     }
 
