@@ -32,6 +32,7 @@ RUST_LOG=trace cargo run -- html
 - styleタグ
 - framesetタグ
 - templateタグ
+- searchタグ + form関連タグ
 - SVG関連タグ
 
 ## WIP: CSS Parser
