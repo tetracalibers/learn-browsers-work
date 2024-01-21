@@ -86,6 +86,7 @@ impl<'a> Tokenizer<'a> {
         State::RCDATA => self.process_rcdata_state(),
         State::RCDATALessThanSign => self.process_rcdata_less_than_sign_state(),
         State::RCDATAEndTagOpen => self.process_rcdata_end_tag_open_state(),
+        State::RCDATAEndTagName => self.process_rcdata_ent_tag_name_state(),
       };
 
       if let Some(token) = token {
@@ -668,7 +669,26 @@ impl<'a> Tokenizer<'a> {
   }
 
   fn process_rcdata_end_tag_open_state(&mut self) -> Option<Token> {
-    todo!("process_rcdata_end_tag_open_state");
+    let b = self.read_current();
+
+    trace!("-- RCDATAEndTagOpen: {}", b as char);
+
+    match b {
+      _ if b.is_ascii_alphabetic() => {
+        self.new_token(Token::new_end_tag());
+        self.reconsume_in(State::RCDATAEndTagName);
+      }
+      _ => {
+        self.will_emit(Token::new_text("</"));
+        self.reconsume_in(State::RCDATA);
+      }
+    }
+
+    None
+  }
+
+  fn process_rcdata_ent_tag_name_state(&mut self) -> Option<Token> {
+    todo!("process_rcdata_ent_tag_name_state");
   }
 
   /* -------------------------------------------- */
