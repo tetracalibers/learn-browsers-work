@@ -83,7 +83,7 @@ impl<'a> TreeBuilder<'a> {
     }
   }
 
-  pub fn run(&mut self) -> NodePtr {
+  pub fn run(mut self) -> NodePtr {
     loop {
       let token = self.tokenizer.next_token();
       debug!("{:?}", token);
@@ -97,7 +97,7 @@ impl<'a> TreeBuilder<'a> {
 
     self.flush_text_insertion();
 
-    self.document.clone()
+    self.document
   }
 
   fn process(&mut self, token: Token) {
