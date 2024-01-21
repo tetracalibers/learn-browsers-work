@@ -84,16 +84,15 @@ impl<'a> TreeBuilder<'a> {
   }
 
   pub fn run(&mut self) -> NodePtr {
-    while !self.should_stop {
+    loop {
       let token = self.tokenizer.next_token();
       debug!("{:?}", token);
 
-      if token.is_eof() {
-        self.stop_parsing();
-        continue;
-      }
-
       self.process(token);
+
+      if self.should_stop {
+        break;
+      }
     }
 
     self.flush_text_insertion();
@@ -146,7 +145,7 @@ impl<'a> TreeBuilder<'a> {
         warn!("Unexpected text: {}", text);
       }
       Token::EOF => {
-        todo!("unexpected: Token::EOF");
+        warn!("Unexpected EOF");
       }
     }
   }
