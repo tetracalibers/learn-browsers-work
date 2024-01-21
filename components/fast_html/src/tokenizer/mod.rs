@@ -50,6 +50,9 @@ impl<'a> Tokenizer<'a> {
         State::TagOpen => self.process_tag_open_state(),
         State::TagName => self.process_tag_name_state(),
         State::EndTagOpen => self.process_end_tag_open_state(),
+        State::SelfClosingStartTag => {
+          self.process_self_closing_start_tag_state()
+        }
         State::BeforeAttributeName => {
           self.process_before_attribute_name_state()
         }
@@ -194,7 +197,7 @@ impl<'a> Tokenizer<'a> {
 
     match c {
       b'/' => {
-        unimplemented!("undefined State::SelfClosingStartTag");
+        self.switch_to(State::SelfClosingStartTag);
       }
       b'>' => {
         self.switch_to(State::Data);
@@ -239,6 +242,37 @@ impl<'a> Tokenizer<'a> {
       _ => {
         warn!("invalid-first-character-of-tag-name");
         unimplemented!("undefined State::BogusComment");
+      }
+    }
+
+    None
+  }
+
+  fn process_self_closing_start_tag_state(&mut self) -> Option<Token> {
+    let b = self.read_current();
+
+    trace!("-- SelfClosingStartTag: {}", b as char);
+
+    match b {
+      b'>' => {
+        let current_token = self.current_token.as_mut().unwrap();
+        if let Token::Tag {
+          ref mut self_closing,
+          ..
+        } = current_token
+        {
+          *self_closing = true;
+        }
+        self.switch_to(State::Data);
+        return Some(self.emit_current_token());
+      }
+      _ if self.stream.is_eof() => {
+        warn!("eof-in-tag");
+        return Some(self.emit_eof());
+      }
+      _ => {
+        warn!("unexpected-solidus-in-tag");
+        self.reconsume_in(State::BeforeAttributeName);
       }
     }
 
@@ -315,7 +349,31 @@ impl<'a> Tokenizer<'a> {
   }
 
   fn process_after_attribute_name_state(&mut self) -> Option<Token> {
-    todo!("process_after_attribute_name_state");
+    let b = self.read_current_skipped_whitespace();
+
+    trace!("-- AfterAttributeName: {}", b as char);
+
+    match b {
+      b'/' => {
+        self.switch_to(State::SelfClosingStartTag);
+      }
+      b'=' => {
+        self.switch_to(State::BeforeAttributeValue);
+      }
+      b'>' => {
+        self.switch_to(State::Data);
+        return Some(self.emit_current_token());
+      }
+      _ if self.stream.is_eof() => {
+        warn!("eof-in-tag");
+        return Some(self.emit_eof());
+      }
+      _ => {
+        self.reconsume_in(State::AttributeName);
+      }
+    }
+
+    None
   }
 
   fn process_before_attribute_value_state(&mut self) -> Option<Token> {
@@ -398,7 +456,7 @@ impl<'a> Tokenizer<'a> {
         self.switch_to(State::BeforeAttributeName);
       }
       b'/' => {
-        unimplemented!("self.switch_to(State::SelfClosingStartTag);");
+        self.switch_to(State::SelfClosingStartTag);
       }
       b'>' => {
         self.switch_to(State::Data);
