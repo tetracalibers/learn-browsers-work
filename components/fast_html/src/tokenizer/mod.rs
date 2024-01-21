@@ -744,12 +744,10 @@ impl<'a> Tokenizer<'a> {
         self.stream.advance_by(pattern_len - 1);
         return true;
       }
-    } else {
-      if peeked == pattern {
-        // for _ in 0..pattern.len() { self.stream.advance(); } のイメージ
-        self.stream.advance_by(pattern_len - 1);
-        return true;
-      }
+    } else if peeked == pattern {
+      // for _ in 0..pattern.len() { self.stream.advance(); } のイメージ
+      self.stream.advance_by(pattern_len - 1);
+      return true;
     }
 
     false
