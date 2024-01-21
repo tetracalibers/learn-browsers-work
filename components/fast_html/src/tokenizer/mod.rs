@@ -85,6 +85,7 @@ impl<'a> Tokenizer<'a> {
         State::RAWTEXT => self.process_rawtext_state(),
         State::RCDATA => self.process_rcdata_state(),
         State::RCDATALessThanSign => self.process_rcdata_less_than_sign_state(),
+        State::RCDATAEndTagOpen => self.process_rcdata_end_tag_open_state(),
       };
 
       if let Some(token) = token {
@@ -648,7 +649,26 @@ impl<'a> Tokenizer<'a> {
   }
 
   fn process_rcdata_less_than_sign_state(&mut self) -> Option<Token> {
-    todo!("process_rcdata_less_than_sign_state");
+    let b = self.read_current();
+
+    trace!("-- RCDATALessThanSign: {}", b as char);
+
+    match b {
+      b'/' => {
+        // TODO: self.tmp_buffer.clear(); が必要か検討
+        self.switch_to(State::RCDATAEndTagOpen);
+      }
+      _ => {
+        self.will_emit(Token::new_text("<"));
+        self.reconsume_in(State::RCDATA);
+      }
+    }
+
+    None
+  }
+
+  fn process_rcdata_end_tag_open_state(&mut self) -> Option<Token> {
+    todo!("process_rcdata_end_tag_open_state");
   }
 
   /* -------------------------------------------- */
