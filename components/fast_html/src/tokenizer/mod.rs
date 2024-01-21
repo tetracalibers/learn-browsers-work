@@ -490,6 +490,8 @@ impl<'a> Tokenizer<'a> {
         return Some(self.emit_eof());
       }
       _ => {
+        let token = Token::new_doctype_char_of(b as char);
+        self.new_token(token);
         self.switch_to(State::DOCTYPEName);
       }
     }
@@ -498,7 +500,43 @@ impl<'a> Tokenizer<'a> {
   }
 
   fn process_doctype_name_state(&mut self) -> Option<Token> {
-    todo!("process_doctype_name_state");
+    let bytes = self.read_to_whitespace_or_oneof(&[b'>', b'\0']);
+
+    trace!("-- DOCTYPEName: {}", bytes_to_string(bytes));
+
+    if !bytes.is_empty() {
+      self.concat_to_doctype_name(bytes);
+    }
+
+    // read_currentに進む前にEOFチェック
+    if self.stream.is_eof() {
+      warn!("eof-in-doctype");
+      let mut token = self.current_token.clone().unwrap();
+      token.set_force_quirks(true);
+      self.will_emit(token);
+      return Some(self.emit_eof());
+    }
+
+    let b = self.read_current();
+
+    match b {
+      _ if b.is_ascii_whitespace() => {
+        self.switch_to(State::AfterDOCTYPEName);
+      }
+      b'>' => {
+        self.switch_to(State::Data);
+        return Some(self.emit_current_token());
+      }
+      b'\0' => {
+        warn!("unexpected-null-character");
+        self.append_char_to_doctype_name(REPLACEMENT_CHARACTER);
+      }
+      _ => {
+        // noop
+      }
+    }
+
+    None
   }
 
   fn process_after_doctype_name_state(&mut self) -> Option<Token> {
@@ -543,6 +581,33 @@ impl<'a> Tokenizer<'a> {
       if let Some(mut last) = attributes.pop() {
         last.value.push(c);
         attributes.push(last);
+      }
+    }
+  }
+
+  fn append_char_to_doctype_name(&mut self, c: char) {
+    let current_tag = self.current_token.as_mut().unwrap();
+    if let Token::DOCTYPE {
+      name: ref mut old_name,
+      ..
+    } = current_tag
+    {
+      if let Some(ref mut old_name) = old_name {
+        old_name.push(c);
+      }
+    }
+  }
+
+  fn concat_to_doctype_name(&mut self, name: &[u8]) {
+    let name = bytes_to_string(name);
+    let current_tag = self.current_token.as_mut().unwrap();
+    if let Token::DOCTYPE {
+      name: ref mut old_name,
+      ..
+    } = current_tag
+    {
+      if let Some(ref mut old_name) = old_name {
+        old_name.push_str(&name);
       }
     }
   }

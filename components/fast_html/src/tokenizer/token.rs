@@ -112,6 +112,16 @@ impl Token {
     }
   }
 
+  pub fn set_force_quirks(&mut self, value: bool) {
+    if let Token::DOCTYPE {
+      ref mut force_quirks,
+      ..
+    } = self
+    {
+      *force_quirks = value;
+    }
+  }
+
   /* checker ------------------------------------ */
 
   pub fn is_start_tag(&self) -> bool {
