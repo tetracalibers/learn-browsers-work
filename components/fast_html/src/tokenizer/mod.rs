@@ -84,6 +84,7 @@ impl<'a> Tokenizer<'a> {
         State::BogusDOCTYPE => self.process_bogus_doctype_state(),
         State::RAWTEXT => self.process_rawtext_state(),
         State::RCDATA => self.process_rcdata_state(),
+        State::RCDATALessThanSign => self.process_rcdata_less_than_sign_state(),
       };
 
       if let Some(token) = token {
@@ -630,7 +631,7 @@ impl<'a> Tokenizer<'a> {
         unimplemented!("self.switch_to(State::CharacterReference);");
       }
       b'<' => {
-        unimplemented!("self.switch_to(State::RCDATALessThanSign);");
+        self.switch_to(State::RCDATALessThanSign);
       }
       b'\0' => {
         warn!("unexpected-null-character");
@@ -644,6 +645,10 @@ impl<'a> Tokenizer<'a> {
     }
 
     None
+  }
+
+  fn process_rcdata_less_than_sign_state(&mut self) -> Option<Token> {
+    todo!("process_rcdata_less_than_sign_state");
   }
 
   /* -------------------------------------------- */
