@@ -1512,7 +1512,11 @@ impl<'a> TreeBuilder<'a> {
     if token.is_start_tag()
       && token.match_tag_name_in(&["applet", "marquee", "object"])
     {
-      todo!("process_in_body: applet/marquee/object start tag");
+      self.reconstruct_active_formatting_elements();
+      self.insert_html_element(token);
+      self.active_formatting_elements.add_marker();
+      self.frameset_ok = false;
+      return;
     }
 
     if token.is_end_tag()
