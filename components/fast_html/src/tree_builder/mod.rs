@@ -324,6 +324,106 @@ impl<'a> TreeBuilder<'a> {
     }
   }
 
+  fn reset_insertion_mode_appropriately(&mut self) {
+    for (index, node) in self.open_elements.iter().enumerate().rev() {
+      // nodeがオープン要素のスタックの最初のノードである場合、lastをtrueに設定
+      let last = index == 0;
+
+      // TODO: フラグメント解析アルゴリズムをサポートするか決める
+      // パーサーがHTMLフラグメント解析アルゴリズムの一部として作成された場合（フラグメントの場合）、nodeをそのアルゴリズムに渡されたコンテキスト要素に設定する
+
+      let element = node.as_element();
+
+      if element.tag_name() == "select" {
+        for ancestor in self.open_elements.iter().rev() {
+          let ancestor_tag_name = ancestor.as_element().tag_name();
+
+          match ancestor_tag_name.as_str() {
+            "template" => {
+              self.switch_to(InsertMode::InSelect);
+              return;
+            }
+            "table" => {
+              self.switch_to(InsertMode::InSelectInTable);
+              return;
+            }
+            _ => {
+              // noop
+            }
+          }
+        }
+
+        self.switch_to(InsertMode::InSelect);
+        return;
+      }
+
+      if element.match_tag_name_in(&["td", "th"]) && !last {
+        self.switch_to(InsertMode::InCell);
+        return;
+      }
+
+      if element.tag_name() == "tr" {
+        self.switch_to(InsertMode::InRow);
+        return;
+      }
+
+      if element.match_tag_name_in(&["tbody", "thead", "tfoot"]) {
+        self.switch_to(InsertMode::InTableBody);
+        return;
+      }
+
+      if element.tag_name() == "caption" {
+        self.switch_to(InsertMode::InCaption);
+        return;
+      }
+
+      if element.tag_name() == "colgroup" {
+        self.switch_to(InsertMode::InColumnGroup);
+        return;
+      }
+
+      if element.tag_name() == "table" {
+        self.switch_to(InsertMode::InTable);
+        return;
+      }
+
+      if element.tag_name() == "template" {
+        todo!("reset_insertion_mode_appropriately: template");
+      }
+
+      if element.tag_name() == "head" && !last {
+        self.switch_to(InsertMode::InHead);
+        return;
+      }
+
+      if element.tag_name() == "body" {
+        self.switch_to(InsertMode::InBody);
+        return;
+      }
+
+      if element.tag_name() == "frameset" {
+        todo!("reset_insertion_mode_appropriately: frameset");
+      }
+
+      if element.tag_name() == "html" {
+        match self.head_pointer {
+          Some(_) => {
+            self.switch_to(InsertMode::AfterHead);
+          }
+          None => {
+            self.switch_to(InsertMode::BeforeHead);
+          }
+        }
+        return;
+      }
+
+      if last {
+        self.switch_to(InsertMode::InBody);
+        return;
+      }
+    }
+  }
+
   /* adoption agency algorithm ------------------ */
 
   // formatting_elementよりもスタックの下位にあり、特別なカテゴリの要素である、オープン要素のスタックの最上位ノード
@@ -1759,7 +1859,103 @@ impl<'a> TreeBuilder<'a> {
   }
 
   fn handle_in_table_mode(&mut self, token: Token) {
-    todo!("handle_in_table_mode");
+    if let Token::Text(_) = token {
+      if self
+        .current_node()
+        .as_element()
+        .match_tag_name_in(&["table", "tbody", "tfoot", "thead", "tr"])
+      {
+        self.pending_table_character_tokens.clear();
+        self.original_insert_mode = Some(self.insert_mode.clone());
+        self.switch_to(InsertMode::InTableText);
+        return self.process(token);
+      }
+    }
+
+    if let Token::Comment(text) = token {
+      self.insert_comment(text);
+      return;
+    }
+
+    if let Token::DOCTYPE { .. } = token {
+      self.unexpected(&token);
+      return;
+    }
+
+    if token.is_start_tag() && token.tag_name() == "caption" {
+      todo!("process_in_table: caption start tag");
+    }
+
+    if token.is_start_tag() && token.tag_name() == "colgroup" {
+      todo!("process_in_table: colgroup start tag");
+    }
+
+    if token.is_start_tag() && token.tag_name() == "col" {
+      todo!("process_in_table: col start tag");
+    }
+
+    if token.is_start_tag()
+      && token.match_tag_name_in(&["tbody", "tfoot", "thead"])
+    {
+      self.open_elements.clear_back_to_table_context();
+      self.insert_html_element(token);
+      self.switch_to(InsertMode::InTableBody);
+      return;
+    }
+
+    if token.is_start_tag() && token.match_tag_name_in(&["td", "th", "tr"]) {
+      todo!("process_in_table: td/th/tr start tag");
+    }
+
+    if token.is_start_tag() && token.tag_name() == "table" {
+      todo!("process_in_table: table start tag");
+    }
+
+    if token.is_end_tag() && token.tag_name() == "table" {
+      if !self.open_elements.has_element_name_in_table_scope("table") {
+        self.unexpected(&token);
+        return;
+      }
+      self.open_elements.pop_until("table");
+      self.reset_insertion_mode_appropriately();
+      return;
+    }
+
+    if token.is_end_tag()
+      && token.match_tag_name_in(&[
+        "body", "caption", "col", "colgroup", "html", "tbody", "td", "tfoot",
+        "th", "thead", "tr",
+      ])
+    {
+      todo!("process_in_table: body/caption/col/colgroup/html/tbody/td/tfoot/th/thead/tr end tag");
+    }
+
+    if token.is_start_tag()
+      && token.match_tag_name_in(&["style", "script", "template"])
+    {
+      todo!("process_in_table: style/script/template start tag");
+    }
+
+    if token.is_end_tag() && token.tag_name() == "template" {
+      todo!("process_in_table: template end tag");
+    }
+
+    if token.is_start_tag() && token.tag_name() == "input" {
+      todo!("process_in_table: input start tag");
+    }
+
+    if token.is_start_tag() && token.tag_name() == "form" {
+      todo!("process_in_table: form start tag");
+    }
+
+    if let Token::EOF = token {
+      return self.handle_in_body_mode(token);
+    }
+
+    self.unexpected(&token);
+    self.foster_parenting = true;
+    self.handle_in_body_mode(token);
+    self.foster_parenting = false;
   }
 
   fn handle_in_table_text_mode(&mut self, token: Token) {
