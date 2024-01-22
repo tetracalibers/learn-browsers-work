@@ -619,7 +619,35 @@ impl<'a> Tokenizer<'a> {
   }
 
   fn process_rawtext_state(&mut self) -> Option<Token> {
-    todo!("process_rawtext_state");
+    let bytes = self.read_to_oneof(&[b'<', b'\0']);
+
+    trace!("-- RAWTEXT: {}", bytes_to_string(bytes));
+
+    if !bytes.is_empty() {
+      return Some(self.emit_text(bytes));
+    }
+
+    // read_currentに進む前にEOFチェック
+    if self.stream.is_eof() {
+      return Some(self.emit_eof());
+    }
+
+    let b = self.read_current();
+
+    match b {
+      b'<' => {
+        self.switch_to(State::RAWTEXTLessThanSign);
+      }
+      b'\0' => {
+        warn!("unexpected-null-character");
+        return Some(self.emit_char(REPLACEMENT_CHARACTER));
+      }
+      _ => {
+        // noop
+      }
+    }
+
+    None
   }
 
   fn process_rawtext_less_than_sign_state(&mut self) -> Option<Token> {

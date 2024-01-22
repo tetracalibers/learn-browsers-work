@@ -111,7 +111,16 @@ where
         }
 
         State::RAWTEXT => {
-          todo!("State::RAWTEXT");
+          let ch = self.consume_next();
+          match ch {
+            Char::ch('<') => self.switch_to(State::RAWTEXTLessThanSign),
+            Char::null => {
+              warn!("unexpected-null-character");
+              return self.emit_char(REPLACEMENT_CHARACTER);
+            }
+            Char::eof => return self.emit_eof(),
+            _ => return self.emit_current_char(),
+          }
         }
 
         State::RAWTEXTLessThanSign => {
