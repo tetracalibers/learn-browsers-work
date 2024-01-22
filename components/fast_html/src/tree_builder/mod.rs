@@ -1959,7 +1959,38 @@ impl<'a> TreeBuilder<'a> {
   }
 
   fn handle_in_table_text_mode(&mut self, token: Token) {
-    todo!("handle_in_table_text_mode");
+    if let Token::Text(ref s) = token {
+      if s == "\0" {
+        self.unexpected(&token);
+        return;
+      }
+      self.pending_table_character_tokens.push(token);
+      return;
+    }
+
+    let has_not_whitespace_char =
+      self.pending_table_character_tokens.iter().any(|token| match token {
+        Token::Text(s) => !s.trim().is_empty(),
+        _ => false,
+      });
+
+    if has_not_whitespace_char {
+      warn!("Non-whitespace in table text");
+      for pending_token in self.pending_table_character_tokens.clone() {
+        self.foster_parenting = true;
+        self.handle_in_body_mode(pending_token);
+        self.foster_parenting = false;
+      }
+    } else {
+      for pending_token in self.pending_table_character_tokens.clone() {
+        if let Token::Text(s) = pending_token {
+          self.insert_str(&s);
+        }
+      }
+    }
+
+    self.switch_to(self.original_insert_mode.clone().unwrap());
+    self.process(token);
   }
 
   fn handle_in_table_body_mode(&mut self, token: Token) {
