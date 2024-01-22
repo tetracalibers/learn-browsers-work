@@ -995,7 +995,7 @@ impl<T: Tokenizing> TreeBuilder<T> {
     if token.is_end_tag()
       && token.match_tag_name_in(&["applet", "marquee", "object"])
     {
-      if !self.open_elements.has_element_name_in_scope(&token.tag_name()) {
+      if !self.open_elements.has_element_name_in_scope(token.tag_name()) {
         self.unexpected(&token);
         return;
       }
