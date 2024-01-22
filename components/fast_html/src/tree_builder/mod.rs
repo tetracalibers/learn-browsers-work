@@ -1522,7 +1522,21 @@ impl<'a> TreeBuilder<'a> {
     if token.is_end_tag()
       && token.match_tag_name_in(&["applet", "marquee", "object"])
     {
-      todo!("process_in_body: applet/marquee/object end tag");
+      if !self.open_elements.has_element_name_in_scope(&token.tag_name()) {
+        self.unexpected(&token);
+        return;
+      }
+
+      self.generate_implied_end_tags("");
+
+      if self.current_node().as_element().tag_name() != *token.tag_name() {
+        self.unexpected(&token);
+      }
+
+      self.open_elements.pop_until(token.tag_name());
+      self.active_formatting_elements.clear_up_to_last_marker();
+
+      return;
     }
 
     if token.is_start_tag() && token.tag_name() == "table" {

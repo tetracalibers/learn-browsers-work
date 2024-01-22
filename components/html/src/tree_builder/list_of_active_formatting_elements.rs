@@ -88,4 +88,15 @@ impl ListOfActiveFormattingElements {
   pub fn add_marker(&mut self) {
     self.entries.push(Entry::Marker);
   }
+
+  pub fn clear_up_to_last_marker(&mut self) {
+    let index = self
+      .iter()
+      .rposition(|entry| match entry {
+        Entry::Marker => true,
+        Entry::Element(_) => false,
+      })
+      .unwrap_or_else(|| panic!("Unable to find marker"));
+    self.entries.truncate(index);
+  }
 }
