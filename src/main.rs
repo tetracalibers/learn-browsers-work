@@ -6,11 +6,9 @@ const TARGET_HTML: &str = r#"<!DOCTYPE html>
   <title>document title</title>
 </head>
 <body>
-<p>
-  The two most popular science courses offered by the school are <b class="term">chemistry</b> (the study of chemicals
-  and the composition of substances) and <b class="term">physics</b> (the study of the nature and properties of matter
-  and energy).
-</p>
+<ruby>
+  漢 <rp>(</rp><rt>Kan</rt><rp>)</rp> 字 <rp>(</rp><rt>ji</rt><rp>)</rp>
+</ruby>
 </body>
 </html>"#;
 
