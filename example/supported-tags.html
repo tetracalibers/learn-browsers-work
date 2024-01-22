@@ -59,6 +59,19 @@
         height="300"
       >
       </iframe>
+      <table>
+        <thead>
+          <tr>
+            <th colspan="2">The table header</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>The table body</td>
+            <td>with two columns</td>
+          </tr>
+        </tbody>
+      </table>
       <section>
         <h2>Introduction</h2>
         <p>
@@ -197,6 +210,12 @@
             where <var>l</var> represents the length, <var>w</var> the width and
             <var>h</var> the height of the box.
           </p>
+          <del>
+            <p>“I apologize for the delay.”</p>
+          </del>
+          <ins cite="../howtobeawizard.html" datetime="2018-05">
+            <p>“A wizard is never late …”</p>
+          </ins>
 
           <dl>
             <dt>Beast of Bodmin</dt>
@@ -267,6 +286,11 @@
             src="https://via.placeholder.com/350x150"
             alt="350 x 150 pic"
           />
+          <picture>
+            <source srcset="mdn-logo-wide.png" media="(min-width: 600px)" />
+            <img src="mdn-logo-narrow.png" alt="MDN" />
+          </picture>
+
           <audio controls>
             <source src="foo.opus" type="audio/ogg; codecs=opus" />
             <source src="foo.ogg" type="audio/ogg; codecs=vorbis" />
