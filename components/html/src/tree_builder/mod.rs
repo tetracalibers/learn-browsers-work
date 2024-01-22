@@ -1327,7 +1327,16 @@ impl<T: Tokenizing> TreeBuilder<T> {
     if token.is_end_tag()
       && token.match_tag_name_in(&["tbody", "tfoot", "thead"])
     {
-      todo!("process_in_table_body: tbody/tfoot/thead end tag");
+      if !self.open_elements.has_element_name_in_table_scope(&token.tag_name())
+      {
+        self.unexpected(&token);
+        return;
+      }
+
+      self.open_elements.clear_back_to_table_body_context();
+      self.open_elements.pop();
+      self.switch_to(InsertMode::InTable);
+      return;
     }
 
     if token.is_start_tag()
