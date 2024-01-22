@@ -134,6 +134,10 @@ impl<T: Tokenizing> TreeBuilder<T> {
       InsertMode::InTableText => self.process_in_table_text(token),
       InsertMode::InRow => self.process_in_row(token),
       InsertMode::InCell => self.process_in_cell(token),
+      InsertMode::InColumnGroup => self.process_in_column_group(token),
+      InsertMode::InCaption => self.process_in_caption(token),
+      InsertMode::InSelect => self.process_in_select(token),
+      InsertMode::InSelectInTable => self.process_in_select_in_table(token),
       InsertMode::Text => self.process_text(token),
     }
   }
@@ -1272,7 +1276,13 @@ impl<T: Tokenizing> TreeBuilder<T> {
     }
 
     if token.is_end_tag() && token.tag_name() == "table" {
-      todo!("process_in_table: table end tag");
+      if !self.open_elements.has_element_name_in_table_scope("table") {
+        self.unexpected(&token);
+        return;
+      }
+      self.open_elements.pop_until("table");
+      self.reset_insertion_mode_appropriately();
+      return;
     }
 
     if token.is_end_tag()
@@ -1491,6 +1501,22 @@ impl<T: Tokenizing> TreeBuilder<T> {
     self.process_in_body(token)
   }
 
+  fn process_in_column_group(&mut self, token: Token) {
+    todo!("process_in_column_group");
+  }
+
+  fn process_in_caption(&mut self, token: Token) {
+    todo!("process_in_caption");
+  }
+
+  fn process_in_select(&mut self, token: Token) {
+    todo!("process_in_select");
+  }
+
+  fn process_in_select_in_table(&mut self, token: Token) {
+    todo!("process_in_select_in_table");
+  }
+
   fn process_text(&mut self, token: Token) {
     if let Token::Character(c) = token {
       self.insert_char(c);
@@ -1691,6 +1717,106 @@ impl<T: Tokenizing> TreeBuilder<T> {
 
       // Advance step
       index += 1;
+    }
+  }
+
+  fn reset_insertion_mode_appropriately(&mut self) {
+    for (index, node) in self.open_elements.iter().enumerate().rev() {
+      // nodeがオープン要素のスタックの最初のノードである場合、lastをtrueに設定
+      let last = index == 0;
+
+      // TODO: フラグメント解析アルゴリズムをサポートするか決める
+      // パーサーがHTMLフラグメント解析アルゴリズムの一部として作成された場合（フラグメントの場合）、nodeをそのアルゴリズムに渡されたコンテキスト要素に設定する
+
+      let element = node.as_element();
+
+      if element.tag_name() == "select" {
+        for ancestor in self.open_elements.iter().rev() {
+          let ancestor_tag_name = ancestor.as_element().tag_name();
+
+          match ancestor_tag_name.as_str() {
+            "template" => {
+              self.switch_to(InsertMode::InSelect);
+              return;
+            }
+            "table" => {
+              self.switch_to(InsertMode::InSelectInTable);
+              return;
+            }
+            _ => {
+              // noop
+            }
+          }
+        }
+
+        self.switch_to(InsertMode::InSelect);
+        return;
+      }
+
+      if element.match_tag_name_in(&["td", "th"]) && !last {
+        self.switch_to(InsertMode::InCell);
+        return;
+      }
+
+      if element.tag_name() == "tr" {
+        self.switch_to(InsertMode::InRow);
+        return;
+      }
+
+      if element.match_tag_name_in(&["tbody", "thead", "tfoot"]) {
+        self.switch_to(InsertMode::InTableBody);
+        return;
+      }
+
+      if element.tag_name() == "caption" {
+        self.switch_to(InsertMode::InCaption);
+        return;
+      }
+
+      if element.tag_name() == "colgroup" {
+        self.switch_to(InsertMode::InColumnGroup);
+        return;
+      }
+
+      if element.tag_name() == "table" {
+        self.switch_to(InsertMode::InTable);
+        return;
+      }
+
+      if element.tag_name() == "template" {
+        todo!("reset_insertion_mode_appropriately: template");
+      }
+
+      if element.tag_name() == "head" && !last {
+        self.switch_to(InsertMode::InHead);
+        return;
+      }
+
+      if element.tag_name() == "body" {
+        self.switch_to(InsertMode::InBody);
+        return;
+      }
+
+      if element.tag_name() == "frameset" {
+        todo!("reset_insertion_mode_appropriately: frameset");
+      }
+
+      if element.tag_name() == "html" {
+        match self.head_pointer {
+          Some(_) => {
+            self.switch_to(InsertMode::AfterHead);
+          }
+          None => {
+            self.switch_to(InsertMode::BeforeHead);
+          }
+        }
+        return;
+      }
+
+      if last {
+        self.switch_to(InsertMode::InBody);
+        return;
+      }
     }
   }
 
