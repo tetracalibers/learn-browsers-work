@@ -1610,7 +1610,16 @@ impl<'a> TreeBuilder<'a> {
     }
 
     if token.is_start_tag() && token.match_tag_name_in(&["rp", "rt"]) {
-      todo!("process_in_body: rp/rt start tag");
+      if self.open_elements.has_element_name_in_scope("ruby") {
+        self.generate_implied_end_tags("rtc");
+      }
+
+      if !self.current_node().as_element().match_tag_name_in(&["rtc", "ruby"]) {
+        self.unexpected(&token);
+      }
+
+      self.insert_html_element(token);
+      return;
     }
 
     if token.is_start_tag() && token.tag_name() == "math" {
