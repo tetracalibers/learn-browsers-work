@@ -1398,7 +1398,15 @@ impl<T: Tokenizing> TreeBuilder<T> {
     }
 
     if token.is_end_tag() && token.tag_name() == "tr" {
-      todo!("process_in_row: tr end tag");
+      if !self.open_elements.has_element_name_in_table_scope("tr") {
+        self.unexpected(&token);
+        return;
+      }
+
+      self.open_elements.clear_back_to_table_row_context();
+      self.open_elements.pop();
+      self.switch_to(InsertMode::InTableBody);
+      return;
     }
 
     if token.is_start_tag()
