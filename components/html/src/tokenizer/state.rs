@@ -8,6 +8,9 @@ pub enum State {
   RCDATAEndTagName,
 
   RAWTEXT,
+  RAWTEXTLessThanSign,
+  RAWTEXTEndTagOpen,
+  RAWTEXTEndTagName,
 
   CharacterReference,
   NamedCharacterReference,

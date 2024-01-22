@@ -85,6 +85,11 @@ impl<'a> Tokenizer<'a> {
         State::AfterDOCTYPEName => self.process_after_doctype_name_state(),
         State::BogusDOCTYPE => self.process_bogus_doctype_state(),
         State::RAWTEXT => self.process_rawtext_state(),
+        State::RAWTEXTLessThanSign => {
+          self.process_rawtext_less_than_sign_state()
+        }
+        State::RAWTEXTEndTagOpen => self.process_rawtext_end_tag_open_state(),
+        State::RAWTEXTEndTagName => self.process_rawtext_end_tag_name_state(),
         State::RCDATA => self.process_rcdata_state(),
         State::RCDATALessThanSign => self.process_rcdata_less_than_sign_state(),
         State::RCDATAEndTagOpen => self.process_rcdata_end_tag_open_state(),
@@ -615,6 +620,18 @@ impl<'a> Tokenizer<'a> {
 
   fn process_rawtext_state(&mut self) -> Option<Token> {
     todo!("process_rawtext_state");
+  }
+
+  fn process_rawtext_less_than_sign_state(&mut self) -> Option<Token> {
+    todo!("process_rawtext_less_than_sign_state");
+  }
+
+  fn process_rawtext_end_tag_open_state(&mut self) -> Option<Token> {
+    todo!("process_rawtext_end_tag_open_state");
+  }
+
+  fn process_rawtext_end_tag_name_state(&mut self) -> Option<Token> {
+    todo!("process_rawtext_end_tag_name_state");
   }
 
   fn process_rcdata_state(&mut self) -> Option<Token> {

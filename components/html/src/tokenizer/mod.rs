@@ -114,6 +114,18 @@ where
           todo!("State::RAWTEXT");
         }
 
+        State::RAWTEXTLessThanSign => {
+          todo!("State::RAWTEXTLessThanSign");
+        }
+
+        State::RAWTEXTEndTagOpen => {
+          todo!("State::RAWTEXTEndTagOpen");
+        }
+
+        State::RAWTEXTEndTagName => {
+          todo!("State::RAWTEXTEndTagName");
+        }
+
         State::TagOpen => {
           let ch = self.consume_next();
 
