@@ -1030,7 +1030,10 @@ impl<T: Tokenizing> TreeBuilder<T> {
     if token.is_start_tag()
       && token.match_tag_name_in(&["param", "source", "track"])
     {
-      todo!("process_in_body: param/source/track start tag");
+      token.acknowledge_self_closing_if_set();
+      self.insert_html_element(token);
+      self.open_elements.pop();
+      return;
     }
 
     if token.is_start_tag() && token.tag_name() == "hr" {
