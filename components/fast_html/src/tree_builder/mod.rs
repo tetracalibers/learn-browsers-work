@@ -1994,7 +1994,53 @@ impl<'a> TreeBuilder<'a> {
   }
 
   fn handle_in_table_body_mode(&mut self, token: Token) {
-    todo!("handle_in_table_body_mode");
+    if token.is_start_tag() && token.tag_name() == "tr" {
+      self.open_elements.clear_back_to_table_body_context();
+      self.insert_html_element(token);
+      self.switch_to(InsertMode::InRow);
+      return;
+    }
+
+    if token.is_start_tag() && token.match_tag_name_in(&["th", "td"]) {
+      todo!("process_in_table_body: th/td start tag");
+    }
+
+    if token.is_end_tag()
+      && token.match_tag_name_in(&["tbody", "tfoot", "thead"])
+    {
+      if !self.open_elements.has_element_name_in_table_scope(&token.tag_name())
+      {
+        self.unexpected(&token);
+        return;
+      }
+
+      self.open_elements.clear_back_to_table_body_context();
+      self.open_elements.pop();
+      self.switch_to(InsertMode::InTable);
+      return;
+    }
+
+    if token.is_start_tag()
+      && token.match_tag_name_in(&[
+        "caption", "col", "colgroup", "tbody", "tfoot", "thead",
+      ])
+    {
+      todo!("process_in_table_body: caption/col/colgroup/tbody/tfoot/thead start tag");
+    }
+
+    if token.is_end_tag() && token.tag_name() == "table" {
+      todo!("process_in_table_body: table end tag");
+    }
+
+    if token.is_end_tag()
+      && token.match_tag_name_in(&[
+        "body", "caption", "col", "colgroup", "html", "td", "th", "tr",
+      ])
+    {
+      todo!("process_in_table_body: body end tag");
+    }
+
+    self.handle_in_table_mode(token)
   }
 
   fn handle_in_row_mode(&mut self, token: Token) {
