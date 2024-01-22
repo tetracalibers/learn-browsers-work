@@ -1556,9 +1556,9 @@ impl<'a> TreeBuilder<'a> {
 
       self.insert_html_element(token);
       self.frameset_ok = false;
-      unimplemented!("self.switch_to(InsertMode::InTable)");
+      self.switch_to(InsertMode::InTable);
 
-      //return;
+      return;
     }
 
     if token.is_end_tag() && token.tag_name() == "br" {
