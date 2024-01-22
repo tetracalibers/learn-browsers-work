@@ -6,13 +6,7 @@ const TARGET_HTML: &str = r#"<!DOCTYPE html>
   <title>document title</title>
 </head>
 <body>
-<iframe
-  src="https://example.org"
-  title="iframe Example 1"
-  width="400"
-  height="300">
-</iframe>
-
+<object type="application/pdf" data="/media/examples/In-CC0.pdf" width="250" height="200"></object>
 </body>
 </html>"#;
 
