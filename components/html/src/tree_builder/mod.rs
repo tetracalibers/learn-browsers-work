@@ -1337,8 +1337,7 @@ impl<T: Tokenizing> TreeBuilder<T> {
     if token.is_end_tag()
       && token.match_tag_name_in(&["tbody", "tfoot", "thead"])
     {
-      if !self.open_elements.has_element_name_in_table_scope(&token.tag_name())
-      {
+      if !self.open_elements.has_element_name_in_table_scope(token.tag_name()) {
         self.unexpected(&token);
         return;
       }
@@ -1459,8 +1458,7 @@ impl<T: Tokenizing> TreeBuilder<T> {
 
   fn process_in_cell(&mut self, token: Token) {
     if token.is_end_tag() && token.match_tag_name_in(&["td", "th"]) {
-      if !self.open_elements.has_element_name_in_table_scope(&token.tag_name())
-      {
+      if !self.open_elements.has_element_name_in_table_scope(token.tag_name()) {
         self.unexpected(&token);
         return;
       }
@@ -1501,19 +1499,19 @@ impl<T: Tokenizing> TreeBuilder<T> {
     self.process_in_body(token)
   }
 
-  fn process_in_column_group(&mut self, token: Token) {
+  fn process_in_column_group(&mut self, _token: Token) {
     todo!("process_in_column_group");
   }
 
-  fn process_in_caption(&mut self, token: Token) {
+  fn process_in_caption(&mut self, _token: Token) {
     todo!("process_in_caption");
   }
 
-  fn process_in_select(&mut self, token: Token) {
+  fn process_in_select(&mut self, _token: Token) {
     todo!("process_in_select");
   }
 
-  fn process_in_select_in_table(&mut self, token: Token) {
+  fn process_in_select_in_table(&mut self, _token: Token) {
     todo!("process_in_select_in_table");
   }
 
