@@ -29,12 +29,13 @@ RUST_LOG=trace cargo run -- html
 - 古いDOCTYPE
 - 文字参照
 - コメント
-- scriptタグ
+- canvas、script、noscriptタグ
 - styleタグ
 - framesetタグ
 - templateタグ
 - searchタグ + form関連タグ
 - SVG関連タグ
+- MathML関連タグ
 
 ## WIP: CSS Parser
 
