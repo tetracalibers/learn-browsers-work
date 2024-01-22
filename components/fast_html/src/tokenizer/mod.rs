@@ -689,7 +689,58 @@ impl<'a> Tokenizer<'a> {
   }
 
   fn process_rawtext_end_tag_name_state(&mut self) -> Option<Token> {
-    todo!("process_rawtext_end_tag_name_state");
+    let bytes = self.read_to_whitespace_or_oneof(&[b'/', b'>', b'\0']);
+
+    trace!("-- RAWTEXTEndTagName: {}", bytes_to_string(bytes));
+
+    if !bytes.is_empty() {
+      self.concat_to_tag_name(bytes);
+      self.push_many_to_tmp_buffer(bytes);
+    }
+
+    fn invalid(this: &mut Tokenizer<'_>) {
+      this.will_emit(Token::new_text("</"));
+      this.emit_tmp_buffer();
+      this.reconsume_in(State::RAWTEXT);
+    }
+
+    // read_currentに進む前にEOFチェック
+    if self.stream.is_eof() {
+      invalid(self);
+      return None;
+    }
+
+    let b = self.read_current();
+
+    match b {
+      b'/' => {
+        if !self.is_appropriate_end_tag() {
+          invalid(self);
+        } else {
+          self.switch_to(State::SelfClosingStartTag);
+        }
+      }
+      b'>' => {
+        if !self.is_appropriate_end_tag() {
+          invalid(self);
+        } else {
+          self.switch_to(State::Data);
+          return Some(self.emit_current_token());
+        }
+      }
+      _ if b.is_ascii_whitespace() => {
+        if !self.is_appropriate_end_tag() {
+          invalid(self);
+        } else {
+          self.switch_to(State::BeforeAttributeName);
+        }
+      }
+      _ => {
+        invalid(self);
+      }
+    }
+
+    None
   }
 
   fn process_rcdata_state(&mut self) -> Option<Token> {

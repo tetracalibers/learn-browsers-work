@@ -153,7 +153,54 @@ where
         }
 
         State::RAWTEXTEndTagName => {
-          todo!("State::RAWTEXTEndTagName");
+          let ch = self.consume_next();
+          match ch {
+            Char::whitespace => {
+              if !self.is_appropriate_end_tag() {
+                self.will_emit(Token::Character('<'));
+                self.will_emit(Token::Character('/'));
+                self.emit_tmp_buffer();
+                self.reconsume_in(State::RAWTEXT);
+              } else {
+                self.switch_to(State::BeforeAttributeName);
+              }
+            }
+            Char::ch('/') => {
+              if !self.is_appropriate_end_tag() {
+                self.will_emit(Token::Character('<'));
+                self.will_emit(Token::Character('/'));
+                self.emit_tmp_buffer();
+                self.reconsume_in(State::RAWTEXT);
+              } else {
+                self.switch_to(State::SelfClosingStartTag);
+              }
+            }
+            Char::ch('>') => {
+              if !self.is_appropriate_end_tag() {
+                self.will_emit(Token::Character('<'));
+                self.will_emit(Token::Character('/'));
+                self.emit_tmp_buffer();
+                self.reconsume_in(State::RAWTEXT);
+              } else {
+                self.switch_to(State::Data);
+                return self.emit_current_token();
+              }
+            }
+            Char::ch(c) if c.is_ascii_uppercase() => {
+              self.append_char_to_tag_name(c.to_ascii_lowercase());
+              self.tmp_buffer.push(self.current_character);
+            }
+            Char::ch(c) if c.is_ascii_lowercase() => {
+              self.append_char_to_tag_name(self.current_character);
+              self.tmp_buffer.push(self.current_character);
+            }
+            _ => {
+              self.will_emit(Token::Character('<'));
+              self.will_emit(Token::Character('/'));
+              self.emit_tmp_buffer();
+              self.reconsume_in(State::RAWTEXT);
+            }
+          }
         }
 
         State::TagOpen => {
