@@ -1432,7 +1432,21 @@ impl<T: Tokenizing> TreeBuilder<T> {
 
   fn process_in_cell(&mut self, token: Token) {
     if token.is_end_tag() && token.match_tag_name_in(&["td", "th"]) {
-      todo!("process_in_cell: td/th end tag");
+      if !self.open_elements.has_element_name_in_table_scope(&token.tag_name())
+      {
+        self.unexpected(&token);
+        return;
+      }
+
+      self.generate_implied_end_tags("");
+
+      if self.current_node().as_element().tag_name() != *token.tag_name() {
+        warn!("Expected current node to have same tag name as token");
+      }
+      self.open_elements.pop_until(token.tag_name());
+      self.active_formatting_elements.clear_up_to_last_marker();
+      self.switch_to(InsertMode::InRow);
+      return;
     }
 
     if token.is_start_tag()
