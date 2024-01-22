@@ -114,6 +114,15 @@ impl<'a> TreeBuilder<'a> {
       InsertMode::InBody => self.handle_in_body_mode(token),
       InsertMode::AfterBody => self.handle_after_body_mode(token),
       InsertMode::AfterAfterBody => self.handle_after_after_body_mode(token),
+      InsertMode::InTable => self.handle_in_table_mode(token),
+      InsertMode::InTableText => self.handle_in_table_text_mode(token),
+      InsertMode::InTableBody => self.handle_in_table_body_mode(token),
+      InsertMode::InRow => self.handle_in_row_mode(token),
+      InsertMode::InCell => self.handle_in_cell_mode(token),
+      InsertMode::InColumnGroup => self.handle_in_column_group_mode(token),
+      InsertMode::InCaption => self.handle_in_caption_mode(token),
+      InsertMode::InSelect => self.handle_in_select_mode(token),
+      InsertMode::InSelectInTable => self.handle_in_select_in_table_mode(token),
       InsertMode::Text => self.handle_text_mode(token),
     }
   }
@@ -1747,6 +1756,42 @@ impl<'a> TreeBuilder<'a> {
     self.unexpected(&token);
     self.switch_to(InsertMode::InBody);
     self.process(token);
+  }
+
+  fn handle_in_table_mode(&mut self, token: Token) {
+    todo!("handle_in_table_mode");
+  }
+
+  fn handle_in_table_text_mode(&mut self, token: Token) {
+    todo!("handle_in_table_text_mode");
+  }
+
+  fn handle_in_table_body_mode(&mut self, token: Token) {
+    todo!("handle_in_table_body_mode");
+  }
+
+  fn handle_in_row_mode(&mut self, token: Token) {
+    todo!("handle_in_row_mode");
+  }
+
+  fn handle_in_cell_mode(&mut self, token: Token) {
+    todo!("handle_in_cell_mode");
+  }
+
+  fn handle_in_column_group_mode(&mut self, token: Token) {
+    todo!("handle_in_column_group_mode");
+  }
+
+  fn handle_in_caption_mode(&mut self, token: Token) {
+    todo!("handle_in_caption_mode");
+  }
+
+  fn handle_in_select_mode(&mut self, token: Token) {
+    todo!("handle_in_select_mode");
+  }
+
+  fn handle_in_select_in_table_mode(&mut self, token: Token) {
+    todo!("handle_in_select_in_table_mode");
   }
 
   fn handle_text_mode(&mut self, token: Token) {
