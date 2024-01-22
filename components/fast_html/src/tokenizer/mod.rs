@@ -651,7 +651,22 @@ impl<'a> Tokenizer<'a> {
   }
 
   fn process_rawtext_less_than_sign_state(&mut self) -> Option<Token> {
-    todo!("process_rawtext_less_than_sign_state");
+    let b = self.read_current();
+
+    trace!("-- RAWTEXTLessThanSign: {}", b as char);
+
+    match b {
+      b'/' => {
+        self.clear_tmp_buffer();
+        self.switch_to(State::RAWTEXTEndTagOpen);
+      }
+      _ => {
+        self.will_emit(Token::new_text("<"));
+        self.reconsume_in(State::RAWTEXT);
+      }
+    }
+
+    None
   }
 
   fn process_rawtext_end_tag_open_state(&mut self) -> Option<Token> {

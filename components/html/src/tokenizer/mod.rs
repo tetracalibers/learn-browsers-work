@@ -124,7 +124,17 @@ where
         }
 
         State::RAWTEXTLessThanSign => {
-          todo!("State::RAWTEXTLessThanSign");
+          let ch = self.consume_next();
+          match ch {
+            Char::ch('/') => {
+              self.tmp_buffer.clear();
+              self.switch_to(State::RAWTEXTEndTagOpen);
+            }
+            _ => {
+              self.will_emit(Token::Character('<'));
+              self.reconsume_in(State::RAWTEXT);
+            }
+          }
         }
 
         State::RAWTEXTEndTagOpen => {
