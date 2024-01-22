@@ -138,7 +138,18 @@ where
         }
 
         State::RAWTEXTEndTagOpen => {
-          todo!("State::RAWTEXTEndTagOpen");
+          let ch = self.consume_next();
+          match ch {
+            Char::ch(c) if c.is_ascii_alphabetic() => {
+              self.new_token(Token::new_end_tag());
+              self.reconsume_in(State::RAWTEXTEndTagName);
+            }
+            _ => {
+              self.will_emit(Token::Character('<'));
+              self.will_emit(Token::Character('/'));
+              self.reconsume_in(State::RAWTEXT);
+            }
+          }
         }
 
         State::RAWTEXTEndTagName => {

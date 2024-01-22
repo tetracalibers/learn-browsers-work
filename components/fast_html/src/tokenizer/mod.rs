@@ -670,7 +670,22 @@ impl<'a> Tokenizer<'a> {
   }
 
   fn process_rawtext_end_tag_open_state(&mut self) -> Option<Token> {
-    todo!("process_rawtext_end_tag_open_state");
+    let b = self.read_current();
+
+    trace!("-- RAWTEXTEndTagOpen: {}", b as char);
+
+    match b {
+      _ if b.is_ascii_alphabetic() => {
+        self.new_token(Token::new_end_tag());
+        self.reconsume_in(State::RAWTEXTEndTagName);
+      }
+      _ => {
+        self.will_emit(Token::new_text("</"));
+        self.reconsume_in(State::RAWTEXT);
+      }
+    }
+
+    None
   }
 
   fn process_rawtext_end_tag_name_state(&mut self) -> Option<Token> {
