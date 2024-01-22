@@ -111,7 +111,96 @@ where
         }
 
         State::RAWTEXT => {
-          todo!("State::RAWTEXT");
+          let ch = self.consume_next();
+          match ch {
+            Char::ch('<') => self.switch_to(State::RAWTEXTLessThanSign),
+            Char::null => {
+              warn!("unexpected-null-character");
+              return self.emit_char(REPLACEMENT_CHARACTER);
+            }
+            Char::eof => return self.emit_eof(),
+            _ => return self.emit_current_char(),
+          }
+        }
+
+        State::RAWTEXTLessThanSign => {
+          let ch = self.consume_next();
+          match ch {
+            Char::ch('/') => {
+              self.tmp_buffer.clear();
+              self.switch_to(State::RAWTEXTEndTagOpen);
+            }
+            _ => {
+              self.will_emit(Token::Character('<'));
+              self.reconsume_in(State::RAWTEXT);
+            }
+          }
+        }
+
+        State::RAWTEXTEndTagOpen => {
+          let ch = self.consume_next();
+          match ch {
+            Char::ch(c) if c.is_ascii_alphabetic() => {
+              self.new_token(Token::new_end_tag());
+              self.reconsume_in(State::RAWTEXTEndTagName);
+            }
+            _ => {
+              self.will_emit(Token::Character('<'));
+              self.will_emit(Token::Character('/'));
+              self.reconsume_in(State::RAWTEXT);
+            }
+          }
+        }
+
+        State::RAWTEXTEndTagName => {
+          let ch = self.consume_next();
+          match ch {
+            Char::whitespace => {
+              if !self.is_appropriate_end_tag() {
+                self.will_emit(Token::Character('<'));
+                self.will_emit(Token::Character('/'));
+                self.emit_tmp_buffer();
+                self.reconsume_in(State::RAWTEXT);
+              } else {
+                self.switch_to(State::BeforeAttributeName);
+              }
+            }
+            Char::ch('/') => {
+              if !self.is_appropriate_end_tag() {
+                self.will_emit(Token::Character('<'));
+                self.will_emit(Token::Character('/'));
+                self.emit_tmp_buffer();
+                self.reconsume_in(State::RAWTEXT);
+              } else {
+                self.switch_to(State::SelfClosingStartTag);
+              }
+            }
+            Char::ch('>') => {
+              if !self.is_appropriate_end_tag() {
+                self.will_emit(Token::Character('<'));
+                self.will_emit(Token::Character('/'));
+                self.emit_tmp_buffer();
+                self.reconsume_in(State::RAWTEXT);
+              } else {
+                self.switch_to(State::Data);
+                return self.emit_current_token();
+              }
+            }
+            Char::ch(c) if c.is_ascii_uppercase() => {
+              self.append_char_to_tag_name(c.to_ascii_lowercase());
+              self.tmp_buffer.push(self.current_character);
+            }
+            Char::ch(c) if c.is_ascii_lowercase() => {
+              self.append_char_to_tag_name(self.current_character);
+              self.tmp_buffer.push(self.current_character);
+            }
+            _ => {
+              self.will_emit(Token::Character('<'));
+              self.will_emit(Token::Character('/'));
+              self.emit_tmp_buffer();
+              self.reconsume_in(State::RAWTEXT);
+            }
+          }
         }
 
         State::TagOpen => {

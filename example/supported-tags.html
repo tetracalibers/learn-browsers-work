@@ -52,6 +52,13 @@
         <h1>Frankenstein</h1>
         <p>Or: The Modern Prometheus</p>
       </hgroup>
+      <iframe
+        src="https://example.org"
+        title="iframe Example 1"
+        width="400"
+        height="300"
+      >
+      </iframe>
       <section>
         <h2>Introduction</h2>
         <p>
@@ -265,6 +272,25 @@
             <source src="foo.ogg" type="audio/ogg; codecs=vorbis" />
             <source src="foo.mp3" type="audio/mpeg" />
           </audio>
+          <video controls src="/media/cc0-videos/friday.mp4">
+            <track
+              default
+              kind="captions"
+              srclang="en"
+              src="/media/examples/friday.vtt"
+            />
+            Download the
+            <a href="/media/cc0-videos/friday.mp4">MP4</a>
+            video, and
+            <a href="/media/examples/friday.vtt">subtitles</a>.
+          </video>
+          <embed
+            type="video/quicktime"
+            src="movie.mov"
+            width="640"
+            height="480"
+            title="Title of my video"
+          />
         </article>
       </article>
     </main>

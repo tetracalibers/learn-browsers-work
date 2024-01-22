@@ -85,6 +85,11 @@ impl<'a> Tokenizer<'a> {
         State::AfterDOCTYPEName => self.process_after_doctype_name_state(),
         State::BogusDOCTYPE => self.process_bogus_doctype_state(),
         State::RAWTEXT => self.process_rawtext_state(),
+        State::RAWTEXTLessThanSign => {
+          self.process_rawtext_less_than_sign_state()
+        }
+        State::RAWTEXTEndTagOpen => self.process_rawtext_end_tag_open_state(),
+        State::RAWTEXTEndTagName => self.process_rawtext_end_tag_name_state(),
         State::RCDATA => self.process_rcdata_state(),
         State::RCDATALessThanSign => self.process_rcdata_less_than_sign_state(),
         State::RCDATAEndTagOpen => self.process_rcdata_end_tag_open_state(),
@@ -614,7 +619,128 @@ impl<'a> Tokenizer<'a> {
   }
 
   fn process_rawtext_state(&mut self) -> Option<Token> {
-    todo!("process_rawtext_state");
+    let bytes = self.read_to_oneof(&[b'<', b'\0']);
+
+    trace!("-- RAWTEXT: {}", bytes_to_string(bytes));
+
+    if !bytes.is_empty() {
+      return Some(self.emit_text(bytes));
+    }
+
+    // read_currentに進む前にEOFチェック
+    if self.stream.is_eof() {
+      return Some(self.emit_eof());
+    }
+
+    let b = self.read_current();
+
+    match b {
+      b'<' => {
+        self.switch_to(State::RAWTEXTLessThanSign);
+      }
+      b'\0' => {
+        warn!("unexpected-null-character");
+        return Some(self.emit_char(REPLACEMENT_CHARACTER));
+      }
+      _ => {
+        // noop
+      }
+    }
+
+    None
+  }
+
+  fn process_rawtext_less_than_sign_state(&mut self) -> Option<Token> {
+    let b = self.read_current();
+
+    trace!("-- RAWTEXTLessThanSign: {}", b as char);
+
+    match b {
+      b'/' => {
+        self.clear_tmp_buffer();
+        self.switch_to(State::RAWTEXTEndTagOpen);
+      }
+      _ => {
+        self.will_emit(Token::new_text("<"));
+        self.reconsume_in(State::RAWTEXT);
+      }
+    }
+
+    None
+  }
+
+  fn process_rawtext_end_tag_open_state(&mut self) -> Option<Token> {
+    let b = self.read_current();
+
+    trace!("-- RAWTEXTEndTagOpen: {}", b as char);
+
+    match b {
+      _ if b.is_ascii_alphabetic() => {
+        self.new_token(Token::new_end_tag());
+        self.reconsume_in(State::RAWTEXTEndTagName);
+      }
+      _ => {
+        self.will_emit(Token::new_text("</"));
+        self.reconsume_in(State::RAWTEXT);
+      }
+    }
+
+    None
+  }
+
+  fn process_rawtext_end_tag_name_state(&mut self) -> Option<Token> {
+    let bytes = self.read_to_whitespace_or_oneof(&[b'/', b'>', b'\0']);
+
+    trace!("-- RAWTEXTEndTagName: {}", bytes_to_string(bytes));
+
+    if !bytes.is_empty() {
+      self.concat_to_tag_name(bytes);
+      self.push_many_to_tmp_buffer(bytes);
+    }
+
+    fn invalid(this: &mut Tokenizer<'_>) {
+      this.will_emit(Token::new_text("</"));
+      this.emit_tmp_buffer();
+      this.reconsume_in(State::RAWTEXT);
+    }
+
+    // read_currentに進む前にEOFチェック
+    if self.stream.is_eof() {
+      invalid(self);
+      return None;
+    }
+
+    let b = self.read_current();
+
+    match b {
+      b'/' => {
+        if !self.is_appropriate_end_tag() {
+          invalid(self);
+        } else {
+          self.switch_to(State::SelfClosingStartTag);
+        }
+      }
+      b'>' => {
+        if !self.is_appropriate_end_tag() {
+          invalid(self);
+        } else {
+          self.switch_to(State::Data);
+          return Some(self.emit_current_token());
+        }
+      }
+      _ if b.is_ascii_whitespace() => {
+        if !self.is_appropriate_end_tag() {
+          invalid(self);
+        } else {
+          self.switch_to(State::BeforeAttributeName);
+        }
+      }
+      _ => {
+        invalid(self);
+      }
+    }
+
+    None
   }
 
   fn process_rcdata_state(&mut self) -> Option<Token> {

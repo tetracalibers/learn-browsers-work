@@ -1587,7 +1587,12 @@ impl<'a> TreeBuilder<'a> {
     }
 
     if token.is_start_tag() && token.tag_name() == "iframe" {
-      todo!("process_in_body: iframe start tag");
+      self.frameset_ok = false;
+      self.parse_text_only_element(
+        token,
+        TextOnlyElementParsingAlgorithm::GenericRawText,
+      );
+      return;
     }
 
     if token.is_start_tag() && token.tag_name() == "noembed" {
