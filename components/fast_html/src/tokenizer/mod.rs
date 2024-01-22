@@ -335,7 +335,7 @@ impl<'a> Tokenizer<'a> {
         self.reconsume_in(State::AfterAttributeName);
       }
       b'/' | b'>' => {
-        self.switch_to(State::AfterAttributeName);
+        self.reconsume_in(State::AfterAttributeName);
       }
       b'=' => {
         self.switch_to(State::BeforeAttributeValue);
