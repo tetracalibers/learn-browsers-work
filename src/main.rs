@@ -6,11 +6,13 @@ const TARGET_HTML: &str = r#"<!DOCTYPE html>
   <title>document title</title>
 </head>
 <body>
-<audio controls>
-  <source src="foo.opus" type="audio/ogg; codecs=opus" />
-  <source src="foo.ogg" type="audio/ogg; codecs=vorbis" />
-  <source src="foo.mp3" type="audio/mpeg" />
-</audio>
+<iframe
+  src="https://example.org"
+  title="iframe Example 1"
+  width="400"
+  height="300">
+</iframe>
+
 </body>
 </html>"#;
 
