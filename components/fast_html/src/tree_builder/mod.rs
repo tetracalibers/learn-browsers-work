@@ -2008,8 +2008,7 @@ impl<'a> TreeBuilder<'a> {
     if token.is_end_tag()
       && token.match_tag_name_in(&["tbody", "tfoot", "thead"])
     {
-      if !self.open_elements.has_element_name_in_table_scope(&token.tag_name())
-      {
+      if !self.open_elements.has_element_name_in_table_scope(token.tag_name()) {
         self.unexpected(&token);
         return;
       }
@@ -2095,8 +2094,7 @@ impl<'a> TreeBuilder<'a> {
 
   fn handle_in_cell_mode(&mut self, token: Token) {
     if token.is_end_tag() && token.match_tag_name_in(&["td", "th"]) {
-      if !self.open_elements.has_element_name_in_table_scope(&token.tag_name())
-      {
+      if !self.open_elements.has_element_name_in_table_scope(token.tag_name()) {
         self.unexpected(&token);
         return;
       }
@@ -2137,19 +2135,19 @@ impl<'a> TreeBuilder<'a> {
     self.handle_in_body_mode(token)
   }
 
-  fn handle_in_column_group_mode(&mut self, token: Token) {
+  fn handle_in_column_group_mode(&mut self, _token: Token) {
     todo!("handle_in_column_group_mode");
   }
 
-  fn handle_in_caption_mode(&mut self, token: Token) {
+  fn handle_in_caption_mode(&mut self, _token: Token) {
     todo!("handle_in_caption_mode");
   }
 
-  fn handle_in_select_mode(&mut self, token: Token) {
+  fn handle_in_select_mode(&mut self, _token: Token) {
     todo!("handle_in_select_mode");
   }
 
-  fn handle_in_select_in_table_mode(&mut self, token: Token) {
+  fn handle_in_select_in_table_mode(&mut self, _token: Token) {
     todo!("handle_in_select_in_table_mode");
   }
 
