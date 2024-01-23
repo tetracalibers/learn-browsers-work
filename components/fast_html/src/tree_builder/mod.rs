@@ -222,11 +222,11 @@ impl<'a> TreeBuilder<'a> {
     self.open_elements.current_node().unwrap()
   }
 
-  fn generate_implied_end_tags(&mut self, exclude: &str) {
+  fn generate_implied_end_tags(&mut self, exclude: &[u8]) {
     while let Some(node) = self.open_elements.current_node() {
       let element = node.as_element();
 
-      if element.tag_name() == exclude {
+      if element.tag_name().as_bytes() == exclude {
         break;
       }
 
@@ -250,7 +250,7 @@ impl<'a> TreeBuilder<'a> {
   }
 
   fn close_p_element(&mut self) {
-    self.generate_implied_end_tags("p");
+    self.generate_implied_end_tags(b"p");
 
     let current_node = self.open_elements.current_node().unwrap();
     let current_element = current_node.as_element();
@@ -1134,7 +1134,7 @@ impl<'a> TreeBuilder<'a> {
       }
 
       if let Some(index) = match_index {
-        this.generate_implied_end_tags(token.tag_name());
+        this.generate_implied_end_tags(token.tag_name().as_bytes());
         this.open_elements.pop_before_index(index);
       }
     }
@@ -1357,7 +1357,7 @@ impl<'a> TreeBuilder<'a> {
         let tag_name = element.tag_name();
 
         if tag_name == "li" {
-          self.generate_implied_end_tags("li");
+          self.generate_implied_end_tags(b"li");
 
           if self.current_node().as_element().tag_name() != "li" {
             warn!("Expected 'li' tag");
@@ -1391,7 +1391,7 @@ impl<'a> TreeBuilder<'a> {
         let tag_name = element.tag_name();
 
         if tag_name == "dd" {
-          self.generate_implied_end_tags("dd");
+          self.generate_implied_end_tags(b"dd");
 
           if self.current_node().as_element().tag_name() != "dd" {
             warn!("Expected 'dd' tag");
@@ -1403,7 +1403,7 @@ impl<'a> TreeBuilder<'a> {
         }
 
         if tag_name == "dt" {
-          self.generate_implied_end_tags("dt");
+          self.generate_implied_end_tags(b"dt");
 
           if self.current_node().as_element().tag_name() != "dt" {
             warn!("Expected 'dt' tag");
@@ -1437,7 +1437,7 @@ impl<'a> TreeBuilder<'a> {
     if token.is_start_tag() && token.tag_name() == "button" {
       if self.open_elements.has_element_name_in_scope("button") {
         self.unexpected(&token);
-        self.generate_implied_end_tags("");
+        self.generate_implied_end_tags(b"");
         self.open_elements.pop_until("button");
       }
 
@@ -1483,7 +1483,7 @@ impl<'a> TreeBuilder<'a> {
         return;
       }
 
-      self.generate_implied_end_tags("");
+      self.generate_implied_end_tags(b"");
 
       let current_node = self.current_node();
       let current_element = current_node.as_element();
@@ -1516,7 +1516,7 @@ impl<'a> TreeBuilder<'a> {
         return;
       }
 
-      self.generate_implied_end_tags("li");
+      self.generate_implied_end_tags(b"li");
 
       if self.current_node().as_element().tag_name() != "li" {
         self.unexpected(&token);
@@ -1535,7 +1535,7 @@ impl<'a> TreeBuilder<'a> {
         return;
       }
 
-      self.generate_implied_end_tags(tag_name);
+      self.generate_implied_end_tags(tag_name.as_bytes());
 
       if self.current_node().as_element().tag_name() != *tag_name {
         self.unexpected(&token);
@@ -1556,7 +1556,7 @@ impl<'a> TreeBuilder<'a> {
         return;
       }
 
-      self.generate_implied_end_tags("");
+      self.generate_implied_end_tags(b"");
 
       let current_node = self.open_elements.current_node().unwrap();
       let current_element = current_node.as_element();
@@ -1645,7 +1645,7 @@ impl<'a> TreeBuilder<'a> {
         return;
       }
 
-      self.generate_implied_end_tags("");
+      self.generate_implied_end_tags(b"");
 
       if self.current_node().as_element().tag_name() != *token.tag_name() {
         self.unexpected(&token);
@@ -1755,7 +1755,7 @@ impl<'a> TreeBuilder<'a> {
 
     if token.is_start_tag() && token.match_tag_name_in(&["rp", "rt"]) {
       if self.open_elements.has_element_name_in_scope("ruby") {
-        self.generate_implied_end_tags("rtc");
+        self.generate_implied_end_tags(b"rtc");
       }
 
       if !self.current_node().as_element().match_tag_name_in(&[b"rtc", b"ruby"])
@@ -2131,7 +2131,7 @@ impl<'a> TreeBuilder<'a> {
         return;
       }
 
-      self.generate_implied_end_tags("");
+      self.generate_implied_end_tags(b"");
 
       if self.current_node().as_element().tag_name() != *token.tag_name() {
         warn!("Expected current node to have same tag name as token");
@@ -2238,7 +2238,7 @@ impl<'a> TreeBuilder<'a> {
         return;
       }
 
-      self.generate_implied_end_tags("");
+      self.generate_implied_end_tags(b"");
 
       if self.current_node().as_element().tag_name() != "caption" {
         self.unexpected(&token);
@@ -2262,7 +2262,7 @@ impl<'a> TreeBuilder<'a> {
         return;
       }
 
-      self.generate_implied_end_tags("");
+      self.generate_implied_end_tags(b"");
 
       if self.current_node().as_element().tag_name() != "caption" {
         self.unexpected(&token);
@@ -2281,7 +2281,7 @@ impl<'a> TreeBuilder<'a> {
         return;
       }
 
-      self.generate_implied_end_tags("");
+      self.generate_implied_end_tags(b"");
 
       if self.current_node().as_element().tag_name() != "caption" {
         self.unexpected(&token);

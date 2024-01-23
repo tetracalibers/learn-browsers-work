@@ -44,9 +44,9 @@ pub fn criterion_benchmark(cr: &mut Criterion) {
       fast_html::debugger::get_document_from_html(&input);
     });
 
-    register_benchmark(cr, &input, &format!("my_html-{}", file), || {
-      html::debugger::get_document_from_html(&input);
-    });
+    //register_benchmark(cr, &input, &format!("my_html-{}", file), || {
+    //  html::debugger::get_document_from_html(&input);
+    //});
   }
 }
 
