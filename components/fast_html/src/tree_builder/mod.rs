@@ -259,7 +259,7 @@ impl<'a> TreeBuilder<'a> {
       warn!("Expected p element");
     }
 
-    self.open_elements.pop_until("p");
+    self.open_elements.pop_until(b"p");
   }
 
   fn is_marker_or_open_element(&self, entry: &Entry) -> bool {
@@ -1411,7 +1411,7 @@ impl<'a> TreeBuilder<'a> {
             warn!("Expected 'li' tag");
           }
 
-          self.open_elements.pop_until("li");
+          self.open_elements.pop_until(b"li");
           break;
         }
 
@@ -1445,7 +1445,7 @@ impl<'a> TreeBuilder<'a> {
             warn!("Expected 'dd' tag");
           }
 
-          self.open_elements.pop_until("dd");
+          self.open_elements.pop_until(b"dd");
 
           break;
         }
@@ -1457,7 +1457,7 @@ impl<'a> TreeBuilder<'a> {
             warn!("Expected 'dt' tag");
           }
 
-          self.open_elements.pop_until("dt");
+          self.open_elements.pop_until(b"dt");
 
           break;
         }
@@ -1486,7 +1486,7 @@ impl<'a> TreeBuilder<'a> {
       if self.open_elements.has_element_name_in_scope(b"button") {
         self.unexpected(&token);
         self.generate_implied_end_tags(b"");
-        self.open_elements.pop_until("button");
+        self.open_elements.pop_until(b"button");
       }
 
       self.reconstruct_active_formatting_elements();
@@ -1544,7 +1544,7 @@ impl<'a> TreeBuilder<'a> {
         return;
       }
 
-      self.open_elements.pop_until(token.tag_name());
+      self.open_elements.pop_until(token.tag_name().as_bytes());
       return;
     }
 
@@ -1573,7 +1573,7 @@ impl<'a> TreeBuilder<'a> {
         self.unexpected(&token);
       }
 
-      self.open_elements.pop_until("li");
+      self.open_elements.pop_until(b"li");
 
       return;
     }
@@ -1592,7 +1592,7 @@ impl<'a> TreeBuilder<'a> {
         self.unexpected(&token);
       }
 
-      self.open_elements.pop_until(tag_name);
+      self.open_elements.pop_until(tag_name.as_bytes());
 
       return;
     }
@@ -1618,7 +1618,7 @@ impl<'a> TreeBuilder<'a> {
 
       self
         .open_elements
-        .pop_until_some_in(&["h1", "h2", "h3", "h4", "h5", "h6"]);
+        .pop_until_some_in(&[b"h1", b"h2", b"h3", b"h4", b"h5", b"h6"]);
 
       return;
     }
@@ -1705,7 +1705,7 @@ impl<'a> TreeBuilder<'a> {
         self.unexpected(&token);
       }
 
-      self.open_elements.pop_until(token.tag_name());
+      self.open_elements.pop_until(token.tag_name().as_bytes());
       self.active_formatting_elements.clear_up_to_last_marker();
 
       return;
@@ -1990,7 +1990,7 @@ impl<'a> TreeBuilder<'a> {
         self.unexpected(&token);
         return;
       }
-      self.open_elements.pop_until("table");
+      self.open_elements.pop_until(b"table");
       self.reset_insertion_mode_appropriately();
       return;
     }
@@ -2196,7 +2196,7 @@ impl<'a> TreeBuilder<'a> {
       if self.current_node().as_element().tag_name() != *token.tag_name() {
         warn!("Expected current node to have same tag name as token");
       }
-      self.open_elements.pop_until(token.tag_name());
+      self.open_elements.pop_until(token.tag_name().as_bytes());
       self.active_formatting_elements.clear_up_to_last_marker();
       self.switch_to(InsertMode::InRow);
       return;
@@ -2304,7 +2304,7 @@ impl<'a> TreeBuilder<'a> {
         self.unexpected(&token);
       }
 
-      self.open_elements.pop_until("caption");
+      self.open_elements.pop_until(b"caption");
       self.active_formatting_elements.clear_up_to_last_marker();
 
       self.switch_to(InsertMode::InTable);
@@ -2328,7 +2328,7 @@ impl<'a> TreeBuilder<'a> {
         self.unexpected(&token);
       }
 
-      self.open_elements.pop_until("caption");
+      self.open_elements.pop_until(b"caption");
       self.active_formatting_elements.clear_up_to_last_marker();
 
       self.switch_to(InsertMode::InTable);
@@ -2347,7 +2347,7 @@ impl<'a> TreeBuilder<'a> {
         self.unexpected(&token);
       }
 
-      self.open_elements.pop_until("caption");
+      self.open_elements.pop_until(b"caption");
       self.active_formatting_elements.clear_up_to_last_marker();
 
       self.switch_to(InsertMode::InTable);

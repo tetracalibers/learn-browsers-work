@@ -206,9 +206,9 @@ impl StackOfOpenElements {
   /* pop ---------------------------------------- */
 
   // tag_nameがpopされるまでpopする
-  pub fn pop_until(&mut self, tag_name: &str) {
+  pub fn pop_until(&mut self, tag_name: &[u8]) {
     while let Some(node) = self.current_node() {
-      if node.as_element().tag_name() == tag_name {
+      if node.as_element().tag_name().as_bytes() == tag_name {
         self.0.pop();
         break;
       }
@@ -224,9 +224,9 @@ impl StackOfOpenElements {
   }
 
   // tag_namesのいずれかがpopされるまでpopする
-  pub fn pop_until_some_in(&mut self, tag_names: &[&str]) {
+  pub fn pop_until_some_in(&mut self, tag_names: &[&[u8]]) {
     while let Some(node) = self.current_node() {
-      if tag_names.contains(&node.as_element().tag_name().as_str()) {
+      if tag_names.contains(&node.as_element().tag_name().as_bytes()) {
         self.0.pop();
         break;
       }
@@ -234,9 +234,9 @@ impl StackOfOpenElements {
     }
   }
 
-  pub fn pop_while_not_in(&mut self, tag_names: &[&str]) {
+  pub fn pop_while_not_in(&mut self, tag_names: &[&[u8]]) {
     while let Some(node) = self.current_node() {
-      if tag_names.contains(&node.as_element().tag_name().as_str()) {
+      if tag_names.contains(&node.as_element().tag_name().as_bytes()) {
         break;
       }
       self.0.pop();
@@ -244,17 +244,22 @@ impl StackOfOpenElements {
   }
 
   pub fn clear_back_to_table_context(&mut self) {
-    self.pop_while_not_in(&["table", "template", "html"]);
+    self.pop_while_not_in(&[b"table", b"template", b"html"]);
   }
 
   pub fn clear_back_to_table_body_context(&mut self) {
     self.pop_while_not_in(&[
-      "table", "tbody", "tfoot", "thead", "template", "html",
+      b"table",
+      b"tbody",
+      b"tfoot",
+      b"thead",
+      b"template",
+      b"html",
     ]);
   }
 
   pub fn clear_back_to_table_row_context(&mut self) {
-    self.pop_while_not_in(&["tr", "template", "html"]);
+    self.pop_while_not_in(&[b"tr", b"template", b"html"]);
   }
 
   /* remove ------------------------------------- */
