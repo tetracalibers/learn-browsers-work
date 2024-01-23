@@ -153,9 +153,9 @@ impl Token {
     }
   }
 
-  pub fn match_tag_name_in(&self, names: &[&str]) -> bool {
+  pub fn match_tag_name_in(&self, names: &[&[u8]]) -> bool {
     if let Token::Tag { tag_name, .. } = self {
-      names.contains(&tag_name.as_str())
+      names.contains(&tag_name.as_bytes())
     } else {
       false
     }

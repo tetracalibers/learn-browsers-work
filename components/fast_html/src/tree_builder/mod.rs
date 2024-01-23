@@ -865,7 +865,7 @@ impl<'a> TreeBuilder<'a> {
     }
 
     if token.is_end_tag()
-      && token.match_tag_name_in(&["head", "body", "html", "br"])
+      && token.match_tag_name_in(&[b"head", b"body", b"html", b"br"])
     {
       anything_else(self, token);
       return;
@@ -922,7 +922,7 @@ impl<'a> TreeBuilder<'a> {
     }
 
     if token.is_end_tag()
-      && token.match_tag_name_in(&["head", "body", "html", "br"])
+      && token.match_tag_name_in(&[b"head", b"body", b"html", b"br"])
     {
       anything_else(self, token);
       return;
@@ -959,7 +959,7 @@ impl<'a> TreeBuilder<'a> {
     }
 
     if token.is_start_tag()
-      && token.match_tag_name_in(&["base", "basefont", "bgsound", "link"])
+      && token.match_tag_name_in(&[b"base", b"basefont", b"bgsound", b"link"])
     {
       self.insert_html_element(token.clone());
       self.open_elements.pop();
@@ -989,7 +989,8 @@ impl<'a> TreeBuilder<'a> {
       todo!("handle_in_head_mode: noscript");
     }
 
-    if token.is_start_tag() && token.match_tag_name_in(&["noframes", "style"]) {
+    if token.is_start_tag() && token.match_tag_name_in(&[b"noframes", b"style"])
+    {
       todo!("handle_in_head_mode: noframes, style");
     }
 
@@ -1078,8 +1079,16 @@ impl<'a> TreeBuilder<'a> {
 
     if token.is_start_tag()
       && token.match_tag_name_in(&[
-        "base", "basefont", "bgsound", "link", "meta", "noframes", "script",
-        "style", "template", "title",
+        b"base",
+        b"basefont",
+        b"bgsound",
+        b"link",
+        b"meta",
+        b"noframes",
+        b"script",
+        b"style",
+        b"template",
+        b"title",
       ])
     {
       self.unexpected(&token);
@@ -1098,7 +1107,8 @@ impl<'a> TreeBuilder<'a> {
       return self.handle_in_head_mode(token);
     }
 
-    if token.is_end_tag() && token.match_tag_name_in(&["body", "html", "br"]) {
+    if token.is_end_tag() && token.match_tag_name_in(&[b"body", b"html", b"br"])
+    {
       return anything_else(self, token);
     }
 
@@ -1186,8 +1196,16 @@ impl<'a> TreeBuilder<'a> {
 
     if token.is_start_tag()
       && token.match_tag_name_in(&[
-        "base", "basefont", "bgsound", "link", "meta", "noframes", "script",
-        "style", "template", "title",
+        b"base",
+        b"basefont",
+        b"bgsound",
+        b"link",
+        b"meta",
+        b"noframes",
+        b"script",
+        b"style",
+        b"template",
+        b"title",
       ])
     {
       return self.handle_in_head_mode(token);
@@ -1322,30 +1340,30 @@ impl<'a> TreeBuilder<'a> {
 
     if token.is_start_tag()
       && token.match_tag_name_in(&[
-        "address",
-        "article",
-        "aside",
-        "blockquote",
-        "center",
-        "details",
-        "dialog",
-        "dir",
-        "div",
-        "dl",
-        "fieldset",
-        "figcaption",
-        "figure",
-        "footer",
-        "header",
-        "hgroup",
-        "main",
-        "menu",
-        "nav",
-        "ol",
-        "p",
-        "section",
-        "summary",
-        "ul",
+        b"address",
+        b"article",
+        b"aside",
+        b"blockquote",
+        b"center",
+        b"details",
+        b"dialog",
+        b"dir",
+        b"div",
+        b"dl",
+        b"fieldset",
+        b"figcaption",
+        b"figure",
+        b"footer",
+        b"header",
+        b"hgroup",
+        b"main",
+        b"menu",
+        b"nav",
+        b"ol",
+        b"p",
+        b"section",
+        b"summary",
+        b"ul",
       ])
     {
       if self.open_elements.has_element_name_in_button_scope(b"p") {
@@ -1357,7 +1375,7 @@ impl<'a> TreeBuilder<'a> {
     }
 
     if token.is_start_tag()
-      && token.match_tag_name_in(&["h1", "h2", "h3", "h4", "h5", "h6"])
+      && token.match_tag_name_in(&[b"h1", b"h2", b"h3", b"h4", b"h5", b"h6"])
     {
       if self.open_elements.has_element_name_in_button_scope(b"p") {
         self.close_p_element();
@@ -1377,7 +1395,7 @@ impl<'a> TreeBuilder<'a> {
       return;
     }
 
-    if token.is_start_tag() && token.match_tag_name_in(&["pre", "listing"]) {
+    if token.is_start_tag() && token.match_tag_name_in(&[b"pre", b"listing"]) {
       if self.open_elements.has_element_name_in_button_scope(b"p") {
         self.close_p_element();
       }
@@ -1435,7 +1453,7 @@ impl<'a> TreeBuilder<'a> {
       return;
     }
 
-    if token.is_start_tag() && token.match_tag_name_in(&["dd", "dt"]) {
+    if token.is_start_tag() && token.match_tag_name_in(&[b"dd", b"dt"]) {
       self.frameset_ok = false;
 
       for node in self.open_elements.iter().rev() {
@@ -1502,32 +1520,32 @@ impl<'a> TreeBuilder<'a> {
 
     if token.is_end_tag()
       && token.match_tag_name_in(&[
-        "address",
-        "article",
-        "aside",
-        "blockquote",
-        "button",
-        "center",
-        "details",
-        "dialog",
-        "dir",
-        "div",
-        "dl",
-        "fieldset",
-        "figcaption",
-        "figure",
-        "footer",
-        "header",
-        "hgroup",
-        "listing",
-        "main",
-        "menu",
-        "nav",
-        "ol",
-        "pre",
-        "section",
-        "summary",
-        "ul",
+        b"address",
+        b"article",
+        b"aside",
+        b"blockquote",
+        b"button",
+        b"center",
+        b"details",
+        b"dialog",
+        b"dir",
+        b"div",
+        b"dl",
+        b"fieldset",
+        b"figcaption",
+        b"figure",
+        b"footer",
+        b"header",
+        b"hgroup",
+        b"listing",
+        b"main",
+        b"menu",
+        b"nav",
+        b"ol",
+        b"pre",
+        b"section",
+        b"summary",
+        b"ul",
       ])
     {
       if !self
@@ -1582,7 +1600,7 @@ impl<'a> TreeBuilder<'a> {
       return;
     }
 
-    if token.is_end_tag() && token.match_tag_name_in(&["dd", "dt"]) {
+    if token.is_end_tag() && token.match_tag_name_in(&[b"dd", b"dt"]) {
       let tag_name = token.tag_name_as_bytes();
 
       if !self.open_elements.has_element_name_in_scope(tag_name) {
@@ -1602,7 +1620,7 @@ impl<'a> TreeBuilder<'a> {
     }
 
     if token.is_end_tag()
-      && token.match_tag_name_in(&["h1", "h2", "h3", "h4", "h5", "h6"])
+      && token.match_tag_name_in(&[b"h1", b"h2", b"h3", b"h4", b"h5", b"h6"])
     {
       if self.open_elements.has_not_all_element_names_in_scope(&[
         b"h1", b"h2", b"h3", b"h4", b"h5", b"h6",
@@ -1652,8 +1670,8 @@ impl<'a> TreeBuilder<'a> {
 
     if token.is_start_tag()
       && token.match_tag_name_in(&[
-        "b", "big", "code", "em", "font", "i", "s", "small", "strike",
-        "strong", "tt", "u",
+        b"b", b"big", b"code", b"em", b"font", b"i", b"s", b"small", b"strike",
+        b"strong", b"tt", b"u",
       ])
     {
       self.reconstruct_active_formatting_elements();
@@ -1668,8 +1686,8 @@ impl<'a> TreeBuilder<'a> {
 
     if token.is_end_tag()
       && token.match_tag_name_in(&[
-        "a", "b", "big", "code", "em", "font", "i", "nobr", "s", "small",
-        "strike", "strong", "tt", "u",
+        b"a", b"b", b"big", b"code", b"em", b"font", b"i", b"nobr", b"s",
+        b"small", b"strike", b"strong", b"tt", b"u",
       ])
     {
       match self.adoption_agency_algorithm(&token) {
@@ -1683,7 +1701,7 @@ impl<'a> TreeBuilder<'a> {
     }
 
     if token.is_start_tag()
-      && token.match_tag_name_in(&["applet", "marquee", "object"])
+      && token.match_tag_name_in(&[b"applet", b"marquee", b"object"])
     {
       self.reconstruct_active_formatting_elements();
       self.insert_html_element(token);
@@ -1693,7 +1711,7 @@ impl<'a> TreeBuilder<'a> {
     }
 
     if token.is_end_tag()
-      && token.match_tag_name_in(&["applet", "marquee", "object"])
+      && token.match_tag_name_in(&[b"applet", b"marquee", b"object"])
     {
       if !self
         .open_elements
@@ -1735,8 +1753,9 @@ impl<'a> TreeBuilder<'a> {
     }
 
     if token.is_start_tag()
-      && token
-        .match_tag_name_in(&["area", "br", "embed", "img", "keygen", "wbr"])
+      && token.match_tag_name_in(&[
+        b"area", b"br", b"embed", b"img", b"keygen", b"wbr",
+      ])
     {
       self.reconstruct_active_formatting_elements();
       token.acknowledge_self_closing_if_set();
@@ -1751,7 +1770,7 @@ impl<'a> TreeBuilder<'a> {
     }
 
     if token.is_start_tag()
-      && token.match_tag_name_in(&["param", "source", "track"])
+      && token.match_tag_name_in(&[b"param", b"source", b"track"])
     {
       token.acknowledge_self_closing_if_set();
       self.insert_html_element(token);
@@ -1806,16 +1825,17 @@ impl<'a> TreeBuilder<'a> {
       todo!("process_in_body: select start tag");
     }
 
-    if token.is_start_tag() && token.match_tag_name_in(&["optgroup", "option"])
+    if token.is_start_tag()
+      && token.match_tag_name_in(&[b"optgroup", b"option"])
     {
       todo!("process_in_body: optgroup/option start tag");
     }
 
-    if token.is_start_tag() && token.match_tag_name_in(&["rb", "rtc"]) {
+    if token.is_start_tag() && token.match_tag_name_in(&[b"rb", b"rtc"]) {
       todo!("process_in_body: rb/rtc start tag");
     }
 
-    if token.is_start_tag() && token.match_tag_name_in(&["rp", "rt"]) {
+    if token.is_start_tag() && token.match_tag_name_in(&[b"rp", b"rt"]) {
       if self.open_elements.has_element_name_in_scope(b"ruby") {
         self.generate_implied_end_tags(b"rtc");
       }
@@ -1839,8 +1859,17 @@ impl<'a> TreeBuilder<'a> {
 
     if token.is_start_tag()
       && token.match_tag_name_in(&[
-        "caption", "col", "colgroup", "frame", "head", "tbody", "td", "tfoot",
-        "th", "thead", "tr",
+        b"caption",
+        b"col",
+        b"colgroup",
+        b"frame",
+        b"head",
+        b"tbody",
+        b"td",
+        b"tfoot",
+        b"th",
+        b"thead",
+        b"tr",
       ])
     {
       todo!("process_in_body: table related start tag");
@@ -1974,7 +2003,7 @@ impl<'a> TreeBuilder<'a> {
     }
 
     if token.is_start_tag()
-      && token.match_tag_name_in(&["tbody", "tfoot", "thead"])
+      && token.match_tag_name_in(&[b"tbody", b"tfoot", b"thead"])
     {
       self.open_elements.clear_back_to_table_context();
       self.insert_html_element(token);
@@ -1982,7 +2011,7 @@ impl<'a> TreeBuilder<'a> {
       return;
     }
 
-    if token.is_start_tag() && token.match_tag_name_in(&["td", "th", "tr"]) {
+    if token.is_start_tag() && token.match_tag_name_in(&[b"td", b"th", b"tr"]) {
       self.open_elements.clear_back_to_table_context();
       self.insert_html_element(Token::new_start_tag_of("tbody"));
       self.switch_to(InsertMode::InTableBody);
@@ -2005,15 +2034,24 @@ impl<'a> TreeBuilder<'a> {
 
     if token.is_end_tag()
       && token.match_tag_name_in(&[
-        "body", "caption", "col", "colgroup", "html", "tbody", "td", "tfoot",
-        "th", "thead", "tr",
+        b"body",
+        b"caption",
+        b"col",
+        b"colgroup",
+        b"html",
+        b"tbody",
+        b"td",
+        b"tfoot",
+        b"th",
+        b"thead",
+        b"tr",
       ])
     {
       todo!("process_in_table: body/caption/col/colgroup/html/tbody/td/tfoot/th/thead/tr end tag");
     }
 
     if token.is_start_tag()
-      && token.match_tag_name_in(&["style", "script", "template"])
+      && token.match_tag_name_in(&[b"style", b"script", b"template"])
     {
       todo!("process_in_table: style/script/template start tag");
     }
@@ -2083,12 +2121,12 @@ impl<'a> TreeBuilder<'a> {
       return;
     }
 
-    if token.is_start_tag() && token.match_tag_name_in(&["th", "td"]) {
+    if token.is_start_tag() && token.match_tag_name_in(&[b"th", b"td"]) {
       todo!("process_in_table_body: th/td start tag");
     }
 
     if token.is_end_tag()
-      && token.match_tag_name_in(&["tbody", "tfoot", "thead"])
+      && token.match_tag_name_in(&[b"tbody", b"tfoot", b"thead"])
     {
       if !self
         .open_elements
@@ -2106,7 +2144,12 @@ impl<'a> TreeBuilder<'a> {
 
     if token.is_start_tag()
       && token.match_tag_name_in(&[
-        "caption", "col", "colgroup", "tbody", "tfoot", "thead",
+        b"caption",
+        b"col",
+        b"colgroup",
+        b"tbody",
+        b"tfoot",
+        b"thead",
       ])
     {
       todo!("process_in_table_body: caption/col/colgroup/tbody/tfoot/thead start tag");
@@ -2130,7 +2173,14 @@ impl<'a> TreeBuilder<'a> {
 
     if token.is_end_tag()
       && token.match_tag_name_in(&[
-        "body", "caption", "col", "colgroup", "html", "td", "th", "tr",
+        b"body",
+        b"caption",
+        b"col",
+        b"colgroup",
+        b"html",
+        b"td",
+        b"th",
+        b"tr",
       ])
     {
       todo!("process_in_table_body: body end tag");
@@ -2140,7 +2190,7 @@ impl<'a> TreeBuilder<'a> {
   }
 
   fn handle_in_row_mode(&mut self, token: Token) {
-    if token.is_start_tag() && token.match_tag_name_in(&["th", "td"]) {
+    if token.is_start_tag() && token.match_tag_name_in(&[b"th", b"td"]) {
       self.open_elements.clear_back_to_table_row_context();
       self.insert_html_element(token);
       self.switch_to(InsertMode::InCell);
@@ -2162,7 +2212,13 @@ impl<'a> TreeBuilder<'a> {
 
     if token.is_start_tag()
       && token.match_tag_name_in(&[
-        "caption", "col", "colgroup", "tbody", "tfoot", "thead", "tr",
+        b"caption",
+        b"col",
+        b"colgroup",
+        b"tbody",
+        b"tfoot",
+        b"thead",
+        b"tr",
       ])
     {
       todo!("process_in_row: caption/col/colgroup/tbody/tfoot/thead start tag");
@@ -2173,14 +2229,20 @@ impl<'a> TreeBuilder<'a> {
     }
 
     if token.is_end_tag()
-      && token.match_tag_name_in(&["tbody", "tfoot", "thead"])
+      && token.match_tag_name_in(&[b"tbody", b"tfoot", b"thead"])
     {
       todo!("process_in_row: tbody/tfoot/thead end tag");
     }
 
     if token.is_end_tag()
       && token.match_tag_name_in(&[
-        "body", "caption", "col", "colgroup", "html", "td", "th",
+        b"body",
+        b"caption",
+        b"col",
+        b"colgroup",
+        b"html",
+        b"td",
+        b"th",
       ])
     {
       todo!("process_in_row: body/caption/col/colgroup/html/td/th end tag");
@@ -2190,7 +2252,7 @@ impl<'a> TreeBuilder<'a> {
   }
 
   fn handle_in_cell_mode(&mut self, token: Token) {
-    if token.is_end_tag() && token.match_tag_name_in(&["td", "th"]) {
+    if token.is_end_tag() && token.match_tag_name_in(&[b"td", b"th"]) {
       if !self
         .open_elements
         .has_element_name_in_table_scope(token.tag_name_as_bytes())
@@ -2214,22 +2276,35 @@ impl<'a> TreeBuilder<'a> {
 
     if token.is_start_tag()
       && token.match_tag_name_in(&[
-        "caption", "col", "colgroup", "tbody", "td", "tfoot", "th", "thead",
-        "tr",
+        b"caption",
+        b"col",
+        b"colgroup",
+        b"tbody",
+        b"td",
+        b"tfoot",
+        b"th",
+        b"thead",
+        b"tr",
       ])
     {
       todo!("process_in_cell: caption/col/colgroup/tbody/td/tfoot/th/thead/tr start tag");
     }
 
     if token.is_end_tag()
-      && token
-        .match_tag_name_in(&["body", "caption", "col", "colgroup", "html"])
+      && token.match_tag_name_in(&[
+        b"body",
+        b"caption",
+        b"col",
+        b"colgroup",
+        b"html",
+      ])
     {
       todo!("process_in_cell: body/caption/col/colgroup/html end tag");
     }
 
     if token.is_end_tag()
-      && token.match_tag_name_in(&["table", "tbody", "tfoot", "thead", "tr"])
+      && token
+        .match_tag_name_in(&[b"table", b"tbody", b"tfoot", b"thead", b"tr"])
     {
       todo!("process_in_cell: table/tbody/tfoot/thead/tr end tag");
     }
@@ -2323,8 +2398,15 @@ impl<'a> TreeBuilder<'a> {
 
     if token.is_start_tag()
       && token.match_tag_name_in(&[
-        "caption", "col", "colgroup", "tbody", "td", "tfoot", "th", "thead",
-        "tr",
+        b"caption",
+        b"col",
+        b"colgroup",
+        b"tbody",
+        b"td",
+        b"tfoot",
+        b"th",
+        b"thead",
+        b"tr",
       ])
     {
       if !self.open_elements.has_element_name_in_table_scope(b"caption") {
@@ -2366,8 +2448,16 @@ impl<'a> TreeBuilder<'a> {
 
     if token.is_end_tag()
       && token.match_tag_name_in(&[
-        "body", "col", "colgroup", "html", "tbody", "td", "tfoot", "th",
-        "thead", "tr",
+        b"body",
+        b"col",
+        b"colgroup",
+        b"html",
+        b"tbody",
+        b"td",
+        b"tfoot",
+        b"th",
+        b"thead",
+        b"tr",
       ])
     {
       self.unexpected(&token);
