@@ -114,6 +114,15 @@ impl<'a> TreeBuilder<'a> {
       InsertMode::InBody => self.handle_in_body_mode(token),
       InsertMode::AfterBody => self.handle_after_body_mode(token),
       InsertMode::AfterAfterBody => self.handle_after_after_body_mode(token),
+      InsertMode::InTable => self.handle_in_table_mode(token),
+      InsertMode::InTableText => self.handle_in_table_text_mode(token),
+      InsertMode::InTableBody => self.handle_in_table_body_mode(token),
+      InsertMode::InRow => self.handle_in_row_mode(token),
+      InsertMode::InCell => self.handle_in_cell_mode(token),
+      InsertMode::InColumnGroup => self.handle_in_column_group_mode(token),
+      InsertMode::InCaption => self.handle_in_caption_mode(token),
+      InsertMode::InSelect => self.handle_in_select_mode(token),
+      InsertMode::InSelectInTable => self.handle_in_select_in_table_mode(token),
       InsertMode::Text => self.handle_text_mode(token),
     }
   }
@@ -312,6 +321,106 @@ impl<'a> TreeBuilder<'a> {
 
       // Advance step
       index += 1;
+    }
+  }
+
+  fn reset_insertion_mode_appropriately(&mut self) {
+    for (index, node) in self.open_elements.iter().enumerate().rev() {
+      // nodeがオープン要素のスタックの最初のノードである場合、lastをtrueに設定
+      let last = index == 0;
+
+      // TODO: フラグメント解析アルゴリズムをサポートするか決める
+      // パーサーがHTMLフラグメント解析アルゴリズムの一部として作成された場合（フラグメントの場合）、nodeをそのアルゴリズムに渡されたコンテキスト要素に設定する
+
+      let element = node.as_element();
+
+      if element.tag_name() == "select" {
+        for ancestor in self.open_elements.iter().rev() {
+          let ancestor_tag_name = ancestor.as_element().tag_name();
+
+          match ancestor_tag_name.as_str() {
+            "template" => {
+              self.switch_to(InsertMode::InSelect);
+              return;
+            }
+            "table" => {
+              self.switch_to(InsertMode::InSelectInTable);
+              return;
+            }
+            _ => {
+              // noop
+            }
+          }
+        }
+
+        self.switch_to(InsertMode::InSelect);
+        return;
+      }
+
+      if element.match_tag_name_in(&["td", "th"]) && !last {
+        self.switch_to(InsertMode::InCell);
+        return;
+      }
+
+      if element.tag_name() == "tr" {
+        self.switch_to(InsertMode::InRow);
+        return;
+      }
+
+      if element.match_tag_name_in(&["tbody", "thead", "tfoot"]) {
+        self.switch_to(InsertMode::InTableBody);
+        return;
+      }
+
+      if element.tag_name() == "caption" {
+        self.switch_to(InsertMode::InCaption);
+        return;
+      }
+
+      if element.tag_name() == "colgroup" {
+        self.switch_to(InsertMode::InColumnGroup);
+        return;
+      }
+
+      if element.tag_name() == "table" {
+        self.switch_to(InsertMode::InTable);
+        return;
+      }
+
+      if element.tag_name() == "template" {
+        todo!("reset_insertion_mode_appropriately: template");
+      }
+
+      if element.tag_name() == "head" && !last {
+        self.switch_to(InsertMode::InHead);
+        return;
+      }
+
+      if element.tag_name() == "body" {
+        self.switch_to(InsertMode::InBody);
+        return;
+      }
+
+      if element.tag_name() == "frameset" {
+        todo!("reset_insertion_mode_appropriately: frameset");
+      }
+
+      if element.tag_name() == "html" {
+        match self.head_pointer {
+          Some(_) => {
+            self.switch_to(InsertMode::AfterHead);
+          }
+          None => {
+            self.switch_to(InsertMode::BeforeHead);
+          }
+        }
+        return;
+      }
+
+      if last {
+        self.switch_to(InsertMode::InBody);
+        return;
+      }
     }
   }
 
@@ -1547,9 +1656,9 @@ impl<'a> TreeBuilder<'a> {
 
       self.insert_html_element(token);
       self.frameset_ok = false;
-      unimplemented!("self.switch_to(InsertMode::InTable)");
+      self.switch_to(InsertMode::InTable);
 
-      //return;
+      return;
     }
 
     if token.is_end_tag() && token.tag_name() == "br" {
@@ -1747,6 +1856,299 @@ impl<'a> TreeBuilder<'a> {
     self.unexpected(&token);
     self.switch_to(InsertMode::InBody);
     self.process(token);
+  }
+
+  fn handle_in_table_mode(&mut self, token: Token) {
+    if let Token::Text(_) = token {
+      if self
+        .current_node()
+        .as_element()
+        .match_tag_name_in(&["table", "tbody", "tfoot", "thead", "tr"])
+      {
+        self.pending_table_character_tokens.clear();
+        self.original_insert_mode = Some(self.insert_mode.clone());
+        self.switch_to(InsertMode::InTableText);
+        return self.process(token);
+      }
+    }
+
+    if let Token::Comment(text) = token {
+      self.insert_comment(text);
+      return;
+    }
+
+    if let Token::DOCTYPE { .. } = token {
+      self.unexpected(&token);
+      return;
+    }
+
+    if token.is_start_tag() && token.tag_name() == "caption" {
+      todo!("process_in_table: caption start tag");
+    }
+
+    if token.is_start_tag() && token.tag_name() == "colgroup" {
+      todo!("process_in_table: colgroup start tag");
+    }
+
+    if token.is_start_tag() && token.tag_name() == "col" {
+      todo!("process_in_table: col start tag");
+    }
+
+    if token.is_start_tag()
+      && token.match_tag_name_in(&["tbody", "tfoot", "thead"])
+    {
+      self.open_elements.clear_back_to_table_context();
+      self.insert_html_element(token);
+      self.switch_to(InsertMode::InTableBody);
+      return;
+    }
+
+    if token.is_start_tag() && token.match_tag_name_in(&["td", "th", "tr"]) {
+      todo!("process_in_table: td/th/tr start tag");
+    }
+
+    if token.is_start_tag() && token.tag_name() == "table" {
+      todo!("process_in_table: table start tag");
+    }
+
+    if token.is_end_tag() && token.tag_name() == "table" {
+      if !self.open_elements.has_element_name_in_table_scope("table") {
+        self.unexpected(&token);
+        return;
+      }
+      self.open_elements.pop_until("table");
+      self.reset_insertion_mode_appropriately();
+      return;
+    }
+
+    if token.is_end_tag()
+      && token.match_tag_name_in(&[
+        "body", "caption", "col", "colgroup", "html", "tbody", "td", "tfoot",
+        "th", "thead", "tr",
+      ])
+    {
+      todo!("process_in_table: body/caption/col/colgroup/html/tbody/td/tfoot/th/thead/tr end tag");
+    }
+
+    if token.is_start_tag()
+      && token.match_tag_name_in(&["style", "script", "template"])
+    {
+      todo!("process_in_table: style/script/template start tag");
+    }
+
+    if token.is_end_tag() && token.tag_name() == "template" {
+      todo!("process_in_table: template end tag");
+    }
+
+    if token.is_start_tag() && token.tag_name() == "input" {
+      todo!("process_in_table: input start tag");
+    }
+
+    if token.is_start_tag() && token.tag_name() == "form" {
+      todo!("process_in_table: form start tag");
+    }
+
+    if let Token::EOF = token {
+      return self.handle_in_body_mode(token);
+    }
+
+    self.unexpected(&token);
+    self.foster_parenting = true;
+    self.handle_in_body_mode(token);
+    self.foster_parenting = false;
+  }
+
+  fn handle_in_table_text_mode(&mut self, token: Token) {
+    if let Token::Text(ref s) = token {
+      if s == "\0" {
+        self.unexpected(&token);
+        return;
+      }
+      self.pending_table_character_tokens.push(token);
+      return;
+    }
+
+    let has_not_whitespace_char =
+      self.pending_table_character_tokens.iter().any(|token| match token {
+        Token::Text(s) => !s.trim().is_empty(),
+        _ => false,
+      });
+
+    if has_not_whitespace_char {
+      warn!("Non-whitespace in table text");
+      for pending_token in self.pending_table_character_tokens.clone() {
+        self.foster_parenting = true;
+        self.handle_in_body_mode(pending_token);
+        self.foster_parenting = false;
+      }
+    } else {
+      for pending_token in self.pending_table_character_tokens.clone() {
+        if let Token::Text(s) = pending_token {
+          self.insert_str(&s);
+        }
+      }
+    }
+
+    self.switch_to(self.original_insert_mode.clone().unwrap());
+    self.process(token);
+  }
+
+  fn handle_in_table_body_mode(&mut self, token: Token) {
+    if token.is_start_tag() && token.tag_name() == "tr" {
+      self.open_elements.clear_back_to_table_body_context();
+      self.insert_html_element(token);
+      self.switch_to(InsertMode::InRow);
+      return;
+    }
+
+    if token.is_start_tag() && token.match_tag_name_in(&["th", "td"]) {
+      todo!("process_in_table_body: th/td start tag");
+    }
+
+    if token.is_end_tag()
+      && token.match_tag_name_in(&["tbody", "tfoot", "thead"])
+    {
+      if !self.open_elements.has_element_name_in_table_scope(token.tag_name()) {
+        self.unexpected(&token);
+        return;
+      }
+
+      self.open_elements.clear_back_to_table_body_context();
+      self.open_elements.pop();
+      self.switch_to(InsertMode::InTable);
+      return;
+    }
+
+    if token.is_start_tag()
+      && token.match_tag_name_in(&[
+        "caption", "col", "colgroup", "tbody", "tfoot", "thead",
+      ])
+    {
+      todo!("process_in_table_body: caption/col/colgroup/tbody/tfoot/thead start tag");
+    }
+
+    if token.is_end_tag() && token.tag_name() == "table" {
+      todo!("process_in_table_body: table end tag");
+    }
+
+    if token.is_end_tag()
+      && token.match_tag_name_in(&[
+        "body", "caption", "col", "colgroup", "html", "td", "th", "tr",
+      ])
+    {
+      todo!("process_in_table_body: body end tag");
+    }
+
+    self.handle_in_table_mode(token)
+  }
+
+  fn handle_in_row_mode(&mut self, token: Token) {
+    if token.is_start_tag() && token.match_tag_name_in(&["th", "td"]) {
+      self.open_elements.clear_back_to_table_row_context();
+      self.insert_html_element(token);
+      self.switch_to(InsertMode::InCell);
+      self.active_formatting_elements.add_marker();
+      return;
+    }
+
+    if token.is_end_tag() && token.tag_name() == "tr" {
+      if !self.open_elements.has_element_name_in_table_scope("tr") {
+        self.unexpected(&token);
+        return;
+      }
+
+      self.open_elements.clear_back_to_table_row_context();
+      self.open_elements.pop();
+      self.switch_to(InsertMode::InTableBody);
+      return;
+    }
+
+    if token.is_start_tag()
+      && token.match_tag_name_in(&[
+        "caption", "col", "colgroup", "tbody", "tfoot", "thead", "tr",
+      ])
+    {
+      todo!("process_in_row: caption/col/colgroup/tbody/tfoot/thead start tag");
+    }
+
+    if token.is_end_tag() && token.tag_name() == "table" {
+      todo!("process_in_row: table end tag");
+    }
+
+    if token.is_end_tag()
+      && token.match_tag_name_in(&["tbody", "tfoot", "thead"])
+    {
+      todo!("process_in_row: tbody/tfoot/thead end tag");
+    }
+
+    if token.is_end_tag()
+      && token.match_tag_name_in(&[
+        "body", "caption", "col", "colgroup", "html", "td", "th",
+      ])
+    {
+      todo!("process_in_row: body/caption/col/colgroup/html/td/th end tag");
+    }
+
+    self.handle_in_table_mode(token)
+  }
+
+  fn handle_in_cell_mode(&mut self, token: Token) {
+    if token.is_end_tag() && token.match_tag_name_in(&["td", "th"]) {
+      if !self.open_elements.has_element_name_in_table_scope(token.tag_name()) {
+        self.unexpected(&token);
+        return;
+      }
+
+      self.generate_implied_end_tags("");
+
+      if self.current_node().as_element().tag_name() != *token.tag_name() {
+        warn!("Expected current node to have same tag name as token");
+      }
+      self.open_elements.pop_until(token.tag_name());
+      self.active_formatting_elements.clear_up_to_last_marker();
+      self.switch_to(InsertMode::InRow);
+      return;
+    }
+
+    if token.is_start_tag()
+      && token.match_tag_name_in(&[
+        "caption", "col", "colgroup", "tbody", "td", "tfoot", "th", "thead",
+        "tr",
+      ])
+    {
+      todo!("process_in_cell: caption/col/colgroup/tbody/td/tfoot/th/thead/tr start tag");
+    }
+
+    if token.is_end_tag()
+      && token
+        .match_tag_name_in(&["body", "caption", "col", "colgroup", "html"])
+    {
+      todo!("process_in_cell: body/caption/col/colgroup/html end tag");
+    }
+
+    if token.is_end_tag()
+      && token.match_tag_name_in(&["table", "tbody", "tfoot", "thead", "tr"])
+    {
+      todo!("process_in_cell: table/tbody/tfoot/thead/tr end tag");
+    }
+
+    self.handle_in_body_mode(token)
+  }
+
+  fn handle_in_column_group_mode(&mut self, _token: Token) {
+    todo!("handle_in_column_group_mode");
+  }
+
+  fn handle_in_caption_mode(&mut self, _token: Token) {
+    todo!("handle_in_caption_mode");
+  }
+
+  fn handle_in_select_mode(&mut self, _token: Token) {
+    todo!("handle_in_select_mode");
+  }
+
+  fn handle_in_select_in_table_mode(&mut self, _token: Token) {
+    todo!("handle_in_select_in_table_mode");
   }
 
   fn handle_text_mode(&mut self, token: Token) {

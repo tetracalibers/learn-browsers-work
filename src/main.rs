@@ -6,7 +6,20 @@ const TARGET_HTML: &str = r#"<!DOCTYPE html>
   <title>document title</title>
 </head>
 <body>
-<object type="application/pdf" data="/media/examples/In-CC0.pdf" width="250" height="200"></object>
+<table>
+  <thead>
+    <tr>
+      <th colspan="2">The table header</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>The table body</td>
+      <td>with two columns</td>
+    </tr>
+  </tbody>
+</table>
+
 </body>
 </html>"#;
 

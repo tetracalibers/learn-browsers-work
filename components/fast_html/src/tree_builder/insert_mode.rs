@@ -13,4 +13,15 @@ pub enum InsertMode {
   AfterAfterBody,
 
   Text,
+
+  InTable,
+  InTableText,
+  InTableBody,
+  InRow,
+  InCell,
+  InCaption,
+  InColumnGroup,
+
+  InSelect,
+  InSelectInTable,
 }
