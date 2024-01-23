@@ -498,8 +498,9 @@ impl<'a> TreeBuilder<'a> {
       }
       external_loop_counter += 1;
 
-      let formatting_element =
-        self.active_formatting_elements.get_element_after_last_marker(subject);
+      let formatting_element = self
+        .active_formatting_elements
+        .get_element_after_last_marker(subject.as_bytes());
 
       if formatting_element.is_none() {
         return AdoptionAgencyAlgorithmOutcome::RunAnyOtherEndTagsSteps;
@@ -1625,7 +1626,7 @@ impl<'a> TreeBuilder<'a> {
 
     if token.is_start_tag() && token.tag_name() == "a" {
       if let Some(element) =
-        self.active_formatting_elements.get_element_after_last_marker("a")
+        self.active_formatting_elements.get_element_after_last_marker(b"a")
       {
         self.unexpected(&token);
         match self.adoption_agency_algorithm(&token) {

@@ -41,12 +41,12 @@ impl ListOfActiveFormattingElements {
 
   pub fn get_element_after_last_marker(
     &self,
-    tag_name: &str,
+    tag_name: &[u8],
   ) -> Option<NodePtr> {
     self.iter().rev().find_map(|entry| match entry {
       Entry::Marker => None,
       Entry::Element(node) => {
-        if node.as_element().tag_name() == tag_name {
+        if node.as_element().tag_name().as_bytes() == tag_name {
           Some(node.clone())
         } else {
           None
