@@ -1170,7 +1170,7 @@ impl<'a> TreeBuilder<'a> {
     if token.is_start_tag() && token.tag_name() == "html" {
       warn!("Unexpected HTML tag");
 
-      if self.open_elements.contains("template") {
+      if self.open_elements.contains(b"template") {
         return;
       }
 
@@ -1211,7 +1211,7 @@ impl<'a> TreeBuilder<'a> {
       }
 
       // 開いている要素にtemplate要素が存在する場合
-      if self.open_elements.contains("template") {
+      if self.open_elements.contains(b"template") {
         return;
       }
 
