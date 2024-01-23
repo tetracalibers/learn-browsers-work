@@ -474,7 +474,7 @@ impl<'a> TreeBuilder<'a> {
     let subject = token.tag_name();
     let current_node = self.current_node();
 
-    if current_node.as_element().tag_name() == *subject
+    if current_node.as_element().tag_name() == subject
       && !self.active_formatting_elements.contains_node(&current_node)
     {
       self.open_elements.pop();
@@ -660,7 +660,7 @@ impl<'a> TreeBuilder<'a> {
 
   fn create_tag_token_cloned_from(&self, element: &NodePtr) -> Token {
     let element = element.as_element();
-    let tag_name = element.tag_name();
+    let tag_name = element.tag_name().clone();
     let attributes = element
       .attributes()
       .borrow()
@@ -1109,7 +1109,7 @@ impl<'a> TreeBuilder<'a> {
       for (index, node) in this.open_elements.iter().enumerate().rev() {
         let node_tag_name = node.as_element().tag_name();
 
-        if node_tag_name == *token.tag_name() {
+        if node_tag_name == token.tag_name() {
           if !Rc::ptr_eq(node, &this.current_node()) {
             this.unexpected(&token);
           }
@@ -1479,7 +1479,7 @@ impl<'a> TreeBuilder<'a> {
       let current_node = self.current_node();
       let current_element = current_node.as_element();
 
-      if current_element.tag_name() != *token.tag_name() {
+      if current_element.tag_name() != token.tag_name() {
         self.unexpected(&token);
         return;
       }
@@ -1528,7 +1528,7 @@ impl<'a> TreeBuilder<'a> {
 
       self.generate_implied_end_tags(tag_name);
 
-      if self.current_node().as_element().tag_name() != *tag_name {
+      if self.current_node().as_element().tag_name() != tag_name {
         self.unexpected(&token);
       }
 
@@ -1552,7 +1552,7 @@ impl<'a> TreeBuilder<'a> {
       let current_node = self.open_elements.current_node().unwrap();
       let current_element = current_node.as_element();
 
-      if current_element.tag_name() != *token.tag_name() {
+      if current_element.tag_name() != token.tag_name() {
         self.unexpected(&token);
       }
 
@@ -1638,7 +1638,7 @@ impl<'a> TreeBuilder<'a> {
 
       self.generate_implied_end_tags("");
 
-      if self.current_node().as_element().tag_name() != *token.tag_name() {
+      if self.current_node().as_element().tag_name() != token.tag_name() {
         self.unexpected(&token);
       }
 
@@ -2123,7 +2123,7 @@ impl<'a> TreeBuilder<'a> {
 
       self.generate_implied_end_tags("");
 
-      if self.current_node().as_element().tag_name() != *token.tag_name() {
+      if self.current_node().as_element().tag_name() != token.tag_name() {
         warn!("Expected current node to have same tag name as token");
       }
       self.open_elements.pop_until(token.tag_name());

@@ -24,8 +24,8 @@ impl Element {
     }
   }
 
-  pub fn tag_name(&self) -> EcoString {
-    self.tag_name.clone()
+  pub fn tag_name(&self) -> &EcoString {
+    &self.tag_name
   }
 
   pub fn match_tag_name_in(&self, names: &[&str]) -> bool {
