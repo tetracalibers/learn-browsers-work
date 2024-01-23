@@ -226,7 +226,7 @@ impl<'a> TreeBuilder<'a> {
     while let Some(node) = self.open_elements.current_node() {
       let element = node.as_element();
 
-      if element.tag_name().as_bytes() == exclude {
+      if element.tag_name_as_bytes() == exclude {
         break;
       }
 
@@ -448,7 +448,7 @@ impl<'a> TreeBuilder<'a> {
         break;
       }
 
-      if is_special_element(&element.as_element().tag_name().as_bytes()) {
+      if is_special_element(&element.as_element().tag_name_as_bytes()) {
         furthest_block = Some(element.clone());
         furthest_block_index = Some(index);
       }
@@ -480,10 +480,10 @@ impl<'a> TreeBuilder<'a> {
     &mut self,
     token: &Token,
   ) -> AdoptionAgencyAlgorithmOutcome {
-    let subject = token.tag_name();
+    let subject = token.tag_name_as_bytes();
     let current_node = self.current_node();
 
-    if current_node.as_element().tag_name() == *subject
+    if current_node.as_element().tag_name_as_bytes() == subject
       && !self.active_formatting_elements.contains_node(&current_node)
     {
       self.open_elements.pop();
@@ -498,9 +498,8 @@ impl<'a> TreeBuilder<'a> {
       }
       external_loop_counter += 1;
 
-      let formatting_element = self
-        .active_formatting_elements
-        .get_element_after_last_marker(subject.as_bytes());
+      let formatting_element =
+        self.active_formatting_elements.get_element_after_last_marker(subject);
 
       if formatting_element.is_none() {
         return AdoptionAgencyAlgorithmOutcome::RunAnyOtherEndTagsSteps;
@@ -1117,9 +1116,9 @@ impl<'a> TreeBuilder<'a> {
       let mut match_index = None;
 
       for (index, node) in this.open_elements.iter().enumerate().rev() {
-        let node_tag_name = node.as_element().tag_name();
+        let node_tag_name = node.as_element().tag_name_as_bytes();
 
-        if node_tag_name == *token.tag_name() {
+        if node_tag_name == token.tag_name_as_bytes() {
           if !Rc::ptr_eq(node, &this.current_node()) {
             this.unexpected(&token);
           }
@@ -1128,14 +1127,14 @@ impl<'a> TreeBuilder<'a> {
           break;
         }
 
-        if is_special_element(&node_tag_name.as_bytes()) {
+        if is_special_element(&node_tag_name) {
           this.unexpected(&token);
           return;
         }
       }
 
       if let Some(index) = match_index {
-        this.generate_implied_end_tags(token.tag_name().as_bytes());
+        this.generate_implied_end_tags(token.tag_name_as_bytes());
         this.open_elements.pop_before_index(index);
       }
     }
@@ -1403,9 +1402,9 @@ impl<'a> TreeBuilder<'a> {
 
       for node in self.open_elements.iter().rev() {
         let element = node.as_element();
-        let tag_name = element.tag_name();
+        let tag_name = element.tag_name_as_bytes();
 
-        if tag_name == "li" {
+        if tag_name == b"li" {
           self.generate_implied_end_tags(b"li");
 
           if self.current_node().as_element().tag_name() != "li" {
@@ -1416,7 +1415,7 @@ impl<'a> TreeBuilder<'a> {
           break;
         }
 
-        if is_special_element(&tag_name.as_bytes())
+        if is_special_element(&tag_name)
           && !element.match_tag_name_in(&[b"address", b"div", b"p"])
         {
           break;
@@ -1437,9 +1436,9 @@ impl<'a> TreeBuilder<'a> {
 
       for node in self.open_elements.iter().rev() {
         let element = node.as_element();
-        let tag_name = element.tag_name();
+        let tag_name = element.tag_name_as_bytes();
 
-        if tag_name == "dd" {
+        if tag_name == b"dd" {
           self.generate_implied_end_tags(b"dd");
 
           if self.current_node().as_element().tag_name() != "dd" {
@@ -1451,7 +1450,7 @@ impl<'a> TreeBuilder<'a> {
           break;
         }
 
-        if tag_name == "dt" {
+        if tag_name == b"dt" {
           self.generate_implied_end_tags(b"dt");
 
           if self.current_node().as_element().tag_name() != "dt" {
@@ -1463,7 +1462,7 @@ impl<'a> TreeBuilder<'a> {
           break;
         }
 
-        if is_special_element(&tag_name.as_bytes())
+        if is_special_element(&tag_name)
           && !element.match_tag_name_in(&[b"address", b"div", b"p"])
         {
           break;
@@ -1529,7 +1528,7 @@ impl<'a> TreeBuilder<'a> {
     {
       if !self
         .open_elements
-        .has_element_name_in_scope(token.tag_name().as_bytes())
+        .has_element_name_in_scope(token.tag_name_as_bytes())
       {
         self.unexpected(&token);
         return;
@@ -1545,7 +1544,7 @@ impl<'a> TreeBuilder<'a> {
         return;
       }
 
-      self.open_elements.pop_until(token.tag_name().as_bytes());
+      self.open_elements.pop_until(token.tag_name_as_bytes());
       return;
     }
 
@@ -1580,20 +1579,20 @@ impl<'a> TreeBuilder<'a> {
     }
 
     if token.is_end_tag() && token.match_tag_name_in(&["dd", "dt"]) {
-      let tag_name = token.tag_name();
+      let tag_name = token.tag_name_as_bytes();
 
-      if !self.open_elements.has_element_name_in_scope(tag_name.as_bytes()) {
+      if !self.open_elements.has_element_name_in_scope(tag_name) {
         self.unexpected(&token);
         return;
       }
 
-      self.generate_implied_end_tags(tag_name.as_bytes());
+      self.generate_implied_end_tags(tag_name);
 
-      if self.current_node().as_element().tag_name() != *tag_name {
+      if self.current_node().as_element().tag_name_as_bytes() != tag_name {
         self.unexpected(&token);
       }
 
-      self.open_elements.pop_until(tag_name.as_bytes());
+      self.open_elements.pop_until(tag_name);
 
       return;
     }
@@ -1694,7 +1693,7 @@ impl<'a> TreeBuilder<'a> {
     {
       if !self
         .open_elements
-        .has_element_name_in_scope(token.tag_name().as_bytes())
+        .has_element_name_in_scope(token.tag_name_as_bytes())
       {
         self.unexpected(&token);
         return;
@@ -1706,7 +1705,7 @@ impl<'a> TreeBuilder<'a> {
         self.unexpected(&token);
       }
 
-      self.open_elements.pop_until(token.tag_name().as_bytes());
+      self.open_elements.pop_until(token.tag_name_as_bytes());
       self.active_formatting_elements.clear_up_to_last_marker();
 
       return;
@@ -2085,7 +2084,7 @@ impl<'a> TreeBuilder<'a> {
     {
       if !self
         .open_elements
-        .has_element_name_in_table_scope(token.tag_name().as_bytes())
+        .has_element_name_in_table_scope(token.tag_name_as_bytes())
       {
         self.unexpected(&token);
         return;
@@ -2186,7 +2185,7 @@ impl<'a> TreeBuilder<'a> {
     if token.is_end_tag() && token.match_tag_name_in(&["td", "th"]) {
       if !self
         .open_elements
-        .has_element_name_in_table_scope(token.tag_name().as_bytes())
+        .has_element_name_in_table_scope(token.tag_name_as_bytes())
       {
         self.unexpected(&token);
         return;
@@ -2197,7 +2196,7 @@ impl<'a> TreeBuilder<'a> {
       if self.current_node().as_element().tag_name() != *token.tag_name() {
         warn!("Expected current node to have same tag name as token");
       }
-      self.open_elements.pop_until(token.tag_name().as_bytes());
+      self.open_elements.pop_until(token.tag_name_as_bytes());
       self.active_formatting_elements.clear_up_to_last_marker();
       self.switch_to(InsertMode::InRow);
       return;

@@ -28,6 +28,10 @@ impl Element {
     self.tag_name.clone()
   }
 
+  pub fn tag_name_as_bytes(&self) -> &[u8] {
+    self.tag_name.as_bytes()
+  }
+
   pub fn match_tag_name_in(&self, names: &[&[u8]]) -> bool {
     names.iter().any(|name| self.tag_name().as_bytes() == *name)
   }

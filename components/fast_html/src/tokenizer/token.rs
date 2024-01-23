@@ -89,6 +89,14 @@ impl Token {
     }
   }
 
+  pub fn tag_name_as_bytes(&self) -> &[u8] {
+    if let Token::Tag { tag_name, .. } = self {
+      tag_name.as_bytes()
+    } else {
+      panic!("Token is not a Tag");
+    }
+  }
+
   pub fn attributes(&self) -> &EcoVec<Attribute> {
     if let Token::Tag { attributes, .. } = self {
       attributes
