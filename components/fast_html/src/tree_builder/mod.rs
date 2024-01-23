@@ -2157,8 +2157,68 @@ impl<'a> TreeBuilder<'a> {
     self.handle_in_body_mode(token)
   }
 
-  fn handle_in_column_group_mode(&mut self, _token: Token) {
-    todo!("handle_in_column_group_mode");
+  fn handle_in_column_group_mode(&mut self, mut token: Token) {
+    if let Token::Text(ref s) = token {
+      if s.trim().is_empty() {
+        self.insert_str(&s);
+        return;
+      }
+    }
+
+    if let Token::Comment(text) = token {
+      self.insert_comment(text);
+      return;
+    }
+
+    if let Token::DOCTYPE { .. } = token {
+      self.unexpected(&token);
+      return;
+    }
+
+    if token.is_start_tag() && token.tag_name() == "html" {
+      return self.handle_in_body_mode(token);
+    }
+
+    if token.is_start_tag() && token.tag_name() == "col" {
+      token.acknowledge_self_closing_if_set();
+      self.insert_html_element(token);
+      self.open_elements.pop();
+      return;
+    }
+
+    if token.is_end_tag() && token.tag_name() == "colgroup" {
+      if self.current_node().as_element().tag_name() != "colgroup" {
+        self.unexpected(&token);
+        return;
+      }
+
+      self.open_elements.pop();
+      self.switch_to(InsertMode::InTable);
+
+      return;
+    }
+
+    if token.is_end_tag() && token.tag_name() == "col" {
+      self.unexpected(&token);
+      return;
+    }
+
+    if token.tag_name() == "template" {
+      return self.handle_in_head_mode(token);
+    }
+
+    if let Token::EOF = token {
+      return self.handle_in_body_mode(token);
+    }
+
+    if self.current_node().as_element().tag_name() != "colgroup" {
+      self.unexpected(&token);
+      return;
+    }
+
+    self.open_elements.pop();
+    self.switch_to(InsertMode::InTable);
+    self.process(token);
   }
 
   fn handle_in_caption_mode(&mut self, token: Token) {
