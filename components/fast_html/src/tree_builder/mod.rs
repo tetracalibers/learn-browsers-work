@@ -448,7 +448,7 @@ impl<'a> TreeBuilder<'a> {
         break;
       }
 
-      if is_special_element(&element.as_element().tag_name()) {
+      if is_special_element(&element.as_element().tag_name().as_bytes()) {
         furthest_block = Some(element.clone());
         furthest_block_index = Some(index);
       }
@@ -1128,7 +1128,7 @@ impl<'a> TreeBuilder<'a> {
           break;
         }
 
-        if is_special_element(&node_tag_name) {
+        if is_special_element(&node_tag_name.as_bytes()) {
           this.unexpected(&token);
           return;
         }
@@ -1416,7 +1416,7 @@ impl<'a> TreeBuilder<'a> {
           break;
         }
 
-        if is_special_element(&tag_name)
+        if is_special_element(&tag_name.as_bytes())
           && !element.match_tag_name_in(&[b"address", b"div", b"p"])
         {
           break;
@@ -1463,7 +1463,7 @@ impl<'a> TreeBuilder<'a> {
           break;
         }
 
-        if is_special_element(&tag_name)
+        if is_special_element(&tag_name.as_bytes())
           && !element.match_tag_name_in(&[b"address", b"div", b"p"])
         {
           break;
