@@ -76,8 +76,9 @@ impl StackOfOpenElements {
   }
 
   // tag_namesのいずれでもないnodeを持つ場合にtrueを返す
-  pub fn contains_not_in(&self, tag_names: &[&str]) -> bool {
-    self.any(|node| !tag_names.contains(&node.as_element().tag_name().as_str()))
+  pub fn contains_not_in(&self, tag_names: &[&[u8]]) -> bool {
+    self
+      .any(|node| !tag_names.contains(&node.as_element().tag_name().as_bytes()))
   }
 
   pub fn contains_node(&self, node: &NodePtr) -> bool {
