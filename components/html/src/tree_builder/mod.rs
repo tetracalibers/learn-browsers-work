@@ -1255,7 +1255,10 @@ impl<T: Tokenizing> TreeBuilder<T> {
     }
 
     if token.is_start_tag() && token.tag_name() == "colgroup" {
-      todo!("process_in_table: colgroup start tag");
+      self.open_elements.clear_back_to_table_context();
+      self.insert_html_element(token);
+      self.switch_to(InsertMode::InColumnGroup);
+      return;
     }
 
     if token.is_start_tag() && token.tag_name() == "col" {
@@ -1518,8 +1521,68 @@ impl<T: Tokenizing> TreeBuilder<T> {
     self.process_in_body(token)
   }
 
-  fn process_in_column_group(&mut self, _token: Token) {
-    todo!("process_in_column_group");
+  fn process_in_column_group(&mut self, mut token: Token) {
+    if let Token::Character(c) = token {
+      if c.is_whitespace() {
+        self.insert_char(c);
+        return;
+      }
+    }
+
+    if let Token::Comment(text) = token {
+      self.insert_comment(text);
+      return;
+    }
+
+    if let Token::DOCTYPE { .. } = token {
+      self.unexpected(&token);
+      return;
+    }
+
+    if token.is_start_tag() && token.tag_name() == "html" {
+      return self.process_in_body(token);
+    }
+
+    if token.is_start_tag() && token.tag_name() == "col" {
+      token.acknowledge_self_closing_if_set();
+      self.insert_html_element(token);
+      self.open_elements.pop();
+      return;
+    }
+
+    if token.is_end_tag() && token.tag_name() == "colgroup" {
+      if self.current_node().as_element().tag_name() != "colgroup" {
+        self.unexpected(&token);
+        return;
+      }
+
+      self.open_elements.pop();
+      self.switch_to(InsertMode::InTable);
+
+      return;
+    }
+
+    if token.is_end_tag() && token.tag_name() == "col" {
+      self.unexpected(&token);
+      return;
+    }
+
+    if token.tag_name() == "template" {
+      return self.process_in_head(token);
+    }
+
+    if let Token::EOF = token {
+      return self.process_in_body(token);
+    }
+
+    if self.current_node().as_element().tag_name() != "colgroup" {
+      self.unexpected(&token);
+      return;
+    }
+
+    self.open_elements.pop();
+    self.switch_to(InsertMode::InTable);
+    self.process(token);
   }
 
   fn process_in_caption(&mut self, token: Token) {

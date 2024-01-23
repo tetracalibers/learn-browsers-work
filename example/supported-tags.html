@@ -62,31 +62,49 @@
       <table>
         <thead>
           <tr>
-            <th colspan="2">The table header</th>
+            <th>Items</th>
+            <th scope="col">Expenditure</th>
           </tr>
         </thead>
         <tbody>
           <tr>
-            <td>The table body</td>
-            <td>with two columns</td>
+            <th scope="row">Donuts</th>
+            <td>3,000</td>
+          </tr>
+          <tr>
+            <th scope="row">Stationery</th>
+            <td>18,000</td>
           </tr>
         </tbody>
+        <tfoot>
+          <tr>
+            <th scope="row">Totals</th>
+            <td>21,000</td>
+          </tr>
+        </tfoot>
       </table>
       <table>
         <caption>
-          Example Caption
+          Superheros and sidekicks
         </caption>
+        <colgroup>
+          <col />
+          <col span="2" class="batman" />
+          <col span="2" class="flash" />
+        </colgroup>
         <tr>
-          <th>Login</th>
-          <th>Email</th>
+          <td> </td>
+          <th scope="col">Batman</th>
+          <th scope="col">Robin</th>
+          <th scope="col">The Flash</th>
+          <th scope="col">Kid Flash</th>
         </tr>
         <tr>
-          <td>user1</td>
-          <td>user1@sample.com</td>
-        </tr>
-        <tr>
-          <td>user2</td>
-          <td>user2@sample.com</td>
+          <th scope="row">Skill</th>
+          <td>Smarts</td>
+          <td>Dex, acrobat</td>
+          <td>Super speed</td>
+          <td>Super speed</td>
         </tr>
       </table>
       <section>
