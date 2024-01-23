@@ -67,18 +67,16 @@ impl StackOfOpenElements {
   }
 
   pub fn contains(&self, tag_name: &[u8]) -> bool {
-    self.any(|node| node.as_element().tag_name().as_bytes() == tag_name)
+    self.any(|node| node.as_element().tag_name_as_bytes() == tag_name)
   }
 
   pub fn contains_in(&self, tag_names: &[&[u8]]) -> bool {
-    self
-      .any(|node| tag_names.contains(&node.as_element().tag_name().as_bytes()))
+    self.any(|node| tag_names.contains(&node.as_element().tag_name_as_bytes()))
   }
 
   // tag_namesのいずれでもないnodeを持つ場合にtrueを返す
   pub fn contains_not_in(&self, tag_names: &[&[u8]]) -> bool {
-    self
-      .any(|node| !tag_names.contains(&node.as_element().tag_name().as_bytes()))
+    self.any(|node| !tag_names.contains(&node.as_element().tag_name_as_bytes()))
   }
 
   pub fn contains_node(&self, node: &NodePtr) -> bool {
@@ -97,7 +95,7 @@ impl StackOfOpenElements {
         return true;
       }
 
-      if list.contains(&node.as_element().tag_name().as_bytes()) {
+      if list.contains(&node.as_element().tag_name_as_bytes()) {
         return false;
       }
     }
@@ -113,11 +111,11 @@ impl StackOfOpenElements {
     for node in self.0.iter().rev() {
       let element = node.as_element();
 
-      if element.tag_name().as_bytes() == tag_name {
+      if element.tag_name_as_bytes() == tag_name {
         return true;
       }
 
-      if list.contains(&element.tag_name().as_bytes()) {
+      if list.contains(&element.tag_name_as_bytes()) {
         return false;
       }
     }
@@ -133,11 +131,11 @@ impl StackOfOpenElements {
     for node in self.0.iter().rev() {
       let element = node.as_element();
 
-      if tag_names.contains(&element.tag_name().as_bytes()) {
+      if tag_names.contains(&element.tag_name_as_bytes()) {
         return true;
       }
 
-      if list.contains(&element.tag_name().as_bytes()) {
+      if list.contains(&element.tag_name_as_bytes()) {
         return false;
       }
     }
@@ -208,7 +206,7 @@ impl StackOfOpenElements {
   // tag_nameがpopされるまでpopする
   pub fn pop_until(&mut self, tag_name: &[u8]) {
     while let Some(node) = self.current_node() {
-      if node.as_element().tag_name().as_bytes() == tag_name {
+      if node.as_element().tag_name_as_bytes() == tag_name {
         self.0.pop();
         break;
       }
@@ -226,7 +224,7 @@ impl StackOfOpenElements {
   // tag_namesのいずれかがpopされるまでpopする
   pub fn pop_until_some_in(&mut self, tag_names: &[&[u8]]) {
     while let Some(node) = self.current_node() {
-      if tag_names.contains(&node.as_element().tag_name().as_bytes()) {
+      if tag_names.contains(&node.as_element().tag_name_as_bytes()) {
         self.0.pop();
         break;
       }
@@ -236,7 +234,7 @@ impl StackOfOpenElements {
 
   pub fn pop_while_not_in(&mut self, tag_names: &[&[u8]]) {
     while let Some(node) = self.current_node() {
-      if tag_names.contains(&node.as_element().tag_name().as_bytes()) {
+      if tag_names.contains(&node.as_element().tag_name_as_bytes()) {
         break;
       }
       self.0.pop();

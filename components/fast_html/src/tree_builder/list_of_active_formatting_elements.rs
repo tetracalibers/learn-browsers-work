@@ -46,7 +46,7 @@ impl ListOfActiveFormattingElements {
     self.iter().rev().find_map(|entry| match entry {
       Entry::Marker => None,
       Entry::Element(node) => {
-        if node.as_element().tag_name().as_bytes() == tag_name {
+        if node.as_element().tag_name_as_bytes() == tag_name {
           Some(node.clone())
         } else {
           None
