@@ -1595,7 +1595,7 @@ impl<T: Tokenizing> TreeBuilder<T> {
       return;
     }
 
-    return self.process_in_body(token);
+    self.process_in_body(token)
   }
 
   fn process_in_select(&mut self, _token: Token) {
