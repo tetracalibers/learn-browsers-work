@@ -13,8 +13,12 @@ members = [
   "components/dom",
   "components/css",
   "utilities/parser_combinator",
-  "components/fast_html", "components/fast_dom",
+  "components/fast_html",
+  "components/fast_dom",
+  "benchmark/compare_html_parser",
 ]
+
+exclude = ["benchmark/compare_html_parser"]
 
 [dependencies]
 html       = { path = "./components/html" }
