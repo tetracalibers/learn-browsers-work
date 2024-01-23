@@ -127,13 +127,13 @@ impl StackOfOpenElements {
 
   pub fn has_oneof_element_names_in_specific_scope(
     &self,
-    tag_names: &[&str],
+    tag_names: &[&[u8]],
     list: EcoVec<&[u8]>,
   ) -> bool {
     for node in self.0.iter().rev() {
       let element = node.as_element();
 
-      if tag_names.contains(&element.tag_name().as_str()) {
+      if tag_names.contains(&element.tag_name().as_bytes()) {
         return true;
       }
 
@@ -194,7 +194,7 @@ impl StackOfOpenElements {
 
   pub fn has_oneof_element_names_in_table_scope(
     &self,
-    tag_names: &[&str],
+    tag_names: &[&[u8]],
   ) -> bool {
     let mut list = EcoVec::from(SCOPE_BASE_LIST);
     list.push(b"html");

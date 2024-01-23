@@ -2107,7 +2107,7 @@ impl<'a> TreeBuilder<'a> {
     if token.is_end_tag() && token.tag_name() == "table" {
       if !self
         .open_elements
-        .has_oneof_element_names_in_table_scope(&["tbody", "tfoot", "thead"])
+        .has_oneof_element_names_in_table_scope(&[b"tbody", b"tfoot", b"thead"])
       {
         self.unexpected(&token);
         return;
