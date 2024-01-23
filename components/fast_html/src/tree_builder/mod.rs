@@ -2160,7 +2160,7 @@ impl<'a> TreeBuilder<'a> {
   fn handle_in_column_group_mode(&mut self, mut token: Token) {
     if let Token::Text(ref s) = token {
       if s.trim().is_empty() {
-        self.insert_str(&s);
+        self.insert_str(s);
         return;
       }
     }
