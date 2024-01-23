@@ -7,9 +7,16 @@ use fast_dom::node::NodePtr;
 
 use ecow::EcoVec;
 
-const SCOPE_BASE_LIST: [&str; 9] = [
-  "applet", "caption", "html", "table", "td", "th", "marquee", "object",
-  "template",
+const SCOPE_BASE_LIST: [&[u8]; 9] = [
+  b"applet",
+  b"caption",
+  b"html",
+  b"table",
+  b"td",
+  b"th",
+  b"marquee",
+  b"object",
+  b"template",
 ];
 
 #[derive(Debug)]
@@ -82,14 +89,14 @@ impl StackOfOpenElements {
   pub fn has_element_in_specific_scope(
     &self,
     target_node: &NodePtr,
-    list: EcoVec<&str>,
+    list: EcoVec<&[u8]>,
   ) -> bool {
     for node in self.0.iter().rev() {
       if Rc::ptr_eq(node, target_node) {
         return true;
       }
 
-      if list.contains(&node.as_element().tag_name().as_str()) {
+      if list.contains(&node.as_element().tag_name().as_bytes()) {
         return false;
       }
     }
@@ -100,7 +107,7 @@ impl StackOfOpenElements {
   pub fn has_element_name_in_specific_scope(
     &self,
     tag_name: &str,
-    list: EcoVec<&str>,
+    list: EcoVec<&[u8]>,
   ) -> bool {
     for node in self.0.iter().rev() {
       let element = node.as_element();
@@ -109,7 +116,7 @@ impl StackOfOpenElements {
         return true;
       }
 
-      if list.contains(&element.tag_name().as_str()) {
+      if list.contains(&element.tag_name().as_bytes()) {
         return false;
       }
     }
@@ -120,7 +127,7 @@ impl StackOfOpenElements {
   pub fn has_oneof_element_names_in_specific_scope(
     &self,
     tag_names: &[&str],
-    list: EcoVec<&str>,
+    list: EcoVec<&[u8]>,
   ) -> bool {
     for node in self.0.iter().rev() {
       let element = node.as_element();
@@ -129,7 +136,7 @@ impl StackOfOpenElements {
         return true;
       }
 
-      if list.contains(&element.tag_name().as_str()) {
+      if list.contains(&element.tag_name().as_bytes()) {
         return false;
       }
     }
@@ -162,22 +169,22 @@ impl StackOfOpenElements {
 
   pub fn has_element_name_in_button_scope(&self, tag_name: &str) -> bool {
     let mut list = EcoVec::from(SCOPE_BASE_LIST);
-    list.push("button");
+    list.push(b"button");
     self.has_element_name_in_specific_scope(tag_name, list)
   }
 
   pub fn has_element_name_in_list_item_scope(&self, tag_name: &str) -> bool {
     let mut list = EcoVec::from(SCOPE_BASE_LIST);
-    list.push("ol");
-    list.push("ul");
+    list.push(b"ol");
+    list.push(b"ul");
     self.has_element_name_in_specific_scope(tag_name, list)
   }
 
   pub fn has_element_name_in_table_scope(&self, tag_name: &str) -> bool {
     let mut list = EcoVec::from(SCOPE_BASE_LIST);
-    list.push("html");
-    list.push("table");
-    list.push("template");
+    list.push(b"html");
+    list.push(b"table");
+    list.push(b"template");
     self.has_element_name_in_specific_scope(tag_name, list)
   }
 
@@ -186,9 +193,9 @@ impl StackOfOpenElements {
     tag_names: &[&str],
   ) -> bool {
     let mut list = EcoVec::from(SCOPE_BASE_LIST);
-    list.push("html");
-    list.push("table");
-    list.push("template");
+    list.push(b"html");
+    list.push(b"table");
+    list.push(b"template");
     self.has_oneof_element_names_in_specific_scope(tag_names, list)
   }
 
