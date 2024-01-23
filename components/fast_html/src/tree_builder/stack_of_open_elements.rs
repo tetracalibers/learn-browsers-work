@@ -63,8 +63,9 @@ impl StackOfOpenElements {
     self.any(|node| node.as_element().tag_name() == tag_name)
   }
 
-  pub fn contains_in(&self, tag_names: &[&str]) -> bool {
-    self.any(|node| tag_names.contains(&node.as_element().tag_name().as_str()))
+  pub fn contains_in(&self, tag_names: &[&[u8]]) -> bool {
+    self
+      .any(|node| tag_names.contains(&node.as_element().tag_name().as_bytes()))
   }
 
   // tag_namesのいずれでもないnodeを持つ場合にtrueを返す

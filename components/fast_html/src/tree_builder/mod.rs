@@ -1225,8 +1225,24 @@ impl<'a> TreeBuilder<'a> {
       // TODO: template挿入モードを扱うかどうか決める
 
       if self.open_elements.contains_in(&[
-        "dd", "dt", "li", "optgroup", "option", "p", "rb", "rp", "rt", "rtc",
-        "tbody", "td", "tfoot", "th", "thead", "tr", "body", "html",
+        b"dd",
+        b"dt",
+        b"li",
+        b"optgroup",
+        b"option",
+        b"p",
+        b"rb",
+        b"rp",
+        b"rt",
+        b"rtc",
+        b"tbody",
+        b"td",
+        b"tfoot",
+        b"th",
+        b"thead",
+        b"tr",
+        b"body",
+        b"html",
       ]) {
         self.unexpected(&token);
       }
