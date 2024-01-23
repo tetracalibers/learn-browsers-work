@@ -7,18 +7,23 @@ const TARGET_HTML: &str = r#"<!DOCTYPE html>
 </head>
 <body>
 <table>
-  <thead>
-    <tr>
-      <th colspan="2">The table header</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr>
-      <td>The table body</td>
-      <td>with two columns</td>
-    </tr>
-  </tbody>
+  <caption>
+    Example Caption
+  </caption>
+  <tr>
+    <th>Login</th>
+    <th>Email</th>
+  </tr>
+  <tr>
+    <td>user1</td>
+    <td>user1@sample.com</td>
+  </tr>
+  <tr>
+    <td>user2</td>
+    <td>user2@sample.com</td>
+  </tr>
 </table>
+
 
 </body>
 </html>"#;
