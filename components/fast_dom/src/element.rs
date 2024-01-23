@@ -33,7 +33,7 @@ impl Element {
   }
 
   pub fn match_tag_name_in(&self, names: &[&[u8]]) -> bool {
-    names.iter().any(|name| self.tag_name().as_bytes() == *name)
+    names.iter().any(|name| self.tag_name_as_bytes() == *name)
   }
 
   pub fn attributes(&self) -> RefCell<AttributeMap> {
