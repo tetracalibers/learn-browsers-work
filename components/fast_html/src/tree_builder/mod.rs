@@ -2231,7 +2231,7 @@ impl<'a> TreeBuilder<'a> {
       return;
     }
 
-    return self.handle_in_body_mode(token);
+    self.handle_in_body_mode(token)
   }
 
   fn handle_in_select_mode(&mut self, _token: Token) {
