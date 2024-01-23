@@ -1247,7 +1247,11 @@ impl<T: Tokenizing> TreeBuilder<T> {
     }
 
     if token.is_start_tag() && token.tag_name() == "caption" {
-      todo!("process_in_table: caption start tag");
+      self.open_elements.clear_back_to_table_context();
+      self.active_formatting_elements.add_marker();
+      self.insert_html_element(token);
+      self.switch_to(InsertMode::InCaption);
+      return;
     }
 
     if token.is_start_tag() && token.tag_name() == "colgroup" {
