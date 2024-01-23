@@ -116,6 +116,26 @@ impl StackOfOpenElements {
     false
   }
 
+  pub fn has_oneof_element_names_in_specific_scope(
+    &self,
+    tag_names: &[&str],
+    list: EcoVec<&str>,
+  ) -> bool {
+    for node in self.0.iter().rev() {
+      let element = node.as_element();
+
+      if tag_names.contains(&element.tag_name().as_str()) {
+        return true;
+      }
+
+      if list.contains(&element.tag_name().as_str()) {
+        return false;
+      }
+    }
+
+    false
+  }
+
   pub fn has_element_in_scope(&self, target_node: &NodePtr) -> bool {
     self
       .has_element_in_specific_scope(target_node, EcoVec::from(SCOPE_BASE_LIST))
@@ -158,6 +178,17 @@ impl StackOfOpenElements {
     list.push("table");
     list.push("template");
     self.has_element_name_in_specific_scope(tag_name, list)
+  }
+
+  pub fn has_oneof_element_names_in_table_scope(
+    &self,
+    tag_names: &[&str],
+  ) -> bool {
+    let mut list = EcoVec::from(SCOPE_BASE_LIST);
+    list.push("html");
+    list.push("table");
+    list.push("template");
+    self.has_oneof_element_names_in_specific_scope(tag_names, list)
   }
 
   /* pop ---------------------------------------- */

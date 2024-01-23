@@ -2035,7 +2035,19 @@ impl<'a> TreeBuilder<'a> {
     }
 
     if token.is_end_tag() && token.tag_name() == "table" {
-      todo!("process_in_table_body: table end tag");
+      if !self
+        .open_elements
+        .has_oneof_element_names_in_table_scope(&["tbody", "tfoot", "thead"])
+      {
+        self.unexpected(&token);
+        return;
+      }
+
+      self.open_elements.clear_back_to_table_body_context();
+      self.open_elements.pop();
+
+      self.switch_to(InsertMode::InTable);
+      return self.process(token);
     }
 
     if token.is_end_tag()
