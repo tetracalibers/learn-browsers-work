@@ -255,7 +255,7 @@ impl<'a> TreeBuilder<'a> {
     let current_node = self.open_elements.current_node().unwrap();
     let current_element = current_node.as_element();
 
-    if current_element.tag_name() != "p" {
+    if current_element.tag_name_as_bytes() != b"p" {
       warn!("Expected p element");
     }
 
@@ -343,16 +343,16 @@ impl<'a> TreeBuilder<'a> {
 
       let element = node.as_element();
 
-      if element.tag_name() == "select" {
+      if element.tag_name_as_bytes() == b"select" {
         for ancestor in self.open_elements.iter().rev() {
-          let ancestor_tag_name = ancestor.as_element().tag_name();
+          let ancestor_tag_name = ancestor.as_element().tag_name_as_bytes();
 
-          match ancestor_tag_name.as_str() {
-            "template" => {
+          match ancestor_tag_name {
+            b"template" => {
               self.switch_to(InsertMode::InSelect);
               return;
             }
-            "table" => {
+            b"table" => {
               self.switch_to(InsertMode::InSelectInTable);
               return;
             }
@@ -371,7 +371,7 @@ impl<'a> TreeBuilder<'a> {
         return;
       }
 
-      if element.tag_name() == "tr" {
+      if element.tag_name_as_bytes() == b"tr" {
         self.switch_to(InsertMode::InRow);
         return;
       }
@@ -381,40 +381,40 @@ impl<'a> TreeBuilder<'a> {
         return;
       }
 
-      if element.tag_name() == "caption" {
+      if element.tag_name_as_bytes() == b"caption" {
         self.switch_to(InsertMode::InCaption);
         return;
       }
 
-      if element.tag_name() == "colgroup" {
+      if element.tag_name_as_bytes() == b"colgroup" {
         self.switch_to(InsertMode::InColumnGroup);
         return;
       }
 
-      if element.tag_name() == "table" {
+      if element.tag_name_as_bytes() == b"table" {
         self.switch_to(InsertMode::InTable);
         return;
       }
 
-      if element.tag_name() == "template" {
+      if element.tag_name_as_bytes() == b"template" {
         todo!("reset_insertion_mode_appropriately: template");
       }
 
-      if element.tag_name() == "head" && !last {
+      if element.tag_name_as_bytes() == b"head" && !last {
         self.switch_to(InsertMode::InHead);
         return;
       }
 
-      if element.tag_name() == "body" {
+      if element.tag_name_as_bytes() == b"body" {
         self.switch_to(InsertMode::InBody);
         return;
       }
 
-      if element.tag_name() == "frameset" {
+      if element.tag_name_as_bytes() == b"frameset" {
         todo!("reset_insertion_mode_appropriately: frameset");
       }
 
-      if element.tag_name() == "html" {
+      if element.tag_name_as_bytes() == b"html" {
         match self.head_pointer {
           Some(_) => {
             self.switch_to(InsertMode::AfterHead);
@@ -856,7 +856,7 @@ impl<'a> TreeBuilder<'a> {
       }
     }
 
-    if token.is_start_tag() && token.tag_name() == "html" {
+    if token.is_start_tag() && token.tag_name_as_bytes() == b"html" {
       let element = self.create_element(token);
       self.document.append_child(element.0.clone());
       self.open_elements.push(element.clone());
@@ -910,11 +910,11 @@ impl<'a> TreeBuilder<'a> {
       return;
     }
 
-    if token.is_start_tag() && token.tag_name() == "html" {
+    if token.is_start_tag() && token.tag_name_as_bytes() == b"html" {
       return self.handle_in_body_mode(token);
     }
 
-    if token.is_start_tag() && token.tag_name() == "head" {
+    if token.is_start_tag() && token.tag_name_as_bytes() == b"head" {
       let head_element = self.insert_html_element(token);
       self.head_pointer = Some(head_element);
       self.switch_to(InsertMode::InHead);
@@ -954,7 +954,7 @@ impl<'a> TreeBuilder<'a> {
       return;
     }
 
-    if token.is_start_tag() && token.tag_name() == "html" {
+    if token.is_start_tag() && token.tag_name_as_bytes() == b"html" {
       return self.handle_in_body_mode(token);
     }
 
@@ -967,14 +967,14 @@ impl<'a> TreeBuilder<'a> {
       return;
     }
 
-    if token.is_start_tag() && token.tag_name() == "meta" {
+    if token.is_start_tag() && token.tag_name_as_bytes() == b"meta" {
       self.insert_html_element(token.clone());
       self.open_elements.pop();
       token.acknowledge_self_closing_if_set();
       return;
     }
 
-    if token.is_start_tag() && token.tag_name() == "title" {
+    if token.is_start_tag() && token.tag_name_as_bytes() == b"title" {
       self.parse_text_only_element(
         token,
         TextOnlyElementParsingAlgorithm::GenericRCDataElement,
@@ -982,7 +982,9 @@ impl<'a> TreeBuilder<'a> {
       return;
     }
 
-    if token.is_start_tag() && token.tag_name() == "noscript" && !self.scripting
+    if token.is_start_tag()
+      && token.tag_name_as_bytes() == b"noscript"
+      && !self.scripting
     {
       todo!("handle_in_head_mode: noscript");
     }
@@ -991,30 +993,32 @@ impl<'a> TreeBuilder<'a> {
       todo!("handle_in_head_mode: noframes, style");
     }
 
-    if token.is_start_tag() && token.tag_name() == "noscript" && self.scripting
+    if token.is_start_tag()
+      && token.tag_name_as_bytes() == b"noscript"
+      && self.scripting
     {
       todo!("handle_in_head_mode: noscript");
     }
 
-    if token.is_start_tag() && token.tag_name() == "script" {
+    if token.is_start_tag() && token.tag_name_as_bytes() == b"script" {
       todo!("handle_in_head_mode: script");
     }
 
-    if token.is_end_tag() && token.tag_name() == "head" {
+    if token.is_end_tag() && token.tag_name_as_bytes() == b"head" {
       self.open_elements.pop();
       self.switch_to(InsertMode::AfterHead);
       return;
     }
 
-    if token.is_start_tag() && token.tag_name() == "template" {
+    if token.is_start_tag() && token.tag_name_as_bytes() == b"template" {
       todo!("handle_in_head_mode: template start");
     }
 
-    if token.is_end_tag() && token.tag_name() == "template" {
+    if token.is_end_tag() && token.tag_name_as_bytes() == b"template" {
       todo!("handle_in_head_mode: template end");
     }
 
-    if token.is_start_tag() && token.tag_name() == "head" {
+    if token.is_start_tag() && token.tag_name_as_bytes() == b"head" {
       self.unexpected(&token);
       return;
     }
@@ -1059,11 +1063,11 @@ impl<'a> TreeBuilder<'a> {
       return;
     }
 
-    if token.is_start_tag() && token.tag_name() == "html" {
+    if token.is_start_tag() && token.tag_name_as_bytes() == b"html" {
       return self.handle_in_body_mode(token);
     }
 
-    if token.is_start_tag() && token.tag_name() == "body" {
+    if token.is_start_tag() && token.tag_name_as_bytes() == b"body" {
       self.insert_html_element(token);
       self.frameset_ok = false;
       self.switch_to(InsertMode::InBody);
@@ -1090,7 +1094,7 @@ impl<'a> TreeBuilder<'a> {
       return;
     }
 
-    if token.is_end_tag() && token.tag_name() == "template" {
+    if token.is_end_tag() && token.tag_name_as_bytes() == b"template" {
       return self.handle_in_head_mode(token);
     }
 
@@ -1098,7 +1102,7 @@ impl<'a> TreeBuilder<'a> {
       return anything_else(self, token);
     }
 
-    if token.is_start_tag() && token.tag_name() == "head" {
+    if token.is_start_tag() && token.tag_name_as_bytes() == b"head" {
       self.unexpected(&token);
       return;
     }
@@ -1167,7 +1171,7 @@ impl<'a> TreeBuilder<'a> {
       return;
     }
 
-    if token.is_start_tag() && token.tag_name() == "html" {
+    if token.is_start_tag() && token.tag_name_as_bytes() == b"html" {
       warn!("Unexpected HTML tag");
 
       if self.open_elements.contains(b"template") {
@@ -1189,11 +1193,11 @@ impl<'a> TreeBuilder<'a> {
       return self.handle_in_head_mode(token);
     }
 
-    if token.is_end_tag() && token.tag_name() == "template" {
+    if token.is_end_tag() && token.tag_name_as_bytes() == b"template" {
       return self.handle_in_head_mode(token);
     }
 
-    if token.is_start_tag() && token.tag_name() == "body" {
+    if token.is_start_tag() && token.tag_name_as_bytes() == b"body" {
       self.unexpected(&token);
 
       // 開いている要素が1つしか存在しない場合
@@ -1205,7 +1209,7 @@ impl<'a> TreeBuilder<'a> {
 
       // 開いている要素の2番目の要素がbody要素でない場合
       if let Some(element) = body.as_maybe_element() {
-        if element.tag_name() != "body" {
+        if element.tag_name_as_bytes() != b"body" {
           return;
         }
       }
@@ -1250,7 +1254,7 @@ impl<'a> TreeBuilder<'a> {
       self.stop_parsing();
     }
 
-    if token.is_end_tag() && token.tag_name() == "body" {
+    if token.is_end_tag() && token.tag_name_as_bytes() == b"body" {
       if !self.open_elements.has_element_name_in_scope(b"body") {
         self.unexpected(&token);
         return;
@@ -1283,7 +1287,7 @@ impl<'a> TreeBuilder<'a> {
       return;
     }
 
-    if token.is_end_tag() && token.tag_name() == "html" {
+    if token.is_end_tag() && token.tag_name_as_bytes() == b"html" {
       if self.open_elements.has_element_name_in_scope(b"body") {
         self.unexpected(&token);
         return;
@@ -1393,11 +1397,11 @@ impl<'a> TreeBuilder<'a> {
       return;
     }
 
-    if token.is_start_tag() && token.tag_name() == "form" {
+    if token.is_start_tag() && token.tag_name_as_bytes() == b"form" {
       todo!("process_in_body: form start tag");
     }
 
-    if token.is_start_tag() && token.tag_name() == "li" {
+    if token.is_start_tag() && token.tag_name_as_bytes() == b"li" {
       self.frameset_ok = false;
 
       for node in self.open_elements.iter().rev() {
@@ -1407,7 +1411,7 @@ impl<'a> TreeBuilder<'a> {
         if tag_name == b"li" {
           self.generate_implied_end_tags(b"li");
 
-          if self.current_node().as_element().tag_name() != "li" {
+          if self.current_node().as_element().tag_name_as_bytes() != b"li" {
             warn!("Expected 'li' tag");
           }
 
@@ -1441,7 +1445,7 @@ impl<'a> TreeBuilder<'a> {
         if tag_name == b"dd" {
           self.generate_implied_end_tags(b"dd");
 
-          if self.current_node().as_element().tag_name() != "dd" {
+          if self.current_node().as_element().tag_name_as_bytes() != b"dd" {
             warn!("Expected 'dd' tag");
           }
 
@@ -1453,7 +1457,7 @@ impl<'a> TreeBuilder<'a> {
         if tag_name == b"dt" {
           self.generate_implied_end_tags(b"dt");
 
-          if self.current_node().as_element().tag_name() != "dt" {
+          if self.current_node().as_element().tag_name_as_bytes() != b"dt" {
             warn!("Expected 'dt' tag");
           }
 
@@ -1478,11 +1482,11 @@ impl<'a> TreeBuilder<'a> {
       return;
     }
 
-    if token.is_start_tag() && token.tag_name() == "plaintext" {
+    if token.is_start_tag() && token.tag_name_as_bytes() == b"plaintext" {
       todo!("process_in_body: plaintext start tag");
     }
 
-    if token.is_start_tag() && token.tag_name() == "button" {
+    if token.is_start_tag() && token.tag_name_as_bytes() == b"button" {
       if self.open_elements.has_element_name_in_scope(b"button") {
         self.unexpected(&token);
         self.generate_implied_end_tags(b"");
@@ -1539,7 +1543,7 @@ impl<'a> TreeBuilder<'a> {
       let current_node = self.current_node();
       let current_element = current_node.as_element();
 
-      if current_element.tag_name() != *token.tag_name() {
+      if current_element.tag_name_as_bytes() != token.tag_name_as_bytes() {
         self.unexpected(&token);
         return;
       }
@@ -1548,11 +1552,11 @@ impl<'a> TreeBuilder<'a> {
       return;
     }
 
-    if token.is_end_tag() && token.tag_name() == "form" {
+    if token.is_end_tag() && token.tag_name_as_bytes() == b"form" {
       todo!("process_in_body: form end tag");
     }
 
-    if token.is_end_tag() && token.tag_name() == "p" {
+    if token.is_end_tag() && token.tag_name_as_bytes() == b"p" {
       if !self.open_elements.has_element_name_in_button_scope(b"p") {
         self.unexpected(&token);
         self.insert_html_element(Token::new_start_tag_of("p"));
@@ -1561,7 +1565,7 @@ impl<'a> TreeBuilder<'a> {
       return;
     }
 
-    if token.is_end_tag() && token.tag_name() == "li" {
+    if token.is_end_tag() && token.tag_name_as_bytes() == b"li" {
       if !self.open_elements.has_element_name_in_list_item_scope(b"li") {
         self.unexpected(&token);
         return;
@@ -1569,7 +1573,7 @@ impl<'a> TreeBuilder<'a> {
 
       self.generate_implied_end_tags(b"li");
 
-      if self.current_node().as_element().tag_name() != "li" {
+      if self.current_node().as_element().tag_name_as_bytes() != b"li" {
         self.unexpected(&token);
       }
 
@@ -1612,7 +1616,7 @@ impl<'a> TreeBuilder<'a> {
       let current_node = self.open_elements.current_node().unwrap();
       let current_element = current_node.as_element();
 
-      if current_element.tag_name() != *token.tag_name() {
+      if current_element.tag_name_as_bytes() != token.tag_name_as_bytes() {
         self.unexpected(&token);
       }
 
@@ -1623,7 +1627,7 @@ impl<'a> TreeBuilder<'a> {
       return;
     }
 
-    if token.is_start_tag() && token.tag_name() == "a" {
+    if token.is_start_tag() && token.tag_name_as_bytes() == b"a" {
       if let Some(element) =
         self.active_formatting_elements.get_element_after_last_marker(b"a")
       {
@@ -1658,7 +1662,7 @@ impl<'a> TreeBuilder<'a> {
       return;
     }
 
-    if token.is_start_tag() && token.tag_name() == "nobr" {
+    if token.is_start_tag() && token.tag_name_as_bytes() == b"nobr" {
       todo!("process_in_body: nobr start tag");
     }
 
@@ -1701,7 +1705,9 @@ impl<'a> TreeBuilder<'a> {
 
       self.generate_implied_end_tags(b"");
 
-      if self.current_node().as_element().tag_name() != *token.tag_name() {
+      if self.current_node().as_element().tag_name_as_bytes()
+        != token.tag_name_as_bytes()
+      {
         self.unexpected(&token);
       }
 
@@ -1711,7 +1717,7 @@ impl<'a> TreeBuilder<'a> {
       return;
     }
 
-    if token.is_start_tag() && token.tag_name() == "table" {
+    if token.is_start_tag() && token.tag_name_as_bytes() == b"table" {
       // TODO: quicksモードの場合、この処理は行わない
       if self.open_elements.has_element_name_in_button_scope(b"p") {
         self.close_p_element();
@@ -1724,7 +1730,7 @@ impl<'a> TreeBuilder<'a> {
       return;
     }
 
-    if token.is_end_tag() && token.tag_name() == "br" {
+    if token.is_end_tag() && token.tag_name_as_bytes() == b"br" {
       todo!("process_in_body: br end tag");
     }
 
@@ -1740,7 +1746,7 @@ impl<'a> TreeBuilder<'a> {
       return;
     }
 
-    if token.is_start_tag() && token.tag_name() == "input" {
+    if token.is_start_tag() && token.tag_name_as_bytes() == b"input" {
       todo!("process_in_body: input start tag");
     }
 
@@ -1753,7 +1759,7 @@ impl<'a> TreeBuilder<'a> {
       return;
     }
 
-    if token.is_start_tag() && token.tag_name() == "hr" {
+    if token.is_start_tag() && token.tag_name_as_bytes() == b"hr" {
       if self.open_elements.has_element_name_in_button_scope(b"p") {
         self.close_p_element();
       }
@@ -1764,19 +1770,19 @@ impl<'a> TreeBuilder<'a> {
       return;
     }
 
-    if token.is_start_tag() && token.tag_name() == "image" {
+    if token.is_start_tag() && token.tag_name_as_bytes() == b"image" {
       todo!("process_in_body: image start tag");
     }
 
-    if token.is_start_tag() && token.tag_name() == "textarea" {
+    if token.is_start_tag() && token.tag_name_as_bytes() == b"textarea" {
       todo!("process_in_body: textarea start tag");
     }
 
-    if token.is_start_tag() && token.tag_name() == "xmp" {
+    if token.is_start_tag() && token.tag_name_as_bytes() == b"xmp" {
       todo!("process_in_body: xmp start tag");
     }
 
-    if token.is_start_tag() && token.tag_name() == "iframe" {
+    if token.is_start_tag() && token.tag_name_as_bytes() == b"iframe" {
       self.frameset_ok = false;
       self.parse_text_only_element(
         token,
@@ -1785,16 +1791,18 @@ impl<'a> TreeBuilder<'a> {
       return;
     }
 
-    if token.is_start_tag() && token.tag_name() == "noembed" {
+    if token.is_start_tag() && token.tag_name_as_bytes() == b"noembed" {
       todo!("process_in_body: noembed start tag");
     }
 
-    if token.is_start_tag() && token.tag_name() == "noscript" && self.scripting
+    if token.is_start_tag()
+      && token.tag_name_as_bytes() == b"noscript"
+      && self.scripting
     {
       todo!("process_in_body: noscript start tag");
     }
 
-    if token.is_start_tag() && token.tag_name() == "select" {
+    if token.is_start_tag() && token.tag_name_as_bytes() == b"select" {
       todo!("process_in_body: select start tag");
     }
 
@@ -1821,11 +1829,11 @@ impl<'a> TreeBuilder<'a> {
       return;
     }
 
-    if token.is_start_tag() && token.tag_name() == "math" {
+    if token.is_start_tag() && token.tag_name_as_bytes() == b"math" {
       todo!("process_in_body: math start tag");
     }
 
-    if token.is_start_tag() && token.tag_name() == "svg" {
+    if token.is_start_tag() && token.tag_name_as_bytes() == b"svg" {
       todo!("process_in_body: svg start tag");
     }
 
@@ -1869,11 +1877,11 @@ impl<'a> TreeBuilder<'a> {
       return;
     }
 
-    if token.is_start_tag() && token.tag_name() == "html" {
+    if token.is_start_tag() && token.tag_name_as_bytes() == b"html" {
       return self.handle_in_body_mode(token);
     }
 
-    if token.is_end_tag() && token.tag_name() == "html" {
+    if token.is_end_tag() && token.tag_name_as_bytes() == b"html" {
       // TODO: フラグメント解析アルゴリズムをサポートするか決める
 
       self.switch_to(InsertMode::AfterAfterBody);
@@ -1913,7 +1921,7 @@ impl<'a> TreeBuilder<'a> {
       }
     }
 
-    if token.is_start_tag() && token.tag_name() == "html" {
+    if token.is_start_tag() && token.tag_name_as_bytes() == b"html" {
       return self.handle_in_body_mode(token);
     }
 
@@ -1946,7 +1954,7 @@ impl<'a> TreeBuilder<'a> {
       return;
     }
 
-    if token.is_start_tag() && token.tag_name() == "caption" {
+    if token.is_start_tag() && token.tag_name_as_bytes() == b"caption" {
       self.open_elements.clear_back_to_table_context();
       self.active_formatting_elements.add_marker();
       self.insert_html_element(token);
@@ -1954,14 +1962,14 @@ impl<'a> TreeBuilder<'a> {
       return;
     }
 
-    if token.is_start_tag() && token.tag_name() == "colgroup" {
+    if token.is_start_tag() && token.tag_name_as_bytes() == b"colgroup" {
       self.open_elements.clear_back_to_table_context();
       self.insert_html_element(token);
       self.switch_to(InsertMode::InColumnGroup);
       return;
     }
 
-    if token.is_start_tag() && token.tag_name() == "col" {
+    if token.is_start_tag() && token.tag_name_as_bytes() == b"col" {
       todo!("process_in_table: col start tag");
     }
 
@@ -1981,11 +1989,11 @@ impl<'a> TreeBuilder<'a> {
       return self.process(token);
     }
 
-    if token.is_start_tag() && token.tag_name() == "table" {
+    if token.is_start_tag() && token.tag_name_as_bytes() == b"table" {
       todo!("process_in_table: table start tag");
     }
 
-    if token.is_end_tag() && token.tag_name() == "table" {
+    if token.is_end_tag() && token.tag_name_as_bytes() == b"table" {
       if !self.open_elements.has_element_name_in_table_scope(b"table") {
         self.unexpected(&token);
         return;
@@ -2010,15 +2018,15 @@ impl<'a> TreeBuilder<'a> {
       todo!("process_in_table: style/script/template start tag");
     }
 
-    if token.is_end_tag() && token.tag_name() == "template" {
+    if token.is_end_tag() && token.tag_name_as_bytes() == b"template" {
       todo!("process_in_table: template end tag");
     }
 
-    if token.is_start_tag() && token.tag_name() == "input" {
+    if token.is_start_tag() && token.tag_name_as_bytes() == b"input" {
       todo!("process_in_table: input start tag");
     }
 
-    if token.is_start_tag() && token.tag_name() == "form" {
+    if token.is_start_tag() && token.tag_name_as_bytes() == b"form" {
       todo!("process_in_table: form start tag");
     }
 
@@ -2068,7 +2076,7 @@ impl<'a> TreeBuilder<'a> {
   }
 
   fn handle_in_table_body_mode(&mut self, token: Token) {
-    if token.is_start_tag() && token.tag_name() == "tr" {
+    if token.is_start_tag() && token.tag_name_as_bytes() == b"tr" {
       self.open_elements.clear_back_to_table_body_context();
       self.insert_html_element(token);
       self.switch_to(InsertMode::InRow);
@@ -2104,7 +2112,7 @@ impl<'a> TreeBuilder<'a> {
       todo!("process_in_table_body: caption/col/colgroup/tbody/tfoot/thead start tag");
     }
 
-    if token.is_end_tag() && token.tag_name() == "table" {
+    if token.is_end_tag() && token.tag_name_as_bytes() == b"table" {
       if !self
         .open_elements
         .has_oneof_element_names_in_table_scope(&[b"tbody", b"tfoot", b"thead"])
@@ -2140,7 +2148,7 @@ impl<'a> TreeBuilder<'a> {
       return;
     }
 
-    if token.is_end_tag() && token.tag_name() == "tr" {
+    if token.is_end_tag() && token.tag_name_as_bytes() == b"tr" {
       if !self.open_elements.has_element_name_in_table_scope(b"tr") {
         self.unexpected(&token);
         return;
@@ -2160,7 +2168,7 @@ impl<'a> TreeBuilder<'a> {
       todo!("process_in_row: caption/col/colgroup/tbody/tfoot/thead start tag");
     }
 
-    if token.is_end_tag() && token.tag_name() == "table" {
+    if token.is_end_tag() && token.tag_name_as_bytes() == b"table" {
       todo!("process_in_row: table end tag");
     }
 
@@ -2193,7 +2201,9 @@ impl<'a> TreeBuilder<'a> {
 
       self.generate_implied_end_tags(b"");
 
-      if self.current_node().as_element().tag_name() != *token.tag_name() {
+      if self.current_node().as_element().tag_name_as_bytes()
+        != token.tag_name_as_bytes()
+      {
         warn!("Expected current node to have same tag name as token");
       }
       self.open_elements.pop_until(token.tag_name_as_bytes());
@@ -2245,19 +2255,19 @@ impl<'a> TreeBuilder<'a> {
       return;
     }
 
-    if token.is_start_tag() && token.tag_name() == "html" {
+    if token.is_start_tag() && token.tag_name_as_bytes() == b"html" {
       return self.handle_in_body_mode(token);
     }
 
-    if token.is_start_tag() && token.tag_name() == "col" {
+    if token.is_start_tag() && token.tag_name_as_bytes() == b"col" {
       token.acknowledge_self_closing_if_set();
       self.insert_html_element(token);
       self.open_elements.pop();
       return;
     }
 
-    if token.is_end_tag() && token.tag_name() == "colgroup" {
-      if self.current_node().as_element().tag_name() != "colgroup" {
+    if token.is_end_tag() && token.tag_name_as_bytes() == b"colgroup" {
+      if self.current_node().as_element().tag_name_as_bytes() != b"colgroup" {
         self.unexpected(&token);
         return;
       }
@@ -2268,12 +2278,12 @@ impl<'a> TreeBuilder<'a> {
       return;
     }
 
-    if token.is_end_tag() && token.tag_name() == "col" {
+    if token.is_end_tag() && token.tag_name_as_bytes() == b"col" {
       self.unexpected(&token);
       return;
     }
 
-    if token.tag_name() == "template" {
+    if token.tag_name_as_bytes() == b"template" {
       return self.handle_in_head_mode(token);
     }
 
@@ -2281,7 +2291,7 @@ impl<'a> TreeBuilder<'a> {
       return self.handle_in_body_mode(token);
     }
 
-    if self.current_node().as_element().tag_name() != "colgroup" {
+    if self.current_node().as_element().tag_name_as_bytes() != b"colgroup" {
       self.unexpected(&token);
       return;
     }
@@ -2292,7 +2302,7 @@ impl<'a> TreeBuilder<'a> {
   }
 
   fn handle_in_caption_mode(&mut self, token: Token) {
-    if token.is_end_tag() && token.tag_name() == "caption" {
+    if token.is_end_tag() && token.tag_name_as_bytes() == b"caption" {
       if !self.open_elements.has_element_name_in_table_scope(b"caption") {
         self.unexpected(&token);
         return;
@@ -2300,7 +2310,7 @@ impl<'a> TreeBuilder<'a> {
 
       self.generate_implied_end_tags(b"");
 
-      if self.current_node().as_element().tag_name() != "caption" {
+      if self.current_node().as_element().tag_name_as_bytes() != b"caption" {
         self.unexpected(&token);
       }
 
@@ -2324,7 +2334,7 @@ impl<'a> TreeBuilder<'a> {
 
       self.generate_implied_end_tags(b"");
 
-      if self.current_node().as_element().tag_name() != "caption" {
+      if self.current_node().as_element().tag_name_as_bytes() != b"caption" {
         self.unexpected(&token);
       }
 
@@ -2335,7 +2345,7 @@ impl<'a> TreeBuilder<'a> {
       return self.process(token);
     }
 
-    if token.is_end_tag() && token.tag_name() == "table" {
+    if token.is_end_tag() && token.tag_name_as_bytes() == b"table" {
       if !self.open_elements.has_element_name_in_table_scope(b"caption") {
         self.unexpected(&token);
         return;
@@ -2343,7 +2353,7 @@ impl<'a> TreeBuilder<'a> {
 
       self.generate_implied_end_tags(b"");
 
-      if self.current_node().as_element().tag_name() != "caption" {
+      if self.current_node().as_element().tag_name_as_bytes() != b"caption" {
         self.unexpected(&token);
       }
 
@@ -2388,7 +2398,7 @@ impl<'a> TreeBuilder<'a> {
       return self.process(token);
     }
 
-    if token.is_end_tag() && token.tag_name() == "script" {
+    if token.is_end_tag() && token.tag_name_as_bytes() == b"script" {
       todo!("handle_text_mode: script end tag");
     }
 
