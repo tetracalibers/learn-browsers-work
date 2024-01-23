@@ -1908,7 +1908,10 @@ impl<'a> TreeBuilder<'a> {
     }
 
     if token.is_start_tag() && token.match_tag_name_in(&["td", "th", "tr"]) {
-      todo!("process_in_table: td/th/tr start tag");
+      self.open_elements.clear_back_to_table_context();
+      self.insert_html_element(Token::new_start_tag_of("tbody"));
+      self.switch_to(InsertMode::InTableBody);
+      return self.process(token);
     }
 
     if token.is_start_tag() && token.tag_name() == "table" {
