@@ -1883,7 +1883,11 @@ impl<'a> TreeBuilder<'a> {
     }
 
     if token.is_start_tag() && token.tag_name() == "caption" {
-      todo!("process_in_table: caption start tag");
+      self.open_elements.clear_back_to_table_context();
+      self.active_formatting_elements.add_marker();
+      self.insert_html_element(token);
+      self.switch_to(InsertMode::InCaption);
+      return;
     }
 
     if token.is_start_tag() && token.tag_name() == "colgroup" {
@@ -1904,7 +1908,10 @@ impl<'a> TreeBuilder<'a> {
     }
 
     if token.is_start_tag() && token.match_tag_name_in(&["td", "th", "tr"]) {
-      todo!("process_in_table: td/th/tr start tag");
+      self.open_elements.clear_back_to_table_context();
+      self.insert_html_element(Token::new_start_tag_of("tbody"));
+      self.switch_to(InsertMode::InTableBody);
+      return self.process(token);
     }
 
     if token.is_start_tag() && token.tag_name() == "table" {
@@ -2028,7 +2035,19 @@ impl<'a> TreeBuilder<'a> {
     }
 
     if token.is_end_tag() && token.tag_name() == "table" {
-      todo!("process_in_table_body: table end tag");
+      if !self
+        .open_elements
+        .has_oneof_element_names_in_table_scope(&["tbody", "tfoot", "thead"])
+      {
+        self.unexpected(&token);
+        return;
+      }
+
+      self.open_elements.clear_back_to_table_body_context();
+      self.open_elements.pop();
+
+      self.switch_to(InsertMode::InTable);
+      return self.process(token);
     }
 
     if token.is_end_tag()
@@ -2139,8 +2158,80 @@ impl<'a> TreeBuilder<'a> {
     todo!("handle_in_column_group_mode");
   }
 
-  fn handle_in_caption_mode(&mut self, _token: Token) {
-    todo!("handle_in_caption_mode");
+  fn handle_in_caption_mode(&mut self, token: Token) {
+    if token.is_end_tag() && token.tag_name() == "caption" {
+      if !self.open_elements.has_element_name_in_table_scope("caption") {
+        self.unexpected(&token);
+        return;
+      }
+
+      self.generate_implied_end_tags("");
+
+      if self.current_node().as_element().tag_name() != "caption" {
+        self.unexpected(&token);
+      }
+
+      self.open_elements.pop_until("caption");
+      self.active_formatting_elements.clear_up_to_last_marker();
+
+      self.switch_to(InsertMode::InTable);
+      return;
+    }
+
+    if token.is_start_tag()
+      && token.match_tag_name_in(&[
+        "caption", "col", "colgroup", "tbody", "td", "tfoot", "th", "thead",
+        "tr",
+      ])
+    {
+      if !self.open_elements.has_element_name_in_table_scope("caption") {
+        self.unexpected(&token);
+        return;
+      }
+
+      self.generate_implied_end_tags("");
+
+      if self.current_node().as_element().tag_name() != "caption" {
+        self.unexpected(&token);
+      }
+
+      self.open_elements.pop_until("caption");
+      self.active_formatting_elements.clear_up_to_last_marker();
+
+      self.switch_to(InsertMode::InTable);
+      return self.process(token);
+    }
+
+    if token.is_end_tag() && token.tag_name() == "table" {
+      if !self.open_elements.has_element_name_in_table_scope("caption") {
+        self.unexpected(&token);
+        return;
+      }
+
+      self.generate_implied_end_tags("");
+
+      if self.current_node().as_element().tag_name() != "caption" {
+        self.unexpected(&token);
+      }
+
+      self.open_elements.pop_until("caption");
+      self.active_formatting_elements.clear_up_to_last_marker();
+
+      self.switch_to(InsertMode::InTable);
+      return self.process(token);
+    }
+
+    if token.is_end_tag()
+      && token.match_tag_name_in(&[
+        "body", "col", "colgroup", "html", "tbody", "td", "tfoot", "th",
+        "thead", "tr",
+      ])
+    {
+      self.unexpected(&token);
+      return;
+    }
+
+    self.handle_in_body_mode(token)
   }
 
   fn handle_in_select_mode(&mut self, _token: Token) {
