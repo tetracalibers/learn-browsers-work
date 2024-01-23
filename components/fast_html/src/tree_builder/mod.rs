@@ -1251,7 +1251,7 @@ impl<'a> TreeBuilder<'a> {
     }
 
     if token.is_end_tag() && token.tag_name() == "body" {
-      if !self.open_elements.has_element_name_in_scope("body") {
+      if !self.open_elements.has_element_name_in_scope(b"body") {
         self.unexpected(&token);
         return;
       }
@@ -1284,7 +1284,7 @@ impl<'a> TreeBuilder<'a> {
     }
 
     if token.is_end_tag() && token.tag_name() == "html" {
-      if self.open_elements.has_element_name_in_scope("body") {
+      if self.open_elements.has_element_name_in_scope(b"body") {
         self.unexpected(&token);
         return;
       }
@@ -1344,7 +1344,7 @@ impl<'a> TreeBuilder<'a> {
         "ul",
       ])
     {
-      if self.open_elements.has_element_name_in_button_scope("p") {
+      if self.open_elements.has_element_name_in_button_scope(b"p") {
         self.close_p_element();
       }
 
@@ -1355,7 +1355,7 @@ impl<'a> TreeBuilder<'a> {
     if token.is_start_tag()
       && token.match_tag_name_in(&["h1", "h2", "h3", "h4", "h5", "h6"])
     {
-      if self.open_elements.has_element_name_in_button_scope("p") {
+      if self.open_elements.has_element_name_in_button_scope(b"p") {
         self.close_p_element();
       }
 
@@ -1374,7 +1374,7 @@ impl<'a> TreeBuilder<'a> {
     }
 
     if token.is_start_tag() && token.match_tag_name_in(&["pre", "listing"]) {
-      if self.open_elements.has_element_name_in_button_scope("p") {
+      if self.open_elements.has_element_name_in_button_scope(b"p") {
         self.close_p_element();
       }
 
@@ -1422,7 +1422,7 @@ impl<'a> TreeBuilder<'a> {
         }
       }
 
-      if self.open_elements.has_element_name_in_button_scope("p") {
+      if self.open_elements.has_element_name_in_button_scope(b"p") {
         self.close_p_element();
       }
 
@@ -1469,7 +1469,7 @@ impl<'a> TreeBuilder<'a> {
         }
       }
 
-      if self.open_elements.has_element_name_in_button_scope("p") {
+      if self.open_elements.has_element_name_in_button_scope(b"p") {
         self.close_p_element();
       }
 
@@ -1483,7 +1483,7 @@ impl<'a> TreeBuilder<'a> {
     }
 
     if token.is_start_tag() && token.tag_name() == "button" {
-      if self.open_elements.has_element_name_in_scope("button") {
+      if self.open_elements.has_element_name_in_scope(b"button") {
         self.unexpected(&token);
         self.generate_implied_end_tags(b"");
         self.open_elements.pop_until("button");
@@ -1526,7 +1526,10 @@ impl<'a> TreeBuilder<'a> {
         "ul",
       ])
     {
-      if !self.open_elements.has_element_name_in_scope(token.tag_name()) {
+      if !self
+        .open_elements
+        .has_element_name_in_scope(token.tag_name().as_bytes())
+      {
         self.unexpected(&token);
         return;
       }
@@ -1550,7 +1553,7 @@ impl<'a> TreeBuilder<'a> {
     }
 
     if token.is_end_tag() && token.tag_name() == "p" {
-      if !self.open_elements.has_element_name_in_button_scope("p") {
+      if !self.open_elements.has_element_name_in_button_scope(b"p") {
         self.unexpected(&token);
         self.insert_html_element(Token::new_start_tag_of("p"));
       }
@@ -1559,7 +1562,7 @@ impl<'a> TreeBuilder<'a> {
     }
 
     if token.is_end_tag() && token.tag_name() == "li" {
-      if !self.open_elements.has_element_name_in_list_item_scope("li") {
+      if !self.open_elements.has_element_name_in_list_item_scope(b"li") {
         self.unexpected(&token);
         return;
       }
@@ -1578,7 +1581,7 @@ impl<'a> TreeBuilder<'a> {
     if token.is_end_tag() && token.match_tag_name_in(&["dd", "dt"]) {
       let tag_name = token.tag_name();
 
-      if !self.open_elements.has_element_name_in_scope(tag_name) {
+      if !self.open_elements.has_element_name_in_scope(tag_name.as_bytes()) {
         self.unexpected(&token);
         return;
       }
@@ -1598,7 +1601,7 @@ impl<'a> TreeBuilder<'a> {
       && token.match_tag_name_in(&["h1", "h2", "h3", "h4", "h5", "h6"])
     {
       if self.open_elements.has_not_all_element_names_in_scope(&[
-        "h1", "h2", "h3", "h4", "h5", "h6",
+        b"h1", b"h2", b"h3", b"h4", b"h5", b"h6",
       ]) {
         self.unexpected(&token);
         return;
@@ -1688,7 +1691,10 @@ impl<'a> TreeBuilder<'a> {
     if token.is_end_tag()
       && token.match_tag_name_in(&["applet", "marquee", "object"])
     {
-      if !self.open_elements.has_element_name_in_scope(token.tag_name()) {
+      if !self
+        .open_elements
+        .has_element_name_in_scope(token.tag_name().as_bytes())
+      {
         self.unexpected(&token);
         return;
       }
@@ -1707,7 +1713,7 @@ impl<'a> TreeBuilder<'a> {
 
     if token.is_start_tag() && token.tag_name() == "table" {
       // TODO: quicksモードの場合、この処理は行わない
-      if self.open_elements.has_element_name_in_button_scope("p") {
+      if self.open_elements.has_element_name_in_button_scope(b"p") {
         self.close_p_element();
       }
 
@@ -1748,7 +1754,7 @@ impl<'a> TreeBuilder<'a> {
     }
 
     if token.is_start_tag() && token.tag_name() == "hr" {
-      if self.open_elements.has_element_name_in_button_scope("p") {
+      if self.open_elements.has_element_name_in_button_scope(b"p") {
         self.close_p_element();
       }
       token.acknowledge_self_closing_if_set();
@@ -1802,7 +1808,7 @@ impl<'a> TreeBuilder<'a> {
     }
 
     if token.is_start_tag() && token.match_tag_name_in(&["rp", "rt"]) {
-      if self.open_elements.has_element_name_in_scope("ruby") {
+      if self.open_elements.has_element_name_in_scope(b"ruby") {
         self.generate_implied_end_tags(b"rtc");
       }
 
@@ -1980,7 +1986,7 @@ impl<'a> TreeBuilder<'a> {
     }
 
     if token.is_end_tag() && token.tag_name() == "table" {
-      if !self.open_elements.has_element_name_in_table_scope("table") {
+      if !self.open_elements.has_element_name_in_table_scope(b"table") {
         self.unexpected(&token);
         return;
       }
@@ -2076,7 +2082,10 @@ impl<'a> TreeBuilder<'a> {
     if token.is_end_tag()
       && token.match_tag_name_in(&["tbody", "tfoot", "thead"])
     {
-      if !self.open_elements.has_element_name_in_table_scope(token.tag_name()) {
+      if !self
+        .open_elements
+        .has_element_name_in_table_scope(token.tag_name().as_bytes())
+      {
         self.unexpected(&token);
         return;
       }
@@ -2132,7 +2141,7 @@ impl<'a> TreeBuilder<'a> {
     }
 
     if token.is_end_tag() && token.tag_name() == "tr" {
-      if !self.open_elements.has_element_name_in_table_scope("tr") {
+      if !self.open_elements.has_element_name_in_table_scope(b"tr") {
         self.unexpected(&token);
         return;
       }
@@ -2174,7 +2183,10 @@ impl<'a> TreeBuilder<'a> {
 
   fn handle_in_cell_mode(&mut self, token: Token) {
     if token.is_end_tag() && token.match_tag_name_in(&["td", "th"]) {
-      if !self.open_elements.has_element_name_in_table_scope(token.tag_name()) {
+      if !self
+        .open_elements
+        .has_element_name_in_table_scope(token.tag_name().as_bytes())
+      {
         self.unexpected(&token);
         return;
       }
@@ -2281,7 +2293,7 @@ impl<'a> TreeBuilder<'a> {
 
   fn handle_in_caption_mode(&mut self, token: Token) {
     if token.is_end_tag() && token.tag_name() == "caption" {
-      if !self.open_elements.has_element_name_in_table_scope("caption") {
+      if !self.open_elements.has_element_name_in_table_scope(b"caption") {
         self.unexpected(&token);
         return;
       }
@@ -2305,7 +2317,7 @@ impl<'a> TreeBuilder<'a> {
         "tr",
       ])
     {
-      if !self.open_elements.has_element_name_in_table_scope("caption") {
+      if !self.open_elements.has_element_name_in_table_scope(b"caption") {
         self.unexpected(&token);
         return;
       }
@@ -2324,7 +2336,7 @@ impl<'a> TreeBuilder<'a> {
     }
 
     if token.is_end_tag() && token.tag_name() == "table" {
-      if !self.open_elements.has_element_name_in_table_scope("caption") {
+      if !self.open_elements.has_element_name_in_table_scope(b"caption") {
         self.unexpected(&token);
         return;
       }

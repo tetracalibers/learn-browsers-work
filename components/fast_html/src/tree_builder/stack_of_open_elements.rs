@@ -107,13 +107,13 @@ impl StackOfOpenElements {
 
   pub fn has_element_name_in_specific_scope(
     &self,
-    tag_name: &str,
+    tag_name: &[u8],
     list: EcoVec<&[u8]>,
   ) -> bool {
     for node in self.0.iter().rev() {
       let element = node.as_element();
 
-      if element.tag_name() == tag_name {
+      if element.tag_name().as_bytes() == tag_name {
         return true;
       }
 
@@ -150,7 +150,7 @@ impl StackOfOpenElements {
       .has_element_in_specific_scope(target_node, EcoVec::from(SCOPE_BASE_LIST))
   }
 
-  pub fn has_element_name_in_scope(&self, tag_name: &str) -> bool {
+  pub fn has_element_name_in_scope(&self, tag_name: &[u8]) -> bool {
     self.has_element_name_in_specific_scope(
       tag_name,
       EcoVec::from(SCOPE_BASE_LIST),
@@ -158,7 +158,10 @@ impl StackOfOpenElements {
   }
 
   // すべてのtag_nameがscope内にない場合にtrueを返す
-  pub fn has_not_all_element_names_in_scope(&self, tag_names: &[&str]) -> bool {
+  pub fn has_not_all_element_names_in_scope(
+    &self,
+    tag_names: &[&[u8]],
+  ) -> bool {
     for tag_name in tag_names {
       if self.has_element_name_in_scope(tag_name) {
         return false;
@@ -168,20 +171,20 @@ impl StackOfOpenElements {
     true
   }
 
-  pub fn has_element_name_in_button_scope(&self, tag_name: &str) -> bool {
+  pub fn has_element_name_in_button_scope(&self, tag_name: &[u8]) -> bool {
     let mut list = EcoVec::from(SCOPE_BASE_LIST);
     list.push(b"button");
     self.has_element_name_in_specific_scope(tag_name, list)
   }
 
-  pub fn has_element_name_in_list_item_scope(&self, tag_name: &str) -> bool {
+  pub fn has_element_name_in_list_item_scope(&self, tag_name: &[u8]) -> bool {
     let mut list = EcoVec::from(SCOPE_BASE_LIST);
     list.push(b"ol");
     list.push(b"ul");
     self.has_element_name_in_specific_scope(tag_name, list)
   }
 
-  pub fn has_element_name_in_table_scope(&self, tag_name: &str) -> bool {
+  pub fn has_element_name_in_table_scope(&self, tag_name: &[u8]) -> bool {
     let mut list = EcoVec::from(SCOPE_BASE_LIST);
     list.push(b"html");
     list.push(b"table");
