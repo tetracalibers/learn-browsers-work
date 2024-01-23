@@ -1507,8 +1507,80 @@ impl<T: Tokenizing> TreeBuilder<T> {
     todo!("process_in_column_group");
   }
 
-  fn process_in_caption(&mut self, _token: Token) {
-    todo!("process_in_caption");
+  fn process_in_caption(&mut self, token: Token) {
+    if token.is_end_tag() && token.tag_name() == "caption" {
+      if !self.open_elements.has_element_name_in_table_scope("caption") {
+        self.unexpected(&token);
+        return;
+      }
+
+      self.generate_implied_end_tags("");
+
+      if self.current_node().as_element().tag_name() != "caption" {
+        self.unexpected(&token);
+      }
+
+      self.open_elements.pop_until("caption");
+      self.active_formatting_elements.clear_up_to_last_marker();
+
+      self.switch_to(InsertMode::InTable);
+      return;
+    }
+
+    if token.is_start_tag()
+      && token.match_tag_name_in(&[
+        "caption", "col", "colgroup", "tbody", "td", "tfoot", "th", "thead",
+        "tr",
+      ])
+    {
+      if !self.open_elements.has_element_name_in_table_scope("caption") {
+        self.unexpected(&token);
+        return;
+      }
+
+      self.generate_implied_end_tags("");
+
+      if self.current_node().as_element().tag_name() != "caption" {
+        self.unexpected(&token);
+      }
+
+      self.open_elements.pop_until("caption");
+      self.active_formatting_elements.clear_up_to_last_marker();
+
+      self.switch_to(InsertMode::InTable);
+      return self.process(token);
+    }
+
+    if token.is_end_tag() && token.tag_name() == "table" {
+      if !self.open_elements.has_element_name_in_table_scope("caption") {
+        self.unexpected(&token);
+        return;
+      }
+
+      self.generate_implied_end_tags("");
+
+      if self.current_node().as_element().tag_name() != "caption" {
+        self.unexpected(&token);
+      }
+
+      self.open_elements.pop_until("caption");
+      self.active_formatting_elements.clear_up_to_last_marker();
+
+      self.switch_to(InsertMode::InTable);
+      return self.process(token);
+    }
+
+    if token.is_end_tag()
+      && token.match_tag_name_in(&[
+        "body", "col", "colgroup", "html", "tbody", "td", "tfoot", "th",
+        "thead", "tr",
+      ])
+    {
+      self.unexpected(&token);
+      return;
+    }
+
+    return self.process_in_body(token);
   }
 
   fn process_in_select(&mut self, _token: Token) {
