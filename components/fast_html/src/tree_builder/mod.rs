@@ -231,7 +231,16 @@ impl<'a> TreeBuilder<'a> {
       }
 
       if element.match_tag_name_in(&[
-        "dd", "dt", "li", "optgroup", "option", "p", "rb", "rt", "rtc", "rp",
+        b"dd",
+        b"dt",
+        b"li",
+        b"optgroup",
+        b"option",
+        b"p",
+        b"rb",
+        b"rt",
+        b"rtc",
+        b"rp",
       ]) {
         self.open_elements.pop();
       } else {
@@ -357,7 +366,7 @@ impl<'a> TreeBuilder<'a> {
         return;
       }
 
-      if element.match_tag_name_in(&["td", "th"]) && !last {
+      if element.match_tag_name_in(&[b"td", b"th"]) && !last {
         self.switch_to(InsertMode::InCell);
         return;
       }
@@ -367,7 +376,7 @@ impl<'a> TreeBuilder<'a> {
         return;
       }
 
-      if element.match_tag_name_in(&["tbody", "thead", "tfoot"]) {
+      if element.match_tag_name_in(&[b"tbody", b"thead", b"tfoot"]) {
         self.switch_to(InsertMode::InTableBody);
         return;
       }
@@ -696,7 +705,7 @@ impl<'a> TreeBuilder<'a> {
     if self.foster_parenting
       && target
         .as_element()
-        .match_tag_name_in(&["table", "tbody", "tfoot", "thead", "tr"])
+        .match_tag_name_in(&[b"table", b"tbody", b"tfoot", b"thead", b"tr"])
     {
       todo!("get_appropriate_insert_position: foster parenting");
     } else {
@@ -1306,7 +1315,7 @@ impl<'a> TreeBuilder<'a> {
       let current_element = current_node.as_element();
 
       if current_element
-        .match_tag_name_in(&["h1", "h2", "h3", "h4", "h5", "h6"])
+        .match_tag_name_in(&[b"h1", b"h2", b"h3", b"h4", b"h5", b"h6"])
       {
         self.unexpected(&token);
         self.open_elements.pop();
@@ -1359,7 +1368,7 @@ impl<'a> TreeBuilder<'a> {
         }
 
         if is_special_element(&tag_name)
-          && !element.match_tag_name_in(&["address", "div", "p"])
+          && !element.match_tag_name_in(&[b"address", b"div", b"p"])
         {
           break;
         }
@@ -1406,7 +1415,7 @@ impl<'a> TreeBuilder<'a> {
         }
 
         if is_special_element(&tag_name)
-          && !element.match_tag_name_in(&["address", "div", "p"])
+          && !element.match_tag_name_in(&[b"address", b"div", b"p"])
         {
           break;
         }
@@ -1749,7 +1758,8 @@ impl<'a> TreeBuilder<'a> {
         self.generate_implied_end_tags("rtc");
       }
 
-      if !self.current_node().as_element().match_tag_name_in(&["rtc", "ruby"]) {
+      if !self.current_node().as_element().match_tag_name_in(&[b"rtc", b"ruby"])
+      {
         self.unexpected(&token);
       }
 
@@ -1863,7 +1873,7 @@ impl<'a> TreeBuilder<'a> {
       if self
         .current_node()
         .as_element()
-        .match_tag_name_in(&["table", "tbody", "tfoot", "thead", "tr"])
+        .match_tag_name_in(&[b"table", b"tbody", b"tfoot", b"thead", b"tr"])
       {
         self.pending_table_character_tokens.clear();
         self.original_insert_mode = Some(self.insert_mode.clone());

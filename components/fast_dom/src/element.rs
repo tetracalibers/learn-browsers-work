@@ -28,8 +28,8 @@ impl Element {
     self.tag_name.clone()
   }
 
-  pub fn match_tag_name_in(&self, names: &[&str]) -> bool {
-    names.iter().any(|name| self.tag_name() == *name)
+  pub fn match_tag_name_in(&self, names: &[&[u8]]) -> bool {
+    names.iter().any(|name| self.tag_name().as_bytes() == *name)
   }
 
   pub fn attributes(&self) -> RefCell<AttributeMap> {
