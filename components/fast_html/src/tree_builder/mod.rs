@@ -1891,7 +1891,10 @@ impl<'a> TreeBuilder<'a> {
     }
 
     if token.is_start_tag() && token.tag_name() == "colgroup" {
-      todo!("process_in_table: colgroup start tag");
+      self.open_elements.clear_back_to_table_context();
+      self.insert_html_element(token);
+      self.switch_to(InsertMode::InColumnGroup);
+      return;
     }
 
     if token.is_start_tag() && token.tag_name() == "col" {
