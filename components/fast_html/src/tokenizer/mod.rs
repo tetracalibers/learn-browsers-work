@@ -925,7 +925,41 @@ impl<'a> Tokenizer<'a> {
   }
 
   fn process_comment_state(&mut self) -> Option<Token> {
-    todo!("process_comment_state");
+    let bytes = self.read_to_oneof(&[b'<', b'-', b'\0']);
+
+    trace!("-- Comment: {}", bytes_to_string(bytes));
+
+    if !bytes.is_empty() {
+      self.concat_to_comment(bytes);
+    }
+
+    // read_currentに進む前にEOFチェック
+    if self.stream.is_eof() {
+      warn!("eof-in-comment");
+      self.will_emit(self.current_token.clone().unwrap());
+      return Some(self.emit_eof());
+    }
+
+    let b = self.read_current();
+
+    match b {
+      b'-' => {
+        self.switch_to(State::CommentEndDash);
+      }
+      b'<' => {
+        self.append_char_to_comment(b as char);
+        self.switch_to(State::CommentLessThanSign);
+      }
+      b'\0' => {
+        warn!("unexpected-null-character");
+        self.append_char_to_comment(REPLACEMENT_CHARACTER);
+      }
+      _ => {
+        // noop
+      }
+    }
+
+    None
   }
 
   fn process_comment_less_than_sign_state(&mut self) -> Option<Token> {
@@ -1002,6 +1036,16 @@ impl<'a> Tokenizer<'a> {
     }
   }
 
+  fn append_char_to_comment(&mut self, c: char) {
+    let current_tag = self.current_token.as_mut().unwrap();
+    match current_tag {
+      Token::Comment(text) => {
+        text.push(c);
+      }
+      _ => unreachable!("No tag found"),
+    }
+  }
+
   fn append_char_to_doctype_name(&mut self, c: char) {
     let current_tag = self.current_token.as_mut().unwrap();
     if let Token::DOCTYPE {
@@ -1021,6 +1065,17 @@ impl<'a> Tokenizer<'a> {
     match current_tag {
       Token::Tag { tag_name, .. } => {
         tag_name.push_str(&suffix);
+      }
+      _ => unreachable!("No tag found"),
+    }
+  }
+
+  fn concat_to_comment(&mut self, suffix: &[u8]) {
+    let suffix = bytes_to_string(suffix);
+    let current_tag = self.current_token.as_mut().unwrap();
+    match current_tag {
+      Token::Comment(text) => {
+        text.push_str(&suffix);
       }
       _ => unreachable!("No tag found"),
     }
