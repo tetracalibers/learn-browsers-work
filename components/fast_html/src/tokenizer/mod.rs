@@ -963,7 +963,24 @@ impl<'a> Tokenizer<'a> {
   }
 
   fn process_comment_less_than_sign_state(&mut self) -> Option<Token> {
-    todo!("process_comment_less_than_sign_state");
+    let b = self.read_current();
+
+    trace!("-- CommentLessThanSign: {}", b as char);
+
+    match b {
+      b'!' => {
+        self.append_char_to_comment(b as char);
+        self.switch_to(State::CommentLessThanSignBang);
+      }
+      b'<' => {
+        self.append_char_to_comment(b as char);
+      }
+      _ => {
+        self.reconsume_in(State::Comment);
+      }
+    }
+
+    None
   }
 
   fn process_comment_less_than_sign_bang_state(&mut self) -> Option<Token> {
