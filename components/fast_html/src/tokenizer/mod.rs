@@ -473,7 +473,40 @@ impl<'a> Tokenizer<'a> {
   }
 
   fn process_attribute_value_single_quoted_state(&mut self) -> Option<Token> {
-    todo!("process_attribute_value_single_quoted_state");
+    let bytes = self.read_to_oneof(&[b'\'', b'&', b'\0']);
+
+    trace!("-- AttributeValueSingleQuoted: {}", bytes_to_string(bytes));
+
+    if !bytes.is_empty() {
+      self.concat_to_attribute_value(bytes);
+    }
+
+    // read_currentに進む前にEOFチェック
+    if self.stream.is_eof() {
+      warn!("eof-in-tag");
+      return Some(self.emit_eof());
+    }
+
+    let b = self.read_current();
+
+    match b {
+      b'\'' => {
+        self.switch_to(State::AfterAttributeValueQuoted);
+      }
+      b'&' => {
+        self.return_state = Some(State::AttributeValueSingleQuoted);
+        unimplemented!("self.switch_to(State::CharacterReference);");
+      }
+      b'\0' => {
+        warn!("unexpected-null-character");
+        self.append_char_to_attribute_value(REPLACEMENT_CHARACTER);
+      }
+      _ => {
+        // noop
+      }
+    }
+
+    None
   }
 
   fn process_attribute_value_unquoted_state(&mut self) -> Option<Token> {
@@ -1127,6 +1160,20 @@ impl<'a> Tokenizer<'a> {
     match current_tag {
       Token::Tag { tag_name, .. } => {
         tag_name.push_str(&suffix);
+      }
+      _ => unreachable!("No tag found"),
+    }
+  }
+
+  fn concat_to_attribute_value(&mut self, suffix: &[u8]) {
+    let suffix = bytes_to_string(suffix);
+    let current_tag = self.current_token.as_mut().unwrap();
+    match current_tag {
+      Token::Tag { attributes, .. } => {
+        if let Some(mut last) = attributes.pop() {
+          last.value.push_str(&suffix);
+          attributes.push(last);
+        }
       }
       _ => unreachable!("No tag found"),
     }
