@@ -6,8 +6,7 @@ const TARGET_HTML: &str = r#"<!DOCTYPE html>
   <title>document title</title>
 </head>
 <body>
-<!-- This is a comment -->
-<p>This is a paragraph.</p>
+<!-- <p>This is another paragraph </p> -->
 </body>
 </html>"#;
 
