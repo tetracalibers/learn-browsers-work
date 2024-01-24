@@ -112,6 +112,7 @@ impl<'a> Tokenizer<'a> {
         State::CommentEndDash => self.process_comment_end_dash_state(),
         State::CommentEnd => self.process_comment_end_state(),
         State::CommentEndBang => self.process_comment_end_bang_state(),
+        State::BogusComment => self.process_bogus_comment_state(),
       };
 
       if let Some(token) = token {
@@ -191,7 +192,8 @@ impl<'a> Tokenizer<'a> {
       }
       b'?' => {
         warn!("unexpected-question-mark-instead-of-tag-name");
-        unimplemented!("undefined Token::Comment and State::BogusComment");
+        self.new_token(Token::new_comment(""));
+        self.reconsume_in(State::BogusComment);
       }
       _ if self.stream.is_eof() => {
         warn!("eof-before-tag-name");
@@ -272,7 +274,8 @@ impl<'a> Tokenizer<'a> {
       }
       _ => {
         warn!("invalid-first-character-of-tag-name");
-        unimplemented!("undefined State::BogusComment");
+        self.new_token(Token::new_comment(""));
+        self.reconsume_in(State::BogusComment);
       }
     }
 
@@ -508,7 +511,9 @@ impl<'a> Tokenizer<'a> {
 
   fn process_markup_declaration_open_state(&mut self) -> Option<Token> {
     if self.read_if_match(b"--", false) {
-      unimplemented!("self.switch_to(State::CommentStart);");
+      self.new_token(Token::new_comment(""));
+      self.switch_to(State::CommentStart);
+      return None;
     }
 
     if self.read_if_match(b"DOCTYPE", true) {
@@ -521,7 +526,10 @@ impl<'a> Tokenizer<'a> {
     }
 
     warn!("incorrectly-opened-comment");
-    unimplemented!("self.switch_to(State::BogusComment);");
+    self.new_token(Token::new_comment(""));
+    self.switch_to(State::BogusComment);
+
+    None
   }
 
   fn process_doctype_state(&mut self) -> Option<Token> {
@@ -932,6 +940,10 @@ impl<'a> Tokenizer<'a> {
 
   fn process_comment_end_bang_state(&mut self) -> Option<Token> {
     todo!("process_comment_end_bang_state");
+  }
+
+  fn process_bogus_comment_state(&mut self) -> Option<Token> {
+    todo!("process_bogus_comment_state");
   }
 
   /* -------------------------------------------- */

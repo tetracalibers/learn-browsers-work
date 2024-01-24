@@ -39,6 +39,7 @@ pub enum State {
   CommentEndDash,
   CommentEnd,
   CommentEndBang,
+  BogusComment,
 
   DOCTYPE,
   BeforeDOCTYPEName,
