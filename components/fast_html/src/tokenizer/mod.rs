@@ -899,7 +899,25 @@ impl<'a> Tokenizer<'a> {
   }
 
   fn process_comment_start_state(&mut self) -> Option<Token> {
-    todo!("process_comment_start_state");
+    let b = self.read_current();
+
+    trace!("-- CommentStart: {}", b as char);
+
+    match b {
+      b'-' => {
+        self.switch_to(State::CommentStartDash);
+      }
+      b'>' => {
+        warn!("abrupt-closing-of-empty-comment");
+        self.switch_to(State::Data);
+        return Some(self.emit_current_token());
+      }
+      _ => {
+        self.reconsume_in(State::Comment);
+      }
+    }
+
+    None
   }
 
   fn process_comment_start_dash_state(&mut self) -> Option<Token> {
