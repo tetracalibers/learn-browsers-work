@@ -65,6 +65,13 @@ impl DOMNode {
     }
   }
 
+  pub fn as_maybe_comment(&self) -> Option<&EcoString> {
+    match &self.data {
+      Some(DOMNodeData::Comment(comment)) => Some(comment),
+      _ => None,
+    }
+  }
+
   pub fn as_maybe_text(&self) -> Option<&Text> {
     match &self.data {
       Some(DOMNodeData::Text(text)) => Some(text),

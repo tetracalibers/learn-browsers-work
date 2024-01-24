@@ -94,6 +94,25 @@ impl<'a> Tokenizer<'a> {
         State::RCDATALessThanSign => self.process_rcdata_less_than_sign_state(),
         State::RCDATAEndTagOpen => self.process_rcdata_end_tag_open_state(),
         State::RCDATAEndTagName => self.process_rcdata_end_tag_name_state(),
+        State::CommentStart => self.process_comment_start_state(),
+        State::CommentStartDash => self.process_comment_start_dash_state(),
+        State::Comment => self.process_comment_state(),
+        State::CommentLessThanSign => {
+          self.process_comment_less_than_sign_state()
+        }
+        State::CommentLessThanSignBang => {
+          self.process_comment_less_than_sign_bang_state()
+        }
+        State::CommentLessThanSignBangDash => {
+          self.process_comment_less_than_sign_bang_dash_state()
+        }
+        State::CommentLessThanSignBangDashDash => {
+          self.process_comment_less_than_sign_bang_dash_dash_state()
+        }
+        State::CommentEndDash => self.process_comment_end_dash_state(),
+        State::CommentEnd => self.process_comment_end_state(),
+        State::CommentEndBang => self.process_comment_end_bang_state(),
+        State::BogusComment => self.process_bogus_comment_state(),
       };
 
       if let Some(token) = token {
@@ -173,7 +192,8 @@ impl<'a> Tokenizer<'a> {
       }
       b'?' => {
         warn!("unexpected-question-mark-instead-of-tag-name");
-        unimplemented!("undefined Token::Comment and State::BogusComment");
+        self.new_token(Token::new_comment(""));
+        self.reconsume_in(State::BogusComment);
       }
       _ if self.stream.is_eof() => {
         warn!("eof-before-tag-name");
@@ -254,7 +274,8 @@ impl<'a> Tokenizer<'a> {
       }
       _ => {
         warn!("invalid-first-character-of-tag-name");
-        unimplemented!("undefined State::BogusComment");
+        self.new_token(Token::new_comment(""));
+        self.reconsume_in(State::BogusComment);
       }
     }
 
@@ -490,7 +511,9 @@ impl<'a> Tokenizer<'a> {
 
   fn process_markup_declaration_open_state(&mut self) -> Option<Token> {
     if self.read_if_match(b"--", false) {
-      unimplemented!("self.switch_to(State::CommentStart);");
+      self.new_token(Token::new_comment(""));
+      self.switch_to(State::CommentStart);
+      return None;
     }
 
     if self.read_if_match(b"DOCTYPE", true) {
@@ -503,7 +526,10 @@ impl<'a> Tokenizer<'a> {
     }
 
     warn!("incorrectly-opened-comment");
-    unimplemented!("self.switch_to(State::BogusComment);");
+    self.new_token(Token::new_comment(""));
+    self.switch_to(State::BogusComment);
+
+    None
   }
 
   fn process_doctype_state(&mut self) -> Option<Token> {
@@ -872,6 +898,151 @@ impl<'a> Tokenizer<'a> {
     None
   }
 
+  fn process_comment_start_state(&mut self) -> Option<Token> {
+    let b = self.read_current();
+
+    trace!("-- CommentStart: {}", b as char);
+
+    match b {
+      b'-' => {
+        self.switch_to(State::CommentStartDash);
+      }
+      b'>' => {
+        warn!("abrupt-closing-of-empty-comment");
+        self.switch_to(State::Data);
+        return Some(self.emit_current_token());
+      }
+      _ => {
+        self.reconsume_in(State::Comment);
+      }
+    }
+
+    None
+  }
+
+  fn process_comment_start_dash_state(&mut self) -> Option<Token> {
+    todo!("process_comment_start_dash_state");
+  }
+
+  fn process_comment_state(&mut self) -> Option<Token> {
+    let bytes = self.read_to_oneof(&[b'<', b'-', b'\0']);
+
+    trace!("-- Comment: {}", bytes_to_string(bytes));
+
+    if !bytes.is_empty() {
+      self.concat_to_comment(bytes);
+    }
+
+    // read_currentに進む前にEOFチェック
+    if self.stream.is_eof() {
+      warn!("eof-in-comment");
+      self.will_emit(self.current_token.clone().unwrap());
+      return Some(self.emit_eof());
+    }
+
+    let b = self.read_current();
+
+    match b {
+      b'-' => {
+        self.switch_to(State::CommentEndDash);
+      }
+      b'<' => {
+        self.append_char_to_comment(b as char);
+        self.switch_to(State::CommentLessThanSign);
+      }
+      b'\0' => {
+        warn!("unexpected-null-character");
+        self.append_char_to_comment(REPLACEMENT_CHARACTER);
+      }
+      _ => {
+        // noop
+      }
+    }
+
+    None
+  }
+
+  fn process_comment_less_than_sign_state(&mut self) -> Option<Token> {
+    todo!("process_comment_less_than_sign_state");
+  }
+
+  fn process_comment_less_than_sign_bang_state(&mut self) -> Option<Token> {
+    todo!("process_comment_less_than_sign_bang_state");
+  }
+
+  fn process_comment_less_than_sign_bang_dash_state(
+    &mut self,
+  ) -> Option<Token> {
+    todo!("process_comment_less_than_sign_bang_dash_state");
+  }
+
+  fn process_comment_less_than_sign_bang_dash_dash_state(
+    &mut self,
+  ) -> Option<Token> {
+    todo!("process_comment_less_than_sign_bang_dash_dash_state");
+  }
+
+  fn process_comment_end_dash_state(&mut self) -> Option<Token> {
+    let b = self.read_current();
+
+    trace!("-- CommentEndDash: {}", b as char);
+
+    match b {
+      b'-' => {
+        self.switch_to(State::CommentEnd);
+      }
+      _ if self.stream.is_eof() => {
+        warn!("eof-in-comment");
+        self.will_emit(self.current_token.clone().unwrap());
+        return Some(self.emit_eof());
+      }
+      _ => {
+        self.append_char_to_comment('-');
+        self.reconsume_in(State::Comment);
+      }
+    }
+
+    None
+  }
+
+  fn process_comment_end_state(&mut self) -> Option<Token> {
+    let b = self.read_current();
+
+    trace!("-- CommentEnd: {}", b as char);
+
+    match b {
+      b'>' => {
+        self.switch_to(State::Data);
+        return Some(self.emit_current_token());
+      }
+      b'!' => {
+        self.switch_to(State::CommentEndBang);
+      }
+      b'-' => {
+        self.append_char_to_comment('-');
+      }
+      _ if self.stream.is_eof() => {
+        warn!("eof-in-comment");
+        self.will_emit(self.current_token.clone().unwrap());
+        return Some(self.emit_eof());
+      }
+      _ => {
+        self.concat_to_comment(b"--");
+        self.reconsume_in(State::Comment);
+      }
+    }
+
+    None
+  }
+
+  fn process_comment_end_bang_state(&mut self) -> Option<Token> {
+    todo!("process_comment_end_bang_state");
+  }
+
+  fn process_bogus_comment_state(&mut self) -> Option<Token> {
+    todo!("process_bogus_comment_state");
+  }
+
   /* -------------------------------------------- */
 
   fn new_token(&mut self, token: Token) {
@@ -910,6 +1081,16 @@ impl<'a> Tokenizer<'a> {
     }
   }
 
+  fn append_char_to_comment(&mut self, c: char) {
+    let current_tag = self.current_token.as_mut().unwrap();
+    match current_tag {
+      Token::Comment(text) => {
+        text.push(c);
+      }
+      _ => unreachable!("No tag found"),
+    }
+  }
+
   fn append_char_to_doctype_name(&mut self, c: char) {
     let current_tag = self.current_token.as_mut().unwrap();
     if let Token::DOCTYPE {
@@ -929,6 +1110,17 @@ impl<'a> Tokenizer<'a> {
     match current_tag {
       Token::Tag { tag_name, .. } => {
         tag_name.push_str(&suffix);
+      }
+      _ => unreachable!("No tag found"),
+    }
+  }
+
+  fn concat_to_comment(&mut self, suffix: &[u8]) {
+    let suffix = bytes_to_string(suffix);
+    let current_tag = self.current_token.as_mut().unwrap();
+    match current_tag {
+      Token::Comment(text) => {
+        text.push_str(&suffix);
       }
       _ => unreachable!("No tag found"),
     }

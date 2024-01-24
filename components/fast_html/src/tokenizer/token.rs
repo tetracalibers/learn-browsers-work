@@ -65,6 +65,10 @@ impl Token {
     Token::Text(EcoString::from(text))
   }
 
+  pub fn new_comment(comment: &str) -> Self {
+    Token::Comment(EcoString::from(comment))
+  }
+
   pub fn new_doctype_char_of(ch: char) -> Self {
     Token::DOCTYPE {
       name: Some(EcoString::from(ch)),

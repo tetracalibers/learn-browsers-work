@@ -6,31 +6,8 @@ const TARGET_HTML: &str = r#"<!DOCTYPE html>
   <title>document title</title>
 </head>
 <body>
-<table>
-  <caption>
-    Superheros and sidekicks
-  </caption>
-  <colgroup>
-    <col />
-    <col span="2" class="batman" />
-    <col span="2" class="flash" />
-  </colgroup>
-  <tr>
-    <td> </td>
-    <th scope="col">Batman</th>
-    <th scope="col">Robin</th>
-    <th scope="col">The Flash</th>
-    <th scope="col">Kid Flash</th>
-  </tr>
-  <tr>
-    <th scope="row">Skill</th>
-    <td>Smarts</td>
-    <td>Dex, acrobat</td>
-    <td>Super speed</td>
-    <td>Super speed</td>
-  </tr>
-</table>
-
+<!-- This is a comment -->
+<p>This is a paragraph.</p>
 </body>
 </html>"#;
 
