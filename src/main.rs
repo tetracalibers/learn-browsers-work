@@ -6,12 +6,7 @@ const TARGET_HTML: &str = r#"<!DOCTYPE html>
   <title>document title</title>
 </head>
 <body>
-<!-- <p>This is paragraph</p> -->
-<!--
-<p>Look at this cool image:</p>
-<img border="0" src="pic_trulli.jpg" alt="Trulli">
--->
-<p>This <!-- great text --> is a paragraph.</p>
+<p title='John "ShotGun" Nelson'></p>
 </body>
 </html>"#;
 
