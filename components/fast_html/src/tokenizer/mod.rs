@@ -1090,7 +1090,37 @@ impl<'a> Tokenizer<'a> {
   }
 
   fn process_bogus_comment_state(&mut self) -> Option<Token> {
-    todo!("process_bogus_comment_state");
+    let bytes = self.read_to_oneof(&[b'>', b'\0']);
+
+    trace!("-- BogusComment: {}", bytes_to_string(bytes));
+
+    if !bytes.is_empty() {
+      self.concat_to_comment(bytes);
+    }
+
+    // read_currentに進む前にEOFチェック
+    if self.stream.is_eof() {
+      self.will_emit(self.current_token.clone().unwrap());
+      return Some(self.emit_eof());
+    }
+
+    let b = self.read_current();
+
+    match b {
+      b'>' => {
+        self.switch_to(State::Data);
+        return Some(self.emit_current_token());
+      }
+      b'\0' => {
+        warn!("unexpected-null-character");
+        self.append_char_to_comment(REPLACEMENT_CHARACTER);
+      }
+      _ => {
+        // noop
+      }
+    }
+
+    None
   }
 
   /* -------------------------------------------- */
