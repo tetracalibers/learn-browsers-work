@@ -126,6 +126,13 @@ fn dom_to_json_core(
     json = element_node_to_json(element_node);
   }
 
+  if let Some(comment) = root.as_maybe_comment() {
+    json = json!({
+      "type": "comment",
+      "value": comment.as_str(),
+    });
+  }
+
   if root.as_maybe_document().is_some() {
     json = document_node_to_json();
   }
