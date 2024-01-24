@@ -28,6 +28,18 @@ pub enum State {
   AfterAttributeValueQuoted,
 
   MarkupDeclarationOpen,
+
+  CommentStart,
+  CommentStartDash,
+  Comment,
+  CommentLessThanSign,
+  CommentLessThanSignBang,
+  CommentLessThanSignBangDash,
+  CommentLessThanSignBangDashDash,
+  CommentEndDash,
+  CommentEnd,
+  CommentEndBang,
+
   DOCTYPE,
   BeforeDOCTYPEName,
   DOCTYPEName,

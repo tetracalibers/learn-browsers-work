@@ -94,6 +94,24 @@ impl<'a> Tokenizer<'a> {
         State::RCDATALessThanSign => self.process_rcdata_less_than_sign_state(),
         State::RCDATAEndTagOpen => self.process_rcdata_end_tag_open_state(),
         State::RCDATAEndTagName => self.process_rcdata_end_tag_name_state(),
+        State::CommentStart => self.process_comment_start_state(),
+        State::CommentStartDash => self.process_comment_start_dash_state(),
+        State::Comment => self.process_comment_state(),
+        State::CommentLessThanSign => {
+          self.process_comment_less_than_sign_state()
+        }
+        State::CommentLessThanSignBang => {
+          self.process_comment_less_than_sign_bang_state()
+        }
+        State::CommentLessThanSignBangDash => {
+          self.process_comment_less_than_sign_bang_dash_state()
+        }
+        State::CommentLessThanSignBangDashDash => {
+          self.process_comment_less_than_sign_bang_dash_dash_state()
+        }
+        State::CommentEndDash => self.process_comment_end_dash_state(),
+        State::CommentEnd => self.process_comment_end_state(),
+        State::CommentEndBang => self.process_comment_end_bang_state(),
       };
 
       if let Some(token) = token {
@@ -870,6 +888,50 @@ impl<'a> Tokenizer<'a> {
     }
 
     None
+  }
+
+  fn process_comment_start_state(&mut self) -> Option<Token> {
+    todo!("process_comment_start_state");
+  }
+
+  fn process_comment_start_dash_state(&mut self) -> Option<Token> {
+    todo!("process_comment_start_dash_state");
+  }
+
+  fn process_comment_state(&mut self) -> Option<Token> {
+    todo!("process_comment_state");
+  }
+
+  fn process_comment_less_than_sign_state(&mut self) -> Option<Token> {
+    todo!("process_comment_less_than_sign_state");
+  }
+
+  fn process_comment_less_than_sign_bang_state(&mut self) -> Option<Token> {
+    todo!("process_comment_less_than_sign_bang_state");
+  }
+
+  fn process_comment_less_than_sign_bang_dash_state(
+    &mut self,
+  ) -> Option<Token> {
+    todo!("process_comment_less_than_sign_bang_dash_state");
+  }
+
+  fn process_comment_less_than_sign_bang_dash_dash_state(
+    &mut self,
+  ) -> Option<Token> {
+    todo!("process_comment_less_than_sign_bang_dash_dash_state");
+  }
+
+  fn process_comment_end_dash_state(&mut self) -> Option<Token> {
+    todo!("process_comment_end_dash_state");
+  }
+
+  fn process_comment_end_state(&mut self) -> Option<Token> {
+    todo!("process_comment_end_state");
+  }
+
+  fn process_comment_end_bang_state(&mut self) -> Option<Token> {
+    todo!("process_comment_end_bang_state");
   }
 
   /* -------------------------------------------- */
