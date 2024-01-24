@@ -983,7 +983,26 @@ impl<'a> Tokenizer<'a> {
   }
 
   fn process_comment_end_dash_state(&mut self) -> Option<Token> {
-    todo!("process_comment_end_dash_state");
+    let b = self.read_current();
+
+    trace!("-- CommentEndDash: {}", b as char);
+
+    match b {
+      b'-' => {
+        self.switch_to(State::CommentEnd);
+      }
+      _ if self.stream.is_eof() => {
+        warn!("eof-in-comment");
+        self.will_emit(self.current_token.clone().unwrap());
+        return Some(self.emit_eof());
+      }
+      _ => {
+        self.append_char_to_comment('-');
+        self.reconsume_in(State::Comment);
+      }
+    }
+
+    None
   }
 
   fn process_comment_end_state(&mut self) -> Option<Token> {
