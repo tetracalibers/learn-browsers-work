@@ -1,14 +1,6 @@
 use std::env;
 
-const TARGET_HTML: &str = r#"<!DOCTYPE html>
-<html>
-<head>
-  <title>document title</title>
-</head>
-<body>
-<p title='John "ShotGun" Nelson'></p>
-</body>
-</html>"#;
+const TARGET_HTML: &str = r#"<body></хелоу></body>"#;
 
 fn run_html(html: &str) {
   let document = html::debugger::get_document_from_html(html);
