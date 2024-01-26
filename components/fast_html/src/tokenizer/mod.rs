@@ -113,6 +113,29 @@ impl<'a> Tokenizer<'a> {
         State::CommentEnd => self.process_comment_end_state(),
         State::CommentEndBang => self.process_comment_end_bang_state(),
         State::BogusComment => self.process_bogus_comment_state(),
+        State::CharacterReference => self.process_character_reference_state(),
+        State::NamedCharacterReference => {
+          self.process_named_character_reference_state()
+        }
+        State::AmbiguousAmpersand => self.process_ambiguous_ampersand_state(),
+        State::NumericCharacterReference => {
+          self.process_numeric_character_reference_state()
+        }
+        State::HexadecimalCharacterReferenceStart => {
+          self.process_hexadecimal_character_reference_start_state()
+        }
+        State::HexadecimalCharacterReference => {
+          self.process_hexadecimal_character_reference_state()
+        }
+        State::DecimalCharacterReferenceStart => {
+          self.process_decimal_character_reference_start_state()
+        }
+        State::DecimalCharacterReference => {
+          self.process_decimal_character_reference_state()
+        }
+        State::NumericCharacterReferenceEnd => {
+          self.process_numeric_character_reference_end_state()
+        }
       };
 
       if let Some(token) = token {
@@ -1164,6 +1187,46 @@ impl<'a> Tokenizer<'a> {
     }
 
     None
+  }
+
+  fn process_character_reference_state(&mut self) -> Option<Token> {
+    todo!("process_character_reference_state");
+  }
+
+  fn process_named_character_reference_state(&mut self) -> Option<Token> {
+    todo!("process_named_character_reference_state");
+  }
+
+  fn process_ambiguous_ampersand_state(&mut self) -> Option<Token> {
+    todo!("process_ambiguous_ampersand_state");
+  }
+
+  fn process_numeric_character_reference_state(&mut self) -> Option<Token> {
+    todo!("process_numeric_character_reference_state");
+  }
+
+  fn process_hexadecimal_character_reference_start_state(
+    &mut self,
+  ) -> Option<Token> {
+    todo!("process_hexadecimal_character_reference_start_state");
+  }
+
+  fn process_decimal_character_reference_start_state(
+    &mut self,
+  ) -> Option<Token> {
+    todo!("process_decimal_character_reference_start_state");
+  }
+
+  fn process_hexadecimal_character_reference_state(&mut self) -> Option<Token> {
+    todo!("process_hexadecimal_character_reference_state");
+  }
+
+  fn process_decimal_character_reference_state(&mut self) -> Option<Token> {
+    todo!("process_decimal_character_reference_state");
+  }
+
+  fn process_numeric_character_reference_end_state(&mut self) -> Option<Token> {
+    todo!("process_numeric_character_reference_end_state");
   }
 
   /* -------------------------------------------- */
