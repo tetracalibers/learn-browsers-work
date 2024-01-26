@@ -351,6 +351,7 @@ dependencies = [
  "ecow",
  "fast_dom",
  "log",
+ "once_cell",
  "serde_json",
  "tree",
 ]
