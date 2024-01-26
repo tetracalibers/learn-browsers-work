@@ -510,7 +510,50 @@ impl<'a> Tokenizer<'a> {
   }
 
   fn process_attribute_value_unquoted_state(&mut self) -> Option<Token> {
-    todo!("process_attribute_value_unquoted_state");
+    let bytes = self.read_to_whitespace_or_oneof(&[
+      b'&', b'>', b'=', b'\0', b'"', b'\'', b'<', b'`',
+    ]);
+
+    trace!("-- AttributeValueUnQuoted: {}", bytes_to_string(bytes));
+
+    if !bytes.is_empty() {
+      self.concat_to_attribute_value(bytes);
+    }
+
+    // read_currentに進む前にEOFチェック
+    if self.stream.is_eof() {
+      warn!("eof-in-tag");
+      return Some(self.emit_eof());
+    }
+
+    let b = self.read_current();
+
+    match b {
+      _ if b.is_ascii_whitespace() => {
+        self.switch_to(State::BeforeAttributeName);
+      }
+      b'&' => {
+        self.return_state = Some(State::AttributeValueUnQuoted);
+        unimplemented!("self.switch_to(State::CharacterReference);");
+      }
+      b'>' => {
+        self.switch_to(State::Data);
+        return Some(self.emit_current_token());
+      }
+      b'\0' => {
+        warn!("unexpected-null-character");
+        self.append_char_to_attribute_value(REPLACEMENT_CHARACTER);
+      }
+      b'"' | b'\'' | b'<' | b'=' | b'`' => {
+        warn!("unexpected-character-in-unquoted-attribute-value");
+        self.append_char_to_attribute_value(b as char);
+      }
+      _ => {
+        // noop
+      }
+    }
+
+    None
   }
 
   fn process_after_attribute_value_quoted_state(&mut self) -> Option<Token> {
