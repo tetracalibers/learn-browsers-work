@@ -1,12 +1,15 @@
 mod byte_string;
+mod entities;
 pub mod state;
 mod stream;
 pub mod token;
 
+use std::char::from_u32;
 use std::collections::HashSet;
 use std::str::from_utf8;
 
 use self::byte_string::*;
+use self::entities::ENTITIES;
 use self::state::State;
 use self::stream::Stream;
 use self::token::Attribute;
@@ -157,9 +160,14 @@ impl<'a> Tokenizer<'a> {
     self.state = state;
   }
 
+  fn switch_to_return_state(&mut self) {
+    let state = self.return_state.take().unwrap();
+    self.switch_to(state);
+  }
+
   fn reconsume_in_return_state(&mut self) {
-    self.state = self.return_state.take().unwrap();
-    debug!("Tokenizer State: reconsume in {:#?}", self.state);
+    let state = self.return_state.take().unwrap();
+    self.reconsume_in(state);
   }
 
   /* -------------------------------------------- */
@@ -1221,7 +1229,48 @@ impl<'a> Tokenizer<'a> {
   }
 
   fn process_named_character_reference_state(&mut self) -> Option<Token> {
-    todo!("process_named_character_reference_state");
+    let bytes = self.peek_while_with_last(|b| b.is_ascii_alphanumeric(), b';');
+
+    trace!("-- NamedCharacterReference: {}", bytes_to_string(bytes));
+
+    let name = from_utf8(bytes).unwrap_or("");
+
+    if let Some(&codepoints) = ENTITIES.get(name) {
+      self.skip(bytes.len() - 1);
+      self.push_many_to_tmp_buffer(bytes);
+
+      let last = bytes.last().unwrap();
+
+      if self.is_character_part_of_attribute() && *last != b';' {
+        if let Some(next) = self.peek_next() {
+          if *next == b'=' || next.is_ascii_alphanumeric() {
+            self.flush_code_points_consumed_as_a_character_reference();
+            self.switch_to_return_state();
+            return None;
+          }
+        }
+      }
+
+      if *last != b';' {
+        warn!("missing-semicolon-after-character-reference");
+      }
+
+      self.clear_tmp_buffer();
+      self.push_to_tmp_buffer(from_u32(codepoints.0).unwrap() as u8);
+      if codepoints.1 != 0 {
+        self.push_to_tmp_buffer(from_u32(codepoints.1).unwrap() as u8);
+      }
+
+      self.flush_code_points_consumed_as_a_character_reference();
+      self.switch_to_return_state();
+
+      return None;
+    }
+
+    self.flush_code_points_consumed_as_a_character_reference();
+    self.switch_to(State::AmbiguousAmpersand);
+
+    None
   }
 
   fn process_ambiguous_ampersand_state(&mut self) -> Option<Token> {
@@ -1623,5 +1672,33 @@ impl<'a> Tokenizer<'a> {
 
     self.stream.advance_by(end);
     self.stream.slice(start, start + end)
+  }
+
+  fn peek_next(&self) -> Option<&u8> {
+    self.stream.peek(1)
+  }
+
+  fn peek_while_with_last(
+    &mut self,
+    f: impl Fn(u8) -> bool,
+    except_last: u8,
+  ) -> &'a [u8] {
+    let start = self.stream.idx;
+    let bytes = &self.stream.data()[start..];
+
+    let mut end =
+      bytes.iter().position(|&b| !f(b)).unwrap_or(self.stream.len() - start);
+
+    if let Some(next) = self.stream.peek(end) {
+      if *next == except_last {
+        end += 1;
+      }
+    }
+
+    self.stream.slice(start, start + end)
+  }
+
+  fn skip(&mut self, offset: usize) {
+    self.stream.advance_by(offset);
   }
 }
