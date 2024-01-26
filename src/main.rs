@@ -1,6 +1,6 @@
 use std::env;
 
-const TARGET_HTML: &str = r#"<div class="a" class="b"></div>"#;
+const TARGET_HTML: &str = r#"<img src=1.png /re/>"#;
 
 fn run_html(html: &str) {
   let document = html::debugger::get_document_from_html(html);
