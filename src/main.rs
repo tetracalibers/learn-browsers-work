@@ -1,6 +1,6 @@
 use std::env;
 
-const TARGET_HTML: &str = r#"<body></хелоу></body>"#;
+const TARGET_HTML: &str = r#"<div class="a" class="b"></div>"#;
 
 fn run_html(html: &str) {
   let document = html::debugger::get_document_from_html(html);
