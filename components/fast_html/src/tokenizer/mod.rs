@@ -157,6 +157,11 @@ impl<'a> Tokenizer<'a> {
     self.state = state;
   }
 
+  fn reconsume_in_return_state(&mut self) {
+    self.state = self.return_state.take().unwrap();
+    debug!("Tokenizer State: reconsume in {:#?}", self.state);
+  }
+
   /* -------------------------------------------- */
 
   fn process_data_state(&mut self) -> Option<Token> {
@@ -1191,7 +1196,28 @@ impl<'a> Tokenizer<'a> {
   }
 
   fn process_character_reference_state(&mut self) -> Option<Token> {
-    todo!("process_character_reference_state");
+    self.clear_tmp_buffer();
+    self.push_to_tmp_buffer(b'&');
+
+    let b = self.read_current();
+
+    trace!("-- CharacterReference: {}", b as char);
+
+    match b {
+      _ if b.is_ascii_alphanumeric() => {
+        self.reconsume_in(State::NamedCharacterReference);
+      }
+      b'#' => {
+        self.push_to_tmp_buffer(b'#');
+        self.switch_to(State::NumericCharacterReference);
+      }
+      _ => {
+        self.flush_code_points_consumed_as_a_character_reference();
+        self.reconsume_in_return_state();
+      }
+    }
+
+    None
   }
 
   fn process_named_character_reference_state(&mut self) -> Option<Token> {
@@ -1474,12 +1500,43 @@ impl<'a> Tokenizer<'a> {
     trace!("-- tmp_buffer_clear");
   }
 
+  fn push_to_tmp_buffer(&mut self, b: u8) {
+    self.tmp_buffer.push(b);
+    trace!(
+      "-- tmp_buffer: {:?}",
+      bytes_to_string(self.tmp_buffer.as_slice())
+    );
+  }
+
   fn push_many_to_tmp_buffer(&mut self, bytes: &[u8]) {
     self.tmp_buffer.extend_from_slice(bytes);
     trace!(
       "-- tmp_buffer: {:?}",
       bytes_to_string(self.tmp_buffer.as_slice())
     );
+  }
+
+  /* character reference ------------------------ */
+
+  fn flush_code_points_consumed_as_a_character_reference(&mut self) {
+    if self.is_character_part_of_attribute() {
+      self.concat_to_attribute_value(self.tmp_buffer.clone().as_slice());
+    } else {
+      self.emit_tmp_buffer();
+    }
+  }
+
+  fn is_character_part_of_attribute(&self) -> bool {
+    if let Some(return_state) = &self.return_state {
+      return match return_state {
+        State::AttributeValueDoubleQuoted => true,
+        State::AttributeValueSingleQuoted => true,
+        State::AttributeValueUnQuoted => true,
+        _ => false,
+      };
+    }
+    warn!("No return state found");
+    false
   }
 
   /* -------------------------------------------- */
