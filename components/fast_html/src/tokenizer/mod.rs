@@ -181,7 +181,8 @@ impl<'a> Tokenizer<'a> {
         self.switch_to(State::TagOpen);
       }
       b'&' => {
-        unimplemented!("undefined State::CharacterReference");
+        self.return_state = Some(State::Data);
+        self.switch_to(State::CharacterReference);
       }
       b'\0' => {
         warn!("unexpected-null-character");
@@ -481,7 +482,7 @@ impl<'a> Tokenizer<'a> {
       }
       b'&' => {
         self.return_state = Some(State::AttributeValueDoubleQuoted);
-        unimplemented!("self.switch_to(State::CharacterReference);");
+        self.switch_to(State::CharacterReference);
       }
       b'\0' => {
         warn!("unexpected-null-character");
@@ -518,7 +519,7 @@ impl<'a> Tokenizer<'a> {
       }
       b'&' => {
         self.return_state = Some(State::AttributeValueSingleQuoted);
-        unimplemented!("self.switch_to(State::CharacterReference);");
+        self.switch_to(State::CharacterReference);
       }
       b'\0' => {
         warn!("unexpected-null-character");
@@ -557,7 +558,7 @@ impl<'a> Tokenizer<'a> {
       }
       b'&' => {
         self.return_state = Some(State::AttributeValueUnQuoted);
-        unimplemented!("self.switch_to(State::CharacterReference);");
+        self.switch_to(State::CharacterReference);
       }
       b'>' => {
         self.switch_to(State::Data);
@@ -887,7 +888,7 @@ impl<'a> Tokenizer<'a> {
     match b {
       b'&' => {
         self.return_state = Some(State::RCDATA);
-        unimplemented!("self.switch_to(State::CharacterReference);");
+        self.switch_to(State::CharacterReference);
       }
       b'<' => {
         self.switch_to(State::RCDATALessThanSign);
