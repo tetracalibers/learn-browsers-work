@@ -6,6 +6,7 @@ pub mod token;
 
 use std::char::from_u32;
 use std::collections::HashSet;
+use std::collections::VecDeque;
 use std::str::from_utf8;
 
 use self::byte_string::*;
@@ -26,7 +27,7 @@ pub struct Tokenizer<'a> {
   state: State,
   return_state: Option<State>,
   stream: Stream<'a, u8>,
-  output: EcoVec<Token>,
+  output: VecDeque<Token>,
   current_token: Option<Token>,
   last_emitted_start_tag: Option<Token>,
   tmp_buffer: EcoVec<u8>,
@@ -38,7 +39,7 @@ impl<'a> Tokenizer<'a> {
       state: State::Data,
       return_state: None,
       stream: Stream::new(data),
-      output: EcoVec::new(),
+      output: VecDeque::new(),
       current_token: None,
       last_emitted_start_tag: None,
       tmp_buffer: EcoVec::new(),
@@ -47,7 +48,7 @@ impl<'a> Tokenizer<'a> {
 
   pub fn next_token(&mut self) -> Token {
     if !self.output.is_empty() {
-      return self.output.pop().unwrap();
+      return self.output.pop_front().unwrap();
     }
 
     loop {
@@ -1514,12 +1515,16 @@ impl<'a> Tokenizer<'a> {
         self.last_emitted_start_tag = Some(token.clone());
       }
     }
-    self.output.push(token);
+    self.output.push_back(token);
+  }
+
+  fn pop_token(&mut self) -> Token {
+    self.output.pop_front().unwrap()
   }
 
   fn emit_current_token(&mut self) -> Token {
     self.will_emit(self.current_token.clone().unwrap());
-    self.output.pop().unwrap()
+    self.pop_token()
   }
 
   fn emit_text(&mut self, s: &[u8]) -> Token {
@@ -1539,7 +1544,7 @@ impl<'a> Tokenizer<'a> {
   }
 
   fn emit_tmp_buffer(&mut self) {
-    self.output.push(Token::Text(bytes_to_string(&self.tmp_buffer)));
+    self.output.push_back(Token::Text(bytes_to_string(&self.tmp_buffer)));
   }
 
   /* tmp buffer --------------------------------- */
