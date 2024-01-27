@@ -10,7 +10,7 @@ use nom::{
   IResult,
 };
 
-type SelectorSequence = Vec<Selector>;
+type SelectorList = Vec<Selector>;
 
 #[derive(Debug, PartialEq, Clone)]
 struct Selector(Vec<SelectorData>);
@@ -254,7 +254,7 @@ fn selector(input: &str) -> IResult<&str, Selector> {
   Ok((input, Selector(selectors)))
 }
 
-fn selector_sequence(input: &str) -> IResult<&str, SelectorSequence> {
+fn selector_list(input: &str) -> IResult<&str, SelectorList> {
   let splitted = input.split(',').collect::<Vec<&str>>();
 
   let mut rest = input;
@@ -273,7 +273,7 @@ pub fn main() {
   let input =
     r#"#foo > .bar + div.k1.k2 [id="baz"]:hello(2):not(:where(#yolo))::before"#;
 
-  let result = selector_sequence(input);
+  let result = selector_list(input);
 
   println!("result: {:?}", result);
 }
@@ -541,9 +541,9 @@ mod tests {
   }
 
   #[test]
-  fn test_selector_sequence() {
+  fn test_selector_list() {
     assert_eq!(
-      selector_sequence("div, a, .class, #id"),
+      selector_list("div, a, .class, #id"),
       Ok((
         "",
         vec![
@@ -567,7 +567,7 @@ mod tests {
       ))
     );
     assert_eq!(
-      selector_sequence("div.class"),
+      selector_list("div.class"),
       Ok((
         "",
         vec![Selector(vec![(
@@ -580,7 +580,7 @@ mod tests {
       ))
     );
     assert_eq!(
-      selector_sequence("div , a"),
+      selector_list("div , a"),
       Ok((
         "",
         vec![
