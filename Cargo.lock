@@ -340,6 +340,7 @@ name = "fast_dom"
 version = "0.1.0"
 dependencies = [
  "ecow",
+ "rustc-hash",
 ]
 
 [[package]]
