@@ -1,5 +1,5 @@
-use super::structs::ComponentValue;
-use super::structs::SimpleBlock;
+use super::atomic::ComponentValue;
+use super::atomic::SimpleBlock;
 
 #[derive(Debug)]
 pub struct QualifiedRule {

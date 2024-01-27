@@ -1,4 +1,4 @@
-use super::structs::ComponentValue;
+use super::atomic::ComponentValue;
 
 #[derive(Debug)]
 pub struct Declaration {
