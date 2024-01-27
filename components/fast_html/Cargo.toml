@@ -32,3 +32,8 @@ harness = false
 name    = "with_attributes"
 path    = "benches/with_attributes.rs"
 harness = false
+
+[[bench]]
+name    = "named_char_ref"
+path    = "benches/named_char_ref.rs"
+harness = false
