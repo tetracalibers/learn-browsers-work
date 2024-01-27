@@ -10,10 +10,10 @@ use nom::{
   IResult,
 };
 
-type SelectorList = Vec<ComplexSelectorSequence>;
+pub type SelectorList = Vec<ComplexSelectorSequence>;
 
 #[derive(Debug, PartialEq, Clone)]
-struct ComplexSelectorSequence(Vec<ComplexSelector>);
+pub struct ComplexSelectorSequence(Vec<ComplexSelector>);
 
 type ComplexSelector = (CompoundSelector, Option<Combinator>);
 

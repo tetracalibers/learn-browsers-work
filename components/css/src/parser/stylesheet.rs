@@ -1,5 +1,5 @@
 use super::at_rule::AtRule;
-use super::qualified_rule::QualifiedRule;
+use super::style_rule::StyleRule;
 
 pub struct StyleSheet {
   pub rules: Vec<Rule>,
@@ -7,6 +7,6 @@ pub struct StyleSheet {
 
 #[derive(Debug)]
 pub enum Rule {
-  QualifiedRule(QualifiedRule),
+  StyleRule(StyleRule),
   AtRule(AtRule),
 }
