@@ -1,25 +1,4 @@
 #[derive(Debug)]
-pub enum Rule {
-  QualifiedRule(QualifiedRule),
-  AtRule(AtRule),
-}
-
-pub type RuleList = Vec<Rule>;
-
-#[derive(Debug)]
-pub struct QualifiedRule {
-  pub prelude: Vec<ComponentValue>,
-  pub block: Option<SimpleBlock>,
-}
-
-#[derive(Debug)]
-pub struct AtRule {
-  pub name: String,
-  pub prelude: Vec<ComponentValue>,
-  pub block: Option<SimpleBlock>,
-}
-
-#[derive(Debug)]
 pub struct SimpleBlock {
   pub associated_token: BracketLeftToken,
   pub value: Vec<ComponentValue>,
@@ -48,32 +27,6 @@ pub enum ComponentValue {
   SimpleBlock(SimpleBlock),
 }
 
-#[derive(Debug)]
-pub struct Declaration {
-  pub name: String,
-  pub value: Vec<ComponentValue>,
-  pub important: bool,
-}
-
-impl QualifiedRule {
-  pub fn new() -> Self {
-    Self {
-      prelude: Vec::new(),
-      block: None,
-    }
-  }
-}
-
-impl AtRule {
-  pub fn new(name: String) -> Self {
-    Self {
-      name,
-      prelude: Vec::new(),
-      block: None,
-    }
-  }
-}
-
 impl SimpleBlock {
   pub fn new(associated_token: BracketLeftToken) -> Self {
     Self {
@@ -88,16 +41,6 @@ impl Function {
     Self {
       name,
       value: Vec::new(),
-    }
-  }
-}
-
-impl Declaration {
-  pub fn new(name: String) -> Self {
-    Self {
-      name,
-      value: Vec::new(),
-      important: false,
     }
   }
 }
