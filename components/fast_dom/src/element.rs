@@ -1,10 +1,10 @@
+use rustc_hash::FxHashMap;
 use std::cell::RefCell;
-use std::collections::HashMap;
 
 use ecow::EcoString;
 use ecow::EcoVec;
 
-type AttributeMap = HashMap<EcoString, EcoString>;
+type AttributeMap = FxHashMap<EcoString, EcoString>;
 type ClassList = EcoVec<EcoString>;
 
 pub struct Element {
@@ -19,7 +19,7 @@ impl Element {
     Self {
       tag_name: EcoString::from(tag_name),
       id: RefCell::new(None),
-      attributes: RefCell::new(AttributeMap::new()),
+      attributes: RefCell::new(AttributeMap::default()),
       class_list: RefCell::new(ClassList::new()),
     }
   }
