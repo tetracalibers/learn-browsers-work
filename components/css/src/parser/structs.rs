@@ -1,5 +1,3 @@
-use super::super::tokenizer::token::Token;
-
 #[derive(Debug)]
 pub enum Rule {
   QualifiedRule(QualifiedRule),
@@ -23,8 +21,18 @@ pub struct AtRule {
 
 #[derive(Debug)]
 pub struct SimpleBlock {
-  pub associated_token: Token,
+  pub associated_token: BracketLeftToken,
   pub value: Vec<ComponentValue>,
+}
+
+#[derive(Debug)]
+enum BracketLeftToken {
+  // [
+  SquareBracketLeft,
+  // {
+  CurlyBracketLeft,
+  // (
+  RoundBracketLeft,
 }
 
 #[derive(Debug)]
@@ -35,7 +43,7 @@ pub struct Function {
 
 #[derive(Debug)]
 pub enum ComponentValue {
-  PreservedToken(Token),
+  PreservedToken(BracketLeftToken),
   Function(Function),
   SimpleBlock(SimpleBlock),
 }
@@ -67,7 +75,7 @@ impl AtRule {
 }
 
 impl SimpleBlock {
-  pub fn new(associated_token: Token) -> Self {
+  pub fn new(associated_token: BracketLeftToken) -> Self {
     Self {
       associated_token,
       value: Vec::new(),
