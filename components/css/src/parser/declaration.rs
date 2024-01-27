@@ -7,6 +7,7 @@ use nom::combinator::map;
 use nom::combinator::opt;
 use nom::multi::many0;
 use nom::multi::many1;
+use nom::multi::separated_list1;
 use nom::sequence::tuple;
 use nom::IResult;
 
@@ -49,6 +50,10 @@ fn important(input: &str) -> IResult<&str, bool> {
   map(tuple((char('!'), alpha1)), |(_, s)| s == "important")(input)
 }
 
+pub fn declaration_list(input: &str) -> IResult<&str, Vec<Declaration>> {
+  separated_list1(tuple((space0, char(';'), space0)), declaration)(input)
+}
+
 pub fn declaration(input: &str) -> IResult<&str, Declaration> {
   map(
     tuple((
@@ -58,10 +63,8 @@ pub fn declaration(input: &str) -> IResult<&str, Declaration> {
       space0,
       many1(css_value),
       opt(tuple((space1, important))),
-      space0,
-      char(';'),
     )),
-    |(name, _, _, _, value, important, _, _)| {
+    |(name, _, _, _, value, important)| {
       let mut declaration = Declaration::new(name);
       declaration.value = value;
       declaration.important = important.is_some();
@@ -95,7 +98,7 @@ mod tests {
   #[test]
   fn test_declaration() {
     assert_eq!(
-      declaration("color: red;"),
+      declaration("color: red"),
       Ok((
         "",
         Declaration {
@@ -106,7 +109,7 @@ mod tests {
       ))
     );
     assert_eq!(
-      declaration("color: red !important;"),
+      declaration("color: red !important"),
       Ok((
         "",
         Declaration {
@@ -114,6 +117,28 @@ mod tests {
           value: vec![CssValue::Keyword(String::from("red"))],
           important: true,
         }
+      ))
+    );
+  }
+
+  #[test]
+  fn test_declaration_list() {
+    assert_eq!(
+      declaration_list("color: red; background-color: blue"),
+      Ok((
+        "",
+        vec![
+          Declaration {
+            name: String::from("color"),
+            value: vec![CssValue::Keyword(String::from("red"))],
+            important: false,
+          },
+          Declaration {
+            name: String::from("background-color"),
+            value: vec![CssValue::Keyword(String::from("blue"))],
+            important: false,
+          },
+        ]
       ))
     );
   }
