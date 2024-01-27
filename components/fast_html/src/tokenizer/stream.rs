@@ -64,6 +64,10 @@ impl<'a, T> Stream<'a, T> {
     self.data.get(self.idx)
   }
 
+  pub fn peek(&self, offset: usize) -> Option<&T> {
+    self.data.get(self.idx + offset)
+  }
+
   pub fn is_eof(&self) -> bool {
     self.idx >= self.data.len()
   }

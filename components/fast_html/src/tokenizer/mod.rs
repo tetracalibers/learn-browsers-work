@@ -1,12 +1,16 @@
 mod byte_string;
+mod entities;
 pub mod state;
 mod stream;
 pub mod token;
 
+use std::char::from_u32;
 use std::collections::HashSet;
+use std::collections::VecDeque;
 use std::str::from_utf8;
 
 use self::byte_string::*;
+use self::entities::ENTITIES;
 use self::state::State;
 use self::stream::Stream;
 use self::token::Attribute;
@@ -23,7 +27,7 @@ pub struct Tokenizer<'a> {
   state: State,
   return_state: Option<State>,
   stream: Stream<'a, u8>,
-  output: EcoVec<Token>,
+  output: VecDeque<Token>,
   current_token: Option<Token>,
   last_emitted_start_tag: Option<Token>,
   tmp_buffer: EcoVec<u8>,
@@ -35,7 +39,7 @@ impl<'a> Tokenizer<'a> {
       state: State::Data,
       return_state: None,
       stream: Stream::new(data),
-      output: EcoVec::new(),
+      output: VecDeque::new(),
       current_token: None,
       last_emitted_start_tag: None,
       tmp_buffer: EcoVec::new(),
@@ -44,7 +48,7 @@ impl<'a> Tokenizer<'a> {
 
   pub fn next_token(&mut self) -> Token {
     if !self.output.is_empty() {
-      return self.output.pop().unwrap();
+      return self.output.pop_front().unwrap();
     }
 
     loop {
@@ -113,6 +117,29 @@ impl<'a> Tokenizer<'a> {
         State::CommentEnd => self.process_comment_end_state(),
         State::CommentEndBang => self.process_comment_end_bang_state(),
         State::BogusComment => self.process_bogus_comment_state(),
+        State::CharacterReference => self.process_character_reference_state(),
+        State::NamedCharacterReference => {
+          self.process_named_character_reference_state()
+        }
+        State::AmbiguousAmpersand => self.process_ambiguous_ampersand_state(),
+        State::NumericCharacterReference => {
+          self.process_numeric_character_reference_state()
+        }
+        State::HexadecimalCharacterReferenceStart => {
+          self.process_hexadecimal_character_reference_start_state()
+        }
+        State::HexadecimalCharacterReference => {
+          self.process_hexadecimal_character_reference_state()
+        }
+        State::DecimalCharacterReferenceStart => {
+          self.process_decimal_character_reference_start_state()
+        }
+        State::DecimalCharacterReference => {
+          self.process_decimal_character_reference_state()
+        }
+        State::NumericCharacterReferenceEnd => {
+          self.process_numeric_character_reference_end_state()
+        }
       };
 
       if let Some(token) = token {
@@ -132,6 +159,16 @@ impl<'a> Tokenizer<'a> {
   pub fn reconsume_in(&mut self, state: State) {
     debug!("Tokenizer State: reconsume in {:#?}", state);
     self.state = state;
+  }
+
+  fn switch_to_return_state(&mut self) {
+    let state = self.return_state.take().unwrap();
+    self.switch_to(state);
+  }
+
+  fn reconsume_in_return_state(&mut self) {
+    let state = self.return_state.take().unwrap();
+    self.reconsume_in(state);
   }
 
   /* -------------------------------------------- */
@@ -158,7 +195,8 @@ impl<'a> Tokenizer<'a> {
         self.switch_to(State::TagOpen);
       }
       b'&' => {
-        unimplemented!("undefined State::CharacterReference");
+        self.return_state = Some(State::Data);
+        self.switch_to(State::CharacterReference);
       }
       b'\0' => {
         warn!("unexpected-null-character");
@@ -458,7 +496,7 @@ impl<'a> Tokenizer<'a> {
       }
       b'&' => {
         self.return_state = Some(State::AttributeValueDoubleQuoted);
-        unimplemented!("self.switch_to(State::CharacterReference);");
+        self.switch_to(State::CharacterReference);
       }
       b'\0' => {
         warn!("unexpected-null-character");
@@ -495,7 +533,7 @@ impl<'a> Tokenizer<'a> {
       }
       b'&' => {
         self.return_state = Some(State::AttributeValueSingleQuoted);
-        unimplemented!("self.switch_to(State::CharacterReference);");
+        self.switch_to(State::CharacterReference);
       }
       b'\0' => {
         warn!("unexpected-null-character");
@@ -534,7 +572,7 @@ impl<'a> Tokenizer<'a> {
       }
       b'&' => {
         self.return_state = Some(State::AttributeValueUnQuoted);
-        unimplemented!("self.switch_to(State::CharacterReference);");
+        self.switch_to(State::CharacterReference);
       }
       b'>' => {
         self.switch_to(State::Data);
@@ -864,7 +902,7 @@ impl<'a> Tokenizer<'a> {
     match b {
       b'&' => {
         self.return_state = Some(State::RCDATA);
-        unimplemented!("self.switch_to(State::CharacterReference);");
+        self.switch_to(State::CharacterReference);
       }
       b'<' => {
         self.switch_to(State::RCDATALessThanSign);
@@ -1166,6 +1204,108 @@ impl<'a> Tokenizer<'a> {
     None
   }
 
+  fn process_character_reference_state(&mut self) -> Option<Token> {
+    self.clear_tmp_buffer();
+    self.push_to_tmp_buffer(b'&');
+
+    let b = self.read_current();
+
+    trace!("-- CharacterReference: {}", b as char);
+
+    match b {
+      _ if b.is_ascii_alphanumeric() => {
+        self.reconsume_in(State::NamedCharacterReference);
+      }
+      b'#' => {
+        self.push_to_tmp_buffer(b'#');
+        self.switch_to(State::NumericCharacterReference);
+      }
+      _ => {
+        self.flush_code_points_consumed_as_a_character_reference();
+        self.reconsume_in_return_state();
+      }
+    }
+
+    None
+  }
+
+  fn process_named_character_reference_state(&mut self) -> Option<Token> {
+    let bytes = self.peek_while_with_last(|b| b.is_ascii_alphanumeric(), b';');
+
+    trace!("-- NamedCharacterReference: {}", bytes_to_string(bytes));
+
+    let name = from_utf8(bytes).unwrap_or("");
+
+    if let Some(&codepoints) = ENTITIES.get(name) {
+      self.skip(bytes.len() - 1);
+      self.push_many_to_tmp_buffer(bytes);
+
+      let last = bytes.last().unwrap();
+
+      if self.is_character_part_of_attribute() && *last != b';' {
+        if let Some(next) = self.peek_next() {
+          if *next == b'=' || next.is_ascii_alphanumeric() {
+            self.flush_code_points_consumed_as_a_character_reference();
+            self.switch_to_return_state();
+            return None;
+          }
+        }
+      }
+
+      if *last != b';' {
+        warn!("missing-semicolon-after-character-reference");
+      }
+
+      self.clear_tmp_buffer();
+      self.push_to_tmp_buffer(from_u32(codepoints.0).unwrap() as u8);
+      if codepoints.1 != 0 {
+        self.push_to_tmp_buffer(from_u32(codepoints.1).unwrap() as u8);
+      }
+
+      self.flush_code_points_consumed_as_a_character_reference();
+      self.switch_to_return_state();
+
+      return None;
+    }
+
+    self.flush_code_points_consumed_as_a_character_reference();
+    self.switch_to(State::AmbiguousAmpersand);
+
+    None
+  }
+
+  fn process_ambiguous_ampersand_state(&mut self) -> Option<Token> {
+    todo!("process_ambiguous_ampersand_state");
+  }
+
+  fn process_numeric_character_reference_state(&mut self) -> Option<Token> {
+    todo!("process_numeric_character_reference_state");
+  }
+
+  fn process_hexadecimal_character_reference_start_state(
+    &mut self,
+  ) -> Option<Token> {
+    todo!("process_hexadecimal_character_reference_start_state");
+  }
+
+  fn process_decimal_character_reference_start_state(
+    &mut self,
+  ) -> Option<Token> {
+    todo!("process_decimal_character_reference_start_state");
+  }
+
+  fn process_hexadecimal_character_reference_state(&mut self) -> Option<Token> {
+    todo!("process_hexadecimal_character_reference_state");
+  }
+
+  fn process_decimal_character_reference_state(&mut self) -> Option<Token> {
+    todo!("process_decimal_character_reference_state");
+  }
+
+  fn process_numeric_character_reference_end_state(&mut self) -> Option<Token> {
+    todo!("process_numeric_character_reference_end_state");
+  }
+
   /* -------------------------------------------- */
 
   fn new_token(&mut self, token: Token) {
@@ -1375,12 +1515,16 @@ impl<'a> Tokenizer<'a> {
         self.last_emitted_start_tag = Some(token.clone());
       }
     }
-    self.output.push(token);
+    self.output.push_back(token);
+  }
+
+  fn pop_token(&mut self) -> Token {
+    self.output.pop_front().unwrap()
   }
 
   fn emit_current_token(&mut self) -> Token {
     self.will_emit(self.current_token.clone().unwrap());
-    self.output.pop().unwrap()
+    self.pop_token()
   }
 
   fn emit_text(&mut self, s: &[u8]) -> Token {
@@ -1400,7 +1544,7 @@ impl<'a> Tokenizer<'a> {
   }
 
   fn emit_tmp_buffer(&mut self) {
-    self.output.push(Token::Text(bytes_to_string(&self.tmp_buffer)));
+    self.output.push_back(Token::Text(bytes_to_string(&self.tmp_buffer)));
   }
 
   /* tmp buffer --------------------------------- */
@@ -1410,12 +1554,43 @@ impl<'a> Tokenizer<'a> {
     trace!("-- tmp_buffer_clear");
   }
 
+  fn push_to_tmp_buffer(&mut self, b: u8) {
+    self.tmp_buffer.push(b);
+    trace!(
+      "-- tmp_buffer: {:?}",
+      bytes_to_string(self.tmp_buffer.as_slice())
+    );
+  }
+
   fn push_many_to_tmp_buffer(&mut self, bytes: &[u8]) {
     self.tmp_buffer.extend_from_slice(bytes);
     trace!(
       "-- tmp_buffer: {:?}",
       bytes_to_string(self.tmp_buffer.as_slice())
     );
+  }
+
+  /* character reference ------------------------ */
+
+  fn flush_code_points_consumed_as_a_character_reference(&mut self) {
+    if self.is_character_part_of_attribute() {
+      self.concat_to_attribute_value(self.tmp_buffer.clone().as_slice());
+    } else {
+      self.emit_tmp_buffer();
+    }
+  }
+
+  fn is_character_part_of_attribute(&self) -> bool {
+    if let Some(return_state) = &self.return_state {
+      return match return_state {
+        State::AttributeValueDoubleQuoted => true,
+        State::AttributeValueSingleQuoted => true,
+        State::AttributeValueUnQuoted => true,
+        _ => false,
+      };
+    }
+    warn!("No return state found");
+    false
   }
 
   /* -------------------------------------------- */
@@ -1502,5 +1677,33 @@ impl<'a> Tokenizer<'a> {
 
     self.stream.advance_by(end);
     self.stream.slice(start, start + end)
+  }
+
+  fn peek_next(&self) -> Option<&u8> {
+    self.stream.peek(1)
+  }
+
+  fn peek_while_with_last(
+    &mut self,
+    f: impl Fn(u8) -> bool,
+    except_last: u8,
+  ) -> &'a [u8] {
+    let start = self.stream.idx;
+    let bytes = &self.stream.data()[start..];
+
+    let mut end =
+      bytes.iter().position(|&b| !f(b)).unwrap_or(self.stream.len() - start);
+
+    if let Some(next) = self.stream.peek(end) {
+      if *next == except_last {
+        end += 1;
+      }
+    }
+
+    self.stream.slice(start, start + end)
+  }
+
+  fn skip(&mut self, offset: usize) {
+    self.stream.advance_by(offset);
   }
 }

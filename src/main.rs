@@ -1,6 +1,6 @@
 use std::env;
 
-const TARGET_HTML: &str = r#"<img src=1.png /re/>"#;
+const TARGET_HTML: &str = r#"<p>Put the &lt;h1> at the beginning of the heading and the &lt;h1> at the end.</p>"#;
 
 fn run_html(html: &str) {
   let document = html::debugger::get_document_from_html(html);

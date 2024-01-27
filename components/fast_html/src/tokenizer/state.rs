@@ -46,4 +46,14 @@ pub enum State {
   DOCTYPEName,
   AfterDOCTYPEName,
   BogusDOCTYPE,
+
+  CharacterReference,
+  NamedCharacterReference,
+  AmbiguousAmpersand,
+  NumericCharacterReference,
+  HexadecimalCharacterReferenceStart,
+  DecimalCharacterReferenceStart,
+  HexadecimalCharacterReference,
+  DecimalCharacterReference,
+  NumericCharacterReferenceEnd,
 }
