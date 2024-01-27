@@ -1,8 +1,8 @@
 use once_cell::sync::Lazy;
-use std::collections::HashMap;
+use rustc_hash::FxHashMap;
 
-pub static ENTITIES: Lazy<HashMap<&str, (u32, u32)>> = Lazy::new(|| {
-  HashMap::from([
+pub static ENTITIES: Lazy<FxHashMap<&str, (u32, u32)>> = Lazy::new(|| {
+  [
     ("AElig", (198, 0)),
     ("AElig;", (198, 0)),
     ("AMP", (38, 0)),
@@ -2234,5 +2234,8 @@ pub static ENTITIES: Lazy<HashMap<&str, (u32, u32)>> = Lazy::new(|| {
     ("zscr;", (120015, 0)),
     ("zwj;", (8205, 0)),
     ("zwnj;", (8204, 0)),
-  ])
+  ]
+  .iter()
+  .cloned()
+  .collect()
 });
