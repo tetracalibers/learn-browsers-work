@@ -1,7 +1,7 @@
 use super::tokenizer::Tokenizer;
 use super::tree_builder::TreeBuilder;
 
-use std::collections::HashMap;
+use rustc_hash::FxHashMap;
 
 use fast_dom::document::Document;
 use fast_dom::element::Element;
@@ -70,7 +70,7 @@ fn element_node_to_json(node: &Element) -> serde_json::Value {
     .borrow()
     .iter()
     .map(|(key, value)| (String::from(key), String::from(value)))
-    .collect::<HashMap<String, String>>();
+    .collect::<FxHashMap<String, String>>();
 
   let class_attribute = node.class_list().borrow().join(" ");
   if !class_attribute.is_empty() {
