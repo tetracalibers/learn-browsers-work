@@ -224,8 +224,6 @@ name = "css"
 version = "0.1.0"
 dependencies = [
  "nom",
- "parser_combinator",
- "stream",
 ]
 
 [[package]]

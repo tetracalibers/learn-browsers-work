@@ -7,6 +7,4 @@ edition = "2021"
 
 [dependencies]
 
-stream            = { path = "../../utilities/stream" }
-parser_combinator = { path = "../../utilities/parser_combinator" }
-nom               = "7.1.3"
+nom = "7.1.3"
