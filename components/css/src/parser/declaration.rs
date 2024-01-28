@@ -1,3 +1,4 @@
+use nom::bytes::complete::tag;
 use nom::character::complete::alpha0;
 use nom::character::complete::alpha1;
 use nom::character::complete::char;
@@ -13,6 +14,8 @@ use nom::IResult;
 
 use super::css_value::css_value;
 use super::css_value::CssValue;
+
+use super::utility::space_with_newline;
 
 #[derive(Debug, PartialEq)]
 pub struct Declaration {
@@ -53,10 +56,11 @@ fn important(input: &str) -> IResult<&str, bool> {
 pub fn declaration_list(input: &str) -> IResult<&str, Vec<Declaration>> {
   map(
     tuple((
-      separated_list1(tuple((space0, char(';'), space0)), declaration),
-      opt(tuple((char(';'), space0))),
+      separated_list1(tuple((space0, tag(";"), space0)), declaration),
+      opt(tag(";")),
+      opt(space_with_newline),
     )),
-    |(declarations, _)| declarations,
+    |(declarations, _, _)| declarations,
   )(input)
 }
 

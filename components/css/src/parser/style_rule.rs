@@ -3,9 +3,9 @@ use super::declaration::Declaration;
 
 use super::selector::selector_list;
 use super::selector::SelectorList;
+use super::utility::space_with_newline;
 
 use nom::character::complete::char;
-use nom::character::complete::space0;
 use nom::combinator::map;
 use nom::sequence::tuple;
 use nom::IResult;
@@ -19,12 +19,13 @@ pub struct StyleRule {
 pub fn style_rule(input: &str) -> IResult<&str, StyleRule> {
   map(
     tuple((
+      space_with_newline,
       selector_list,
-      tuple((space0, char('{'), space0)),
+      tuple((space_with_newline, char('{'), space_with_newline)),
       declaration_list,
-      tuple((space0, char('}'), space0)),
+      tuple((space_with_newline, char('}'), space_with_newline)),
     )),
-    |(selector, _, declarations, _)| StyleRule {
+    |(_, selector, _, declarations, _)| StyleRule {
       selector,
       declarations,
     },
@@ -59,5 +60,29 @@ mod tests {
         }
       ))
     );
+
+    assert_eq!(
+      style_rule(
+        r#"
+        h1 {
+          font-weight: bold;
+        }
+        "#
+      ),
+      Ok((
+        "",
+        StyleRule {
+          selector: vec![vec![(
+            CompoundSelector(vec![SimpleSelector::Type("h1".to_string())]),
+            None
+          )],],
+          declarations: vec![Declaration {
+            name: "font-weight".to_string(),
+            value: vec![CssValue::Keyword("bold".to_string())],
+            important: false,
+          }],
+        }
+      ))
+    )
   }
 }

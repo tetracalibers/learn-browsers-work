@@ -26,7 +26,7 @@ fn run_fast_html(html: &str) {
 }
 
 fn run_css() {
-  css::parser::selector::main();
+  css::parser::stylesheet::main();
 }
 
 fn main() {
