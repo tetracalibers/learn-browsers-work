@@ -51,7 +51,13 @@ fn important(input: &str) -> IResult<&str, bool> {
 }
 
 pub fn declaration_list(input: &str) -> IResult<&str, Vec<Declaration>> {
-  separated_list1(tuple((space0, char(';'), space0)), declaration)(input)
+  map(
+    tuple((
+      separated_list1(tuple((space0, char(';'), space0)), declaration),
+      opt(tuple((char(';'), space0))),
+    )),
+    |(declarations, _)| declarations,
+  )(input)
 }
 
 pub fn declaration(input: &str) -> IResult<&str, Declaration> {
@@ -125,6 +131,24 @@ mod tests {
   fn test_declaration_list() {
     assert_eq!(
       declaration_list("color: red; background-color: blue"),
+      Ok((
+        "",
+        vec![
+          Declaration {
+            name: String::from("color"),
+            value: vec![CssValue::Keyword(String::from("red"))],
+            important: false,
+          },
+          Declaration {
+            name: String::from("background-color"),
+            value: vec![CssValue::Keyword(String::from("blue"))],
+            important: false,
+          },
+        ]
+      ))
+    );
+    assert_eq!(
+      declaration_list("color: red; background-color: blue;"),
       Ok((
         "",
         vec![
