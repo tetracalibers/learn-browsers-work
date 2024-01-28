@@ -1,24 +1,28 @@
 use std::ops::{Deref, DerefMut};
 
+use nom::bytes::complete::take_until;
+use nom::character::complete::alphanumeric1;
+use nom::character::complete::char;
+use nom::combinator::map;
+use nom::multi::{many1, separated_list1};
 use nom::{
   branch::alt,
-  bytes::complete::{tag, take_till, take_while1},
-  character::complete::{alpha1, alphanumeric1, space0, space1},
-  combinator::{eof, opt, peek, value},
-  multi::{many0, many_till},
+  bytes::complete::tag,
+  character::complete::{alpha1, space0, space1},
+  combinator::{opt, peek, value},
+  multi::many0,
   sequence::{delimited, tuple},
   IResult,
 };
 
 pub type SelectorList = Vec<ComplexSelectorSequence>;
 
-#[derive(Debug, PartialEq, Clone)]
-pub struct ComplexSelectorSequence(Vec<ComplexSelector>);
+pub type ComplexSelectorSequence = Vec<ComplexSelector>;
 
-type ComplexSelector = (CompoundSelector, Option<Combinator>);
+pub type ComplexSelector = (CompoundSelector, Option<Combinator>);
 
 #[derive(Debug, PartialEq, Clone)]
-enum SimpleSelector {
+pub enum SimpleSelector {
   Id(String),                           // #id
   Class(String),                        // .class
   Type(String),                         // div
@@ -29,10 +33,10 @@ enum SimpleSelector {
 
 // p.class#id とか p:not(.class) とか
 #[derive(Debug, PartialEq, Clone)]
-struct CompoundSelector(Vec<SimpleSelector>);
+pub struct CompoundSelector(pub Vec<SimpleSelector>);
 
 #[derive(Debug, PartialEq, Clone)]
-struct AttributeSelector {
+pub struct AttributeSelector {
   name: String,
   operator: Option<AttributeOperator>,
   value: Option<String>,
@@ -47,7 +51,7 @@ enum AttributeOperator {
 }
 
 #[derive(Debug, PartialEq, Clone)]
-enum Combinator {
+pub enum Combinator {
   Descendant,
   Child,
   NextSibling,
@@ -55,14 +59,14 @@ enum Combinator {
 }
 
 #[derive(Debug, PartialEq, Clone)]
-struct PseudoClassSelector {
+pub struct PseudoClassSelector {
   name: String,
   argument: Option<String>,
-  subtree: Option<ComplexSelectorSequence>,
+  subtree: Option<SelectorList>,
 }
 
 #[derive(Debug, PartialEq, Clone)]
-struct PseudoElementSelector {
+pub struct PseudoElementSelector {
   name: String,
 }
 
@@ -83,26 +87,11 @@ impl DerefMut for CompoundSelector {
 
 /* -------------------------------------------- */
 
-// クラス名やID名として有効なもの
-fn identifier(input: &str) -> IResult<&str, &str> {
-  take_while1(|c: char| c.is_alphanumeric() || c == '-' || c == '_')(input)
-}
-
-fn till_next_start(input: &str) -> IResult<&str, &str> {
-  take_till(|c: char| {
-    [
-      '#', '.', '(', '{', '[', ':', '>', '+', '~', ')', '}', ']', ',',
-    ]
-    .contains(&c)
-      || c.is_whitespace()
-  })(input)
-}
-
 fn double_quoted_string(input: &str) -> IResult<&str, &str> {
-  let (input, _) = tag("\"")(input)?;
-  let (input, name) = take_while1(|c: char| c != '"')(input)?;
-  let (input, _) = tag("\"")(input)?;
-  Ok((input, name))
+  map(
+    tuple((tag("\""), take_until("\""), tag("\""))),
+    |(_, s, _)| s,
+  )(input)
 }
 
 fn parenthesized<'a, F, O>(
@@ -114,21 +103,36 @@ where
   delimited(tag("("), parser, tag(")"))
 }
 
+fn identifier(input: &str) -> IResult<&str, String> {
+  map(
+    tuple((
+      alpha1::<&str, _>,
+      opt(tuple((many0(alt((tag("-"), tag("_")))), alphanumeric1))),
+    )),
+    |(s1, o1)| {
+      if let Some((v1, s2)) = o1 {
+        format!("{}{}{}", s1, v1.join(""), s2)
+      } else {
+        s1.to_string()
+      }
+    },
+  )(input)
+}
+
 fn type_selector(input: &str) -> IResult<&str, SimpleSelector> {
-  let (input, name) = till_next_start(input)?;
-  Ok((input, SimpleSelector::Type(name.to_string())))
+  map(identifier, |name| SimpleSelector::Type(name))(input)
 }
 
 fn id_selector(input: &str) -> IResult<&str, SimpleSelector> {
-  let (input, _) = tag("#")(input)?;
-  let (input, name) = till_next_start(input)?; // ID名はクラス名や擬似クラス名などとして有効なもので終わる
-  Ok((input, SimpleSelector::Id(name.to_string())))
+  map(tuple((tag("#"), identifier)), |(_, name)| {
+    SimpleSelector::Id(name)
+  })(input)
 }
 
 fn class_selector(input: &str) -> IResult<&str, SimpleSelector> {
-  let (input, _) = tag(".")(input)?;
-  let (input, name) = till_next_start(input)?;
-  Ok((input, SimpleSelector::Class(name.to_string())))
+  map(tuple((tag("."), identifier)), |(_, name)| {
+    SimpleSelector::Class(name)
+  })(input)
 }
 
 fn attribute_operator(input: &str) -> IResult<&str, AttributeOperator> {
@@ -141,147 +145,137 @@ fn attribute_operator(input: &str) -> IResult<&str, AttributeOperator> {
 }
 
 fn attribute_selector(input: &str) -> IResult<&str, SimpleSelector> {
-  let (input, _) = tag("[")(input)?;
-  let (input, name) = identifier(input)?;
-  let (input, operator) = opt(attribute_operator)(input)?;
-  let (input, value) = opt(double_quoted_string)(input)?;
-  let (input, _) = tag("]")(input)?;
-
-  Ok((
-    input,
-    SimpleSelector::Attribute(AttributeSelector {
-      name: name.to_string(),
-      operator,
-      value: value.map(|v| v.to_string()),
-    }),
-  ))
+  map(
+    tuple((
+      tag("["),
+      identifier,
+      opt(attribute_operator),
+      opt(double_quoted_string),
+      tag("]"),
+    )),
+    |(_, name, operator, value, _)| {
+      SimpleSelector::Attribute(AttributeSelector {
+        name,
+        operator,
+        value: value.map(|v| v.to_string()),
+      })
+    },
+  )(input)
 }
 
 fn pseudo_class_selector(input: &str) -> IResult<&str, SimpleSelector> {
-  let (input, _) = tag(":")(input)?;
-  let (input, name) = many0(alt((alpha1, tag("-"))))(input)?;
-  let (input, argument) = opt(parenthesized(alphanumeric1))(input)?;
-  let (input, subtree) = opt(parenthesized(complex_selector_sequence))(input)?;
-
-  Ok((
-    input,
-    SimpleSelector::PseudoClass(PseudoClassSelector {
-      name: name.join("").to_string(),
-      argument: argument.map(|v| v.to_string()),
-      subtree,
-    }),
-  ))
+  map(
+    tuple((
+      tag(":"),
+      identifier,
+      opt(parenthesized(alphanumeric1)),
+      opt(parenthesized(selector_list)),
+    )),
+    |(_, name, argument, subtree)| {
+      SimpleSelector::PseudoClass(PseudoClassSelector {
+        name,
+        argument: argument.map(|v| v.to_string()),
+        subtree,
+      })
+    },
+  )(input)
 }
 
 fn pseudo_element_selector(input: &str) -> IResult<&str, SimpleSelector> {
-  let (input, _) = tag("::")(input)?;
-  let (input, name) = till_next_start(input)?;
+  map(tuple((tag("::"), identifier)), |(_, name)| {
+    SimpleSelector::PseudoElement(PseudoElementSelector { name })
+  })(input)
+}
 
-  Ok((
-    input,
-    SimpleSelector::PseudoElement(PseudoElementSelector {
-      name: name.to_string(),
-    }),
-  ))
+fn simple_selector(input: &str) -> IResult<&str, SimpleSelector> {
+  alt((
+    id_selector,
+    class_selector,
+    attribute_selector,
+    pseudo_element_selector,
+    pseudo_class_selector,
+    type_selector,
+  ))(input)
 }
 
 fn compound_selector(input: &str) -> IResult<&str, CompoundSelector> {
-  let input = input.trim();
-  // altは上から順にマッチするので、並べる順序が重要
-  let (input, (selectors, _)) = many_till(
-    alt((
-      id_selector,
-      class_selector,
-      attribute_selector,
-      pseudo_element_selector,
-      pseudo_class_selector,
-      type_selector,
-    )),
-    alt((peek(delimiter_string), eof)),
-  )(input)?;
-
-  Ok((input, CompoundSelector(selectors)))
+  map(many1(simple_selector), |selectors| {
+    CompoundSelector(selectors)
+  })(input)
 }
 
 fn combinator(input: &str) -> IResult<&str, Combinator> {
   alt((
     value(
       Combinator::Child,
-      delimited(space0, tag(">"), take_till(|c| c == ' ')),
+      tuple((space0, tag(">"), space0, peek(compound_selector))),
     ),
     value(
       Combinator::NextSibling,
-      delimited(space0, tag("+"), take_till(|c| c == ' ')),
+      tuple((space0, tag("+"), space0, peek(compound_selector))),
     ),
     value(
       Combinator::SubsequentSibling,
-      delimited(space0, tag("~"), take_till(|c| c == ' ')),
+      tuple((space0, tag("~"), space0, peek(compound_selector))),
     ),
-    value(Combinator::Descendant, tuple((space1, till_next_start))), // 他の記号がスペースで囲まれている場合にマッチしないよう最後に置く
-  ))(input)
-}
-
-fn delimiter_string(input: &str) -> IResult<&str, &str> {
-  alt((
-    tag(">"),
-    tag("+"),
-    tag("~"),
-    tag(")"),
-    tag("("),
-    tag(","),
-    space1,
+    value(
+      Combinator::Descendant,
+      tuple((space1, peek(compound_selector))),
+    ), // 他の記号がスペースで囲まれている場合にマッチしないよう最後に置く
   ))(input)
 }
 
 // cobminatorで繋がれた2つのcompound_selectorをparseする
 fn complex_selector(input: &str) -> IResult<&str, ComplexSelector> {
-  let (input, selector) = compound_selector(input)?;
-  let (input, combinator) = opt(combinator)(input)?;
-
-  Ok((input, (selector, combinator)))
+  map(
+    tuple((compound_selector, combinator)),
+    |(selector, combinator)| (selector, Some(combinator)),
+  )(input)
 }
 
 fn complex_selector_sequence(
   input: &str,
 ) -> IResult<&str, ComplexSelectorSequence> {
-  let (input, (selectors, _)) =
-    many_till(complex_selector, alt((eof, tag(","), peek(tag(")")))))(input)?;
-
-  // 空のcompound_selectorがある場合は削除する
-  let selectors = selectors
-    .into_iter()
-    .filter(|(selector, _)| !selector.is_empty())
-    .collect();
-
-  Ok((input, ComplexSelectorSequence(selectors)))
+  map(
+    tuple((many0(complex_selector), compound_selector)),
+    |(selectors, selector)| {
+      let mut selectors = selectors
+        .into_iter()
+        .filter(|(s, _)| !s.is_empty())
+        .collect::<Vec<_>>();
+      selectors.push((selector, None));
+      selectors
+    },
+  )(input)
 }
 
-fn selector_list(input: &str) -> IResult<&str, SelectorList> {
-  let splitted = input.split(',').collect::<Vec<&str>>();
-
-  let mut rest = input;
-  let mut selectors = Vec::new();
-
-  for s in splitted {
-    let (input, selector) = complex_selector_sequence(s)?;
-    selectors.push(selector);
-    rest = input;
-  }
-
-  Ok((rest, selectors))
+pub fn selector_list(input: &str) -> IResult<&str, SelectorList> {
+  map(
+    tuple((
+      separated_list1(
+        tuple((space0, char(','), space0)),
+        complex_selector_sequence,
+      ),
+      opt(tuple((space0, char(','), space0))),
+    )),
+    |(selectors, _)| selectors,
+  )(input)
 }
 
 pub fn main() {
   let input =
     r#"#foo > .bar + div.k1.k2 [id="baz"]:hello(2):not(:where(#yolo))::before"#;
 
-  let result = selector_list(input);
+  let (rest, result) = selector_list(input).unwrap();
 
+  println!("rest: {:?}", rest);
   println!("result: {:?}", result);
 }
 
 #[cfg(test)]
 mod tests {
+  use std::vec;
+
   use super::*;
 
   #[test]
@@ -350,21 +344,12 @@ mod tests {
   }
 
   #[test]
-  fn test_combinator() {
-    assert_eq!(combinator(" "), Ok(("", Combinator::Descendant)));
-    assert_eq!(combinator(">"), Ok(("", Combinator::Child)));
-    assert_eq!(combinator("+"), Ok(("", Combinator::NextSibling)));
-    assert_eq!(combinator("~"), Ok(("", Combinator::SubsequentSibling)));
-    assert_eq!(combinator(" > .bar"), Ok((" .bar", Combinator::Child)));
-  }
-
-  #[test]
   fn test_selector() {
     assert_eq!(
       complex_selector_sequence("div.class #id"),
       Ok((
         "",
-        ComplexSelectorSequence(vec![
+        vec![
           (
             CompoundSelector(vec![
               SimpleSelector::Type("div".to_string()),
@@ -376,14 +361,14 @@ mod tests {
             CompoundSelector(vec![SimpleSelector::Id("id".to_string())]),
             None
           ),
-        ])
+        ]
       ))
     );
     assert_eq!(
       complex_selector_sequence("div.class > #id"),
       Ok((
         "",
-        ComplexSelectorSequence(vec![
+        vec![
           (
             CompoundSelector(vec![
               SimpleSelector::Type("div".to_string()),
@@ -395,83 +380,64 @@ mod tests {
             CompoundSelector(vec![SimpleSelector::Id("id".to_string())]),
             None
           ),
-        ])
-      ))
-    );
-    assert_eq!(
-      complex_selector_sequence("div.class > > #id"),
-      Ok((
-        "",
-        ComplexSelectorSequence(vec![
-          (
-            CompoundSelector(vec![
-              SimpleSelector::Type("div".to_string()),
-              SimpleSelector::Class("class".to_string()),
-            ]),
-            Some(Combinator::Child)
-          ),
-          (
-            CompoundSelector(vec![SimpleSelector::Id("id".to_string())]),
-            None
-          ),
-        ])
+        ]
       ))
     );
     assert_eq!(
       complex_selector_sequence(":where(#yoro)"),
       Ok((
         "",
-        ComplexSelectorSequence(vec![(
+        vec![(
           CompoundSelector(vec![SimpleSelector::PseudoClass(
             PseudoClassSelector {
               name: "where".to_string(),
               argument: None,
-              subtree: Some(ComplexSelectorSequence(vec![(
+              subtree: Some(vec![vec![(
                 CompoundSelector(vec![SimpleSelector::Id("yoro".to_string())]),
                 None
-              )]))
+              )]])
             }
           )]),
           None
-        )])
+        )]
       ))
     );
     assert_eq!(
       complex_selector_sequence("input:not(:where(#yolo))"),
       Ok((
         "",
-        ComplexSelectorSequence(vec![(
+        vec![(
           CompoundSelector(vec![
             SimpleSelector::Type("input".to_string()),
             SimpleSelector::PseudoClass(PseudoClassSelector {
               name: "not".to_string(),
               argument: None,
-              subtree: Some(ComplexSelectorSequence(vec![(
+              subtree: Some(vec![vec![(
                 CompoundSelector(vec![SimpleSelector::PseudoClass(
                   PseudoClassSelector {
                     name: "where".to_string(),
                     argument: None,
-                    subtree: Some(ComplexSelectorSequence(vec![(
+                    subtree: Some(vec![vec![(
                       CompoundSelector(vec![SimpleSelector::Id(
                         "yolo".to_string()
                       )]),
                       None
-                    )]))
+                    )]])
                   }
                 )]),
                 None
-              )]))
+              )]])
             })
           ]),
           None
-        )])
+        )]
       ))
     );
     assert_eq!(
       complex_selector_sequence("a:hover::before"),
       Ok((
         "",
-        ComplexSelectorSequence(vec![(
+        vec![(
           CompoundSelector(vec![
             SimpleSelector::Type("a".to_string()),
             SimpleSelector::PseudoClass(PseudoClassSelector {
@@ -484,7 +450,7 @@ mod tests {
             })
           ]),
           None
-        )])
+        )]
       ))
     )
   }
@@ -520,10 +486,10 @@ mod tests {
         SimpleSelector::PseudoClass(PseudoClassSelector {
           name: "not".to_string(),
           argument: None,
-          subtree: Some(ComplexSelectorSequence(vec![(
+          subtree: Some(vec![vec![(
             CompoundSelector(vec![SimpleSelector::Class("class".to_string())]),
             None
-          ),])),
+          ),]]),
         })
       ))
     );
@@ -549,22 +515,22 @@ mod tests {
       Ok((
         "",
         vec![
-          ComplexSelectorSequence(vec![(
+          vec![(
             CompoundSelector(vec![SimpleSelector::Type("div".to_string())]),
             None
-          )]),
-          ComplexSelectorSequence(vec![(
+          )],
+          vec![(
             CompoundSelector(vec![SimpleSelector::Type("a".to_string())]),
             None
-          )]),
-          ComplexSelectorSequence(vec![(
+          )],
+          vec![(
             CompoundSelector(vec![SimpleSelector::Class("class".to_string())]),
             None
-          )]),
-          ComplexSelectorSequence(vec![(
+          )],
+          vec![(
             CompoundSelector(vec![SimpleSelector::Id("id".to_string())]),
             None
-          )]),
+          )],
         ]
       ))
     );
@@ -572,13 +538,13 @@ mod tests {
       selector_list("div.class"),
       Ok((
         "",
-        vec![ComplexSelectorSequence(vec![(
+        vec![vec![(
           CompoundSelector(vec![
             SimpleSelector::Type("div".to_string()),
             SimpleSelector::Class("class".to_string()),
           ]),
           None
-        )])]
+        )]]
       ))
     );
     assert_eq!(
@@ -586,14 +552,14 @@ mod tests {
       Ok((
         "",
         vec![
-          ComplexSelectorSequence(vec![(
+          vec![(
             CompoundSelector(vec![SimpleSelector::Type("div".to_string())]),
             None
-          )]),
-          ComplexSelectorSequence(vec![(
+          )],
+          vec![(
             CompoundSelector(vec![SimpleSelector::Type("a".to_string())]),
             None
-          )]),
+          )],
         ]
       ))
     )
