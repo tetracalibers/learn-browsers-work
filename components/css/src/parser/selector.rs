@@ -23,6 +23,7 @@ pub type ComplexSelector = (CompoundSelector, Option<Combinator>);
 
 #[derive(Debug, PartialEq, Clone)]
 pub enum SimpleSelector {
+  Universal,                            // *
   Id(String),                           // #id
   Class(String),                        // .class
   Type(String),                         // div
@@ -123,6 +124,10 @@ fn type_selector(input: &str) -> IResult<&str, SimpleSelector> {
   map(identifier, |name| SimpleSelector::Type(name))(input)
 }
 
+fn universal_selector(input: &str) -> IResult<&str, SimpleSelector> {
+  map(tag("*"), |_| SimpleSelector::Universal)(input)
+}
+
 fn id_selector(input: &str) -> IResult<&str, SimpleSelector> {
   map(tuple((tag("#"), identifier)), |(_, name)| {
     SimpleSelector::Id(name)
@@ -194,6 +199,7 @@ fn simple_selector(input: &str) -> IResult<&str, SimpleSelector> {
     attribute_selector,
     pseudo_element_selector,
     pseudo_class_selector,
+    universal_selector,
     type_selector,
   ))(input)
 }
