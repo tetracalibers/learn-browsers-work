@@ -14,7 +14,7 @@ use nom::{
   IResult,
 };
 
-use super::utility::double_quoted_string;
+use super::utility::double_quoted;
 
 pub type SelectorList = Vec<ComplexSelectorSequence>;
 
@@ -149,7 +149,7 @@ fn attribute_selector(input: &str) -> IResult<&str, SimpleSelector> {
       tag("["),
       identifier,
       opt(attribute_operator),
-      opt(double_quoted_string),
+      opt(double_quoted),
       tag("]"),
     )),
     |(_, name, operator, value, _)| {

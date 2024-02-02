@@ -32,17 +32,17 @@ pub fn alpha1_with_hyphen(input: &str) -> IResult<&str, String> {
   )(input)
 }
 
-pub fn double_quoted_string(input: &str) -> IResult<&str, &str> {
+pub fn double_quoted(input: &str) -> IResult<&str, &str> {
   map(
     tuple((tag("\""), take_until("\""), tag("\""))),
     |(_, s, _)| s,
   )(input)
 }
 
-pub fn single_quoted_string(input: &str) -> IResult<&str, &str> {
+pub fn single_quoted(input: &str) -> IResult<&str, &str> {
   map(tuple((tag("'"), take_until("'"), tag("'"))), |(_, s, _)| s)(input)
 }
 
-pub fn quoted_string(input: &str) -> IResult<&str, &str> {
-  alt((double_quoted_string, single_quoted_string))(input)
+pub fn quoted(input: &str) -> IResult<&str, &str> {
+  alt((double_quoted, single_quoted))(input)
 }
