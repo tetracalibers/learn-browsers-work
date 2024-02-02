@@ -10,8 +10,8 @@ use nom::multi::separated_list1;
 use nom::sequence::tuple;
 use nom::IResult;
 
-use super::css_value::component_value;
-use super::css_value::ComponentValue;
+use super::component_value::component_value;
+use super::component_value::ComponentValue;
 
 use super::utility::alpha1_with_hyphen;
 use super::utility::space_with_newline;

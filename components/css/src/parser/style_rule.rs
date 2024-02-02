@@ -36,7 +36,7 @@ pub fn style_rule(input: &str) -> IResult<&str, StyleRule> {
 mod tests {
   use std::vec;
 
-  use super::super::css_value::ComponentValue;
+  use super::super::component_value::ComponentValue;
   use super::super::selector::CompoundSelector;
   use super::super::selector::SimpleSelector;
   use super::*;
