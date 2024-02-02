@@ -10,6 +10,7 @@ use nom::sequence::tuple;
 use nom::IResult;
 
 use super::utility::alpha1_with_hyphen;
+use super::utility::quoted_within_esceped_quote;
 
 #[derive(Debug, PartialEq)]
 pub enum ComponentValue {
@@ -17,6 +18,8 @@ pub enum ComponentValue {
   Keyword(String),
   // ref: https://www.w3.org/TR/css-values-4/#dashed-idents
   DashedIndent(String),
+  // ref: https://www.w3.org/TR/css-values-4/#strings
+  QuotedString(String),
   Length(f32, Unit),
   ColorValue(Color),
 }
@@ -27,7 +30,7 @@ pub enum Unit {
 }
 
 pub fn component_value(input: &str) -> IResult<&str, ComponentValue> {
-  alt((keyword, dashed_ident))(input)
+  alt((keyword, dashed_ident, quoted_string))(input)
 }
 
 fn color(input: &str) -> IResult<&str, ComponentValue> {
@@ -42,6 +45,12 @@ fn keyword(input: &str) -> IResult<&str, ComponentValue> {
 fn dashed_ident(input: &str) -> IResult<&str, ComponentValue> {
   map(tuple((tag("--"), alpha1_with_hyphen)), |(_, s)| {
     ComponentValue::DashedIndent(s)
+  })(input)
+}
+
+fn quoted_string(input: &str) -> IResult<&str, ComponentValue> {
+  map(quoted_within_esceped_quote, |s: String| {
+    ComponentValue::QuotedString(s)
   })(input)
 }
 
