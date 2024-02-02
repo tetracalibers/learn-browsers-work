@@ -10,7 +10,7 @@ use nom::multi::separated_list1;
 use nom::sequence::tuple;
 use nom::IResult;
 
-use super::css_value::css_value;
+use super::css_value::component_value;
 use super::css_value::ComponentValue;
 
 use super::utility::alpha1_with_hyphen;
@@ -59,7 +59,7 @@ pub fn declaration(input: &str) -> IResult<&str, Declaration> {
       space0,
       char(':'),
       space0,
-      many1(css_value),
+      many1(component_value),
       opt(tuple((space1, important))),
     )),
     |(name, _, _, _, value, important)| {

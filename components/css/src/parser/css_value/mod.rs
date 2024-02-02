@@ -26,7 +26,7 @@ pub enum Unit {
   Px,
 }
 
-pub fn css_value(input: &str) -> IResult<&str, ComponentValue> {
+pub fn component_value(input: &str) -> IResult<&str, ComponentValue> {
   alt((keyword, dashed_ident))(input)
 }
 
