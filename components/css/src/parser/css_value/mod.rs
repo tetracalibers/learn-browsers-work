@@ -2,7 +2,6 @@ pub mod color;
 
 use self::color::Color;
 
-use nom::branch::alt;
 use nom::character::complete::alpha1;
 use nom::combinator::map;
 use nom::IResult;
