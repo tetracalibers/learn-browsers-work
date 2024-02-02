@@ -1,12 +1,10 @@
 use nom::bytes::complete::tag;
-use nom::character::complete::alpha0;
 use nom::character::complete::alpha1;
 use nom::character::complete::char;
 use nom::character::complete::space0;
 use nom::character::complete::space1;
 use nom::combinator::map;
 use nom::combinator::opt;
-use nom::multi::many0;
 use nom::multi::many1;
 use nom::multi::separated_list1;
 use nom::sequence::tuple;
@@ -15,6 +13,7 @@ use nom::IResult;
 use super::css_value::css_value;
 use super::css_value::ComponentValue;
 
+use super::utility::alpha1_with_hyphen;
 use super::utility::space_with_newline;
 
 #[derive(Debug, PartialEq)]
@@ -35,18 +34,7 @@ impl Declaration {
 }
 
 fn declaration_name(input: &str) -> IResult<&str, String> {
-  map(
-    tuple((alpha1, many0(tuple((char('-'), alpha1))), alpha0)),
-    |(s1, s2, s3)| {
-      let mut name = String::from(s1);
-      for (c, s) in s2 {
-        name.push(c);
-        name.push_str(s);
-      }
-      name.push_str(s3);
-      name
-    },
-  )(input)
+  alpha1_with_hyphen(input)
 }
 
 fn important(input: &str) -> IResult<&str, bool> {
