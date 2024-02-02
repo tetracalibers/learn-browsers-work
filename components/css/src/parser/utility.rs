@@ -37,14 +37,11 @@ pub fn alpha1_with_hyphen(input: &str) -> IResult<&str, String> {
 }
 
 pub fn double_quoted(input: &str) -> IResult<&str, &str> {
-  map(
-    tuple((tag("\""), take_until("\""), tag("\""))),
-    |(_, s, _)| s,
-  )(input)
+  delimited(tag("\""), take_until("\""), tag("\""))(input)
 }
 
 pub fn single_quoted(input: &str) -> IResult<&str, &str> {
-  map(tuple((tag("'"), take_until("'"), tag("'"))), |(_, s, _)| s)(input)
+  delimited(tag("'"), take_until("'"), tag("'"))(input)
 }
 
 pub fn quoted(input: &str) -> IResult<&str, &str> {
