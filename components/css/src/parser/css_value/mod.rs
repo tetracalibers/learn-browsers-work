@@ -9,6 +9,7 @@ use nom::IResult;
 
 #[derive(Debug, PartialEq)]
 pub enum ComponentValue {
+  // ref: https://www.w3.org/TR/css-values-4/#keywords
   Keyword(String),
   Length(f32, Unit),
   ColorValue(Color),
