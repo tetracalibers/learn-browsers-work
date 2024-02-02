@@ -1,6 +1,5 @@
 use std::ops::{Deref, DerefMut};
 
-use nom::bytes::complete::take_until;
 use nom::character::complete::alphanumeric1;
 use nom::character::complete::char;
 use nom::combinator::map;
@@ -14,6 +13,8 @@ use nom::{
   sequence::{delimited, tuple},
   IResult,
 };
+
+use super::utility::double_quoted_string;
 
 pub type SelectorList = Vec<ComplexSelectorSequence>;
 
@@ -87,13 +88,6 @@ impl DerefMut for CompoundSelector {
 }
 
 /* -------------------------------------------- */
-
-fn double_quoted_string(input: &str) -> IResult<&str, &str> {
-  map(
-    tuple((tag("\""), take_until("\""), tag("\""))),
-    |(_, s, _)| s,
-  )(input)
-}
 
 fn parenthesized<'a, F, O>(
   parser: F,

@@ -1,3 +1,6 @@
+use nom::branch::alt;
+use nom::bytes::complete::tag;
+use nom::bytes::complete::take_until;
 use nom::character::complete::alpha0;
 use nom::character::complete::alpha1;
 use nom::character::complete::char;
@@ -27,4 +30,19 @@ pub fn alpha1_with_hyphen(input: &str) -> IResult<&str, String> {
       name
     },
   )(input)
+}
+
+pub fn double_quoted_string(input: &str) -> IResult<&str, &str> {
+  map(
+    tuple((tag("\""), take_until("\""), tag("\""))),
+    |(_, s, _)| s,
+  )(input)
+}
+
+pub fn single_quoted_string(input: &str) -> IResult<&str, &str> {
+  map(tuple((tag("'"), take_until("'"), tag("'"))), |(_, s, _)| s)(input)
+}
+
+pub fn quoted_string(input: &str) -> IResult<&str, &str> {
+  alt((double_quoted_string, single_quoted_string))(input)
 }
