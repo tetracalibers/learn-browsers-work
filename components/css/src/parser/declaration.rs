@@ -13,14 +13,14 @@ use nom::sequence::tuple;
 use nom::IResult;
 
 use super::css_value::css_value;
-use super::css_value::CssValue;
+use super::css_value::ComponentValue;
 
 use super::utility::space_with_newline;
 
 #[derive(Debug, PartialEq)]
 pub struct Declaration {
   pub name: String,
-  pub value: Vec<CssValue>,
+  pub value: Vec<ComponentValue>,
   pub important: bool,
 }
 
@@ -113,7 +113,7 @@ mod tests {
         "",
         Declaration {
           name: String::from("color"),
-          value: vec![CssValue::Keyword(String::from("red"))],
+          value: vec![ComponentValue::Keyword(String::from("red"))],
           important: false,
         }
       ))
@@ -124,7 +124,7 @@ mod tests {
         "",
         Declaration {
           name: String::from("color"),
-          value: vec![CssValue::Keyword(String::from("red"))],
+          value: vec![ComponentValue::Keyword(String::from("red"))],
           important: true,
         }
       ))
@@ -140,12 +140,12 @@ mod tests {
         vec![
           Declaration {
             name: String::from("color"),
-            value: vec![CssValue::Keyword(String::from("red"))],
+            value: vec![ComponentValue::Keyword(String::from("red"))],
             important: false,
           },
           Declaration {
             name: String::from("background-color"),
-            value: vec![CssValue::Keyword(String::from("blue"))],
+            value: vec![ComponentValue::Keyword(String::from("blue"))],
             important: false,
           },
         ]
@@ -158,12 +158,12 @@ mod tests {
         vec![
           Declaration {
             name: String::from("color"),
-            value: vec![CssValue::Keyword(String::from("red"))],
+            value: vec![ComponentValue::Keyword(String::from("red"))],
             important: false,
           },
           Declaration {
             name: String::from("background-color"),
-            value: vec![CssValue::Keyword(String::from("blue"))],
+            value: vec![ComponentValue::Keyword(String::from("blue"))],
             important: false,
           },
         ]

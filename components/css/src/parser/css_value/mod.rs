@@ -8,7 +8,7 @@ use nom::combinator::map;
 use nom::IResult;
 
 #[derive(Debug, PartialEq)]
-pub enum CssValue {
+pub enum ComponentValue {
   Keyword(String),
   Length(f32, Unit),
   ColorValue(Color),
@@ -19,20 +19,20 @@ pub enum Unit {
   Px,
 }
 
-pub fn css_value(input: &str) -> IResult<&str, CssValue> {
+pub fn css_value(input: &str) -> IResult<&str, ComponentValue> {
   // TODO: alt((keyword, length, color))(input)
   keyword(input)
 }
 
-fn color(input: &str) -> IResult<&str, CssValue> {
+fn color(input: &str) -> IResult<&str, ComponentValue> {
   todo!("parse_color");
 }
 
-fn keyword(input: &str) -> IResult<&str, CssValue> {
+fn keyword(input: &str) -> IResult<&str, ComponentValue> {
   // TODO
-  map(alpha1, |s: &str| CssValue::Keyword(s.to_string()))(input)
+  map(alpha1, |s: &str| ComponentValue::Keyword(s.to_string()))(input)
 }
 
-fn length(input: &str) -> IResult<&str, CssValue> {
+fn length(input: &str) -> IResult<&str, ComponentValue> {
   todo!("parse_length");
 }

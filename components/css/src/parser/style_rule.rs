@@ -36,7 +36,7 @@ pub fn style_rule(input: &str) -> IResult<&str, StyleRule> {
 mod tests {
   use std::vec;
 
-  use super::super::css_value::CssValue;
+  use super::super::css_value::ComponentValue;
   use super::super::selector::CompoundSelector;
   use super::super::selector::SimpleSelector;
   use super::*;
@@ -54,7 +54,7 @@ mod tests {
           )],],
           declarations: vec![Declaration {
             name: "font-weight".to_string(),
-            value: vec![CssValue::Keyword("bold".to_string())],
+            value: vec![ComponentValue::Keyword("bold".to_string())],
             important: false,
           }],
         }
@@ -78,7 +78,7 @@ mod tests {
           )],],
           declarations: vec![Declaration {
             name: "font-weight".to_string(),
-            value: vec![CssValue::Keyword("bold".to_string())],
+            value: vec![ComponentValue::Keyword("bold".to_string())],
             important: false,
           }],
         }
