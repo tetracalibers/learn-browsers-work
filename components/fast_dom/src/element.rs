@@ -8,10 +8,10 @@ type AttributeMap = FxHashMap<EcoString, EcoString>;
 type ClassList = EcoVec<EcoString>;
 
 pub struct Element {
-  tag_name: EcoString,
-  id: RefCell<Option<EcoString>>,
-  attributes: RefCell<AttributeMap>,
-  class_list: RefCell<ClassList>,
+  pub tag_name: EcoString,
+  pub id: RefCell<Option<EcoString>>,
+  pub attributes: RefCell<AttributeMap>,
+  pub class_list: RefCell<ClassList>,
 }
 
 impl Element {
