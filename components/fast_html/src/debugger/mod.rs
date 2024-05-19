@@ -67,7 +67,6 @@ fn text_node_to_json(node: &Text) -> serde_json::Value {
 fn element_node_to_json(node: &Element) -> serde_json::Value {
   let mut attributes = node
     .attributes()
-    .borrow()
     .iter()
     .map(|(key, value)| (String::from(key), String::from(value)))
     .collect::<FxHashMap<String, String>>();
@@ -77,7 +76,7 @@ fn element_node_to_json(node: &Element) -> serde_json::Value {
     attributes.insert("class".to_string(), class_attribute);
   }
 
-  if let Some(id) = node.id().borrow().as_ref() {
+  if let Some(id) = node.id().as_ref() {
     attributes.insert("id".to_string(), id.to_string());
   }
 

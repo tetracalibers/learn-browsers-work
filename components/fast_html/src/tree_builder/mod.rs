@@ -663,7 +663,6 @@ impl<'a> TreeBuilder<'a> {
     let tag_name = element.tag_name().clone();
     let attributes = element
       .attributes()
-      .borrow()
       .iter()
       .map(|(name, value)| Attribute {
         name: name.clone(),

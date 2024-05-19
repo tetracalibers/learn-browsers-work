@@ -32,12 +32,12 @@ impl Element {
     names.iter().any(|name| self.tag_name() == *name)
   }
 
-  pub fn attributes(&self) -> RefCell<AttributeMap> {
-    self.attributes.clone()
+  pub fn attributes(&self) -> AttributeMap {
+    self.attributes.borrow().clone()
   }
 
-  pub fn id(&self) -> RefCell<Option<EcoString>> {
-    self.id.clone()
+  pub fn id(&self) -> Option<EcoString> {
+    self.id.borrow().clone()
   }
 
   pub fn class_list(&self) -> RefCell<ClassList> {
