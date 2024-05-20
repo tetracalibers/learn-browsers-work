@@ -9,7 +9,7 @@ fn is_match_compound_selector(
   selector: &CompoundSelector,
 ) -> bool {
   if let Some(element) = element.as_maybe_element() {
-    return selector.sequence().iter().all(|simple_selector| {
+    return selector.values().iter().all(|simple_selector| {
       is_match_simple_selector(element, &simple_selector)
     });
   }

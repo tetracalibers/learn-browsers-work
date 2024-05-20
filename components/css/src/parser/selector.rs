@@ -88,7 +88,7 @@ impl DerefMut for CompoundSelector {
 }
 
 impl CompoundSelector {
-  pub fn sequence(&self) -> &Vec<SimpleSelector> {
+  pub fn values(&self) -> &Vec<SimpleSelector> {
     &self.0
   }
 }
