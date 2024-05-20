@@ -23,7 +23,7 @@ fn get_prev_sibling(element: &NodePtr) -> Option<NodePtr> {
 
 /* -------------------------------------------- */
 
-fn is_match_selectors(element: &NodePtr, selectors: SelectorList) -> bool {
+fn is_match_selectors(element: &NodePtr, selectors: &SelectorList) -> bool {
   selectors.iter().any(|selector| is_match_selector(element.clone(), selector))
 }
 
@@ -85,7 +85,7 @@ fn is_match_selector(
     }
   }
 
-  false
+  true
 }
 
 fn is_match_compound_selector(
@@ -146,84 +146,147 @@ fn is_match_simple_selector(
 #[cfg(test)]
 mod tests {
   use super::*;
-  use css::structs::selector::AttributeOperator;
-  use css::structs::selector::AttributeSelector;
-  use css::structs::selector::SimpleSelector;
-  use ecow::eco_vec;
-  use ecow::EcoString;
-  use fast_dom::element::Element;
-  use rustc_hash::FxHashMap;
-  use std::cell::RefCell;
+
+  use css::cssom::stylesheet::CSSRule;
+  use css::parser::parse_css;
+
+  use fast_dom::create_document;
+  use fast_dom::create_element;
+  use fast_dom::tree::WeakTreeNode;
+
+  fn assert_style_rule_matched_element(rule: &CSSRule, element: &NodePtr) {
+    match rule {
+      CSSRule::Style(style) => {
+        let selectors = &style.selector;
+        assert!(is_match_selectors(&element, selectors));
+      }
+    }
+  }
+
+  fn assert_style_rule_not_matched_element(rule: &CSSRule, element: &NodePtr) {
+    match rule {
+      CSSRule::Style(style) => {
+        let selectors = &style.selector;
+        assert!(!is_match_selectors(&element, selectors));
+      }
+    }
+  }
 
   #[test]
-  fn test_is_match_simple_selector() {
-    let mut attributes = FxHashMap::default();
-    attributes.insert(EcoString::from("class"), EcoString::from("foo"));
-    attributes.insert(EcoString::from("id"), EcoString::from("baz"));
-    attributes.insert(EcoString::from("data-foo"), EcoString::from("baz"));
+  fn match_simple_type_ignore_case() {
+    let element =
+      create_element(WeakTreeNode::from(&create_document().0), "h1");
+    let css = "h1 { color: red; } H1 { text-align: center; }";
 
-    let element = Element {
-      tag_name: EcoString::from("div"),
-      id: RefCell::new(Some(EcoString::from("bar"))),
-      attributes: RefCell::new(attributes),
-      class_list: RefCell::new(eco_vec![EcoString::from("foo")]),
-    };
+    let stylesheet = parse_css(css).unwrap();
 
-    assert!(is_match_simple_selector(
-      &element,
-      &SimpleSelector::Universal
-    ));
-    assert!(is_match_simple_selector(
-      &element,
-      &SimpleSelector::Type("div".to_string())
-    ));
-    assert!(is_match_simple_selector(
-      &element,
-      &SimpleSelector::Class("foo".to_string())
-    ));
-    assert!(is_match_simple_selector(
-      &element,
-      &SimpleSelector::Id("bar".to_string())
-    ));
-    assert!(is_match_simple_selector(
-      &element,
-      &SimpleSelector::Attribute(AttributeSelector {
-        name: "data-foo".to_string(),
-        operator: None,
-        value: None,
-      })
-    ));
-    assert!(is_match_simple_selector(
-      &element,
-      &SimpleSelector::Attribute(AttributeSelector {
-        name: "data-foo".to_string(),
-        operator: Some(AttributeOperator::Equal),
-        value: Some("baz".to_string()),
-      })
-    ));
-    assert!(is_match_simple_selector(
-      &element,
-      &SimpleSelector::Attribute(AttributeSelector {
-        name: "data-foo".to_string(),
-        operator: Some(AttributeOperator::Contains),
-        value: Some("a".to_string()),
-      })
-    ));
-    assert!(is_match_simple_selector(
-      &element,
-      &SimpleSelector::Attribute(AttributeSelector {
-        name: "data-foo".to_string(),
-        operator: Some(AttributeOperator::StartsWith),
-        value: Some("b".to_string()),
-      })
-    ));
-    assert!(is_match_simple_selector(
-      &element,
-      &SimpleSelector::Attribute(AttributeSelector {
-        name: "data-foo".to_string(),
-        operator: Some(AttributeOperator::EndsWith),
-        value: Some("z".to_string()),
-      })
-    ));
+    let mut rules = stylesheet.rules.iter();
+
+    let first_rule = rules.next().unwrap();
+    let second_rule = rules.next().unwrap();
+
+    assert_style_rule_matched_element(&first_rule, &element);
+    assert_style_rule_matched_element(&second_rule, &element);
+  }
+
+  #[test]
+  fn match_simple_class() {
+    let element =
+      create_element(WeakTreeNode::from(&create_document().0), "h1");
+    element.as_element().set_attribute("class", "foo");
+    let css = "h1.foo { color: red; }";
+
+    let stylesheet = parse_css(css).unwrap();
+    let rules = stylesheet.rules.first().unwrap();
+
+    assert_style_rule_matched_element(&rules, &element);
+  }
+
+  #[test]
+  fn match_simple_id() {
+    let element =
+      create_element(WeakTreeNode::from(&create_document().0), "h1");
+    element.as_element().set_attribute("id", "hoge");
+    let css = "h1#hoge { color: red; }";
+
+    let stylesheet = parse_css(css).unwrap();
+    let rules = stylesheet.rules.first().unwrap();
+
+    assert_style_rule_matched_element(&rules, &element);
+  }
+
+  #[test]
+  fn match_attribute_has() {
+    let element =
+      create_element(WeakTreeNode::from(&create_document().0), "h1");
+    element.as_element().set_attribute("data-foo", "");
+    let css = "h1[data-foo] { color: red; }";
+
+    let stylesheet = parse_css(css).unwrap();
+    let rules = stylesheet.rules.first().unwrap();
+
+    assert_style_rule_matched_element(&rules, &element);
+  }
+
+  #[test]
+  fn match_attribute_equal() {
+    let element =
+      create_element(WeakTreeNode::from(&create_document().0), "h1");
+    element.as_element().set_attribute("data-foo", "bar");
+    let css = "h1[data-foo=\"bar\"] { color: red; }";
+
+    let stylesheet = parse_css(css).unwrap();
+    let rules = stylesheet.rules.first().unwrap();
+
+    assert_style_rule_matched_element(&rules, &element);
+  }
+
+  // todo: more attribute tests
+
+  #[test]
+  fn match_simple_decendant() {
+    let doc = create_document();
+    let parent = create_element(WeakTreeNode::from(&doc.0), "section");
+    let child = create_element(WeakTreeNode::from(&doc.0), "h1");
+    parent.append_child(child.0.clone());
+
+    let css = "section h1 { font-weight: bold; }";
+
+    let stylesheet = parse_css(css).unwrap();
+    let rules = stylesheet.rules.first().unwrap();
+
+    assert_style_rule_matched_element(&rules, &child);
+  }
+
+  #[test]
+  fn match_simple_child() {
+    let doc = create_document();
+    let parent = create_element(WeakTreeNode::from(&doc.0), "section");
+    let child = create_element(WeakTreeNode::from(&doc.0), "h1");
+    parent.append_child(child.0.clone());
+
+    let css = "section > h1 { font-weight: bold; }";
+
+    let stylesheet = parse_css(css).unwrap();
+    let rules = stylesheet.rules.first().unwrap();
+
+    assert_style_rule_matched_element(&rules, &child);
+  }
+
+  // todo: more combinator tests
+
+  #[test]
+  fn match_invalid_child() {
+    let doc = create_document();
+    let parent = create_element(WeakTreeNode::from(&doc.0), "section");
+    let child = create_element(WeakTreeNode::from(&doc.0), "h1");
+    parent.append_child(child.0.clone());
+
+    let css = "h1 > section { font-weight: bold; }";
+
+    let stylesheet = parse_css(css).unwrap();
+    let rules = stylesheet.rules.first().unwrap();
+
+    assert_style_rule_not_matched_element(&rules, &child);
   }
 }
