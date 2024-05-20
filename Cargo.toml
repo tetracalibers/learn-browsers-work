@@ -16,6 +16,7 @@ members = [
   "components/fast_html",
   "components/fast_dom",
   "benchmark/compare_html_parser",
+  "components/style",
 ]
 
 exclude = ["benchmark/compare_html_parser"]

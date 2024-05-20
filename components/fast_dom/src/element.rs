@@ -8,10 +8,10 @@ type AttributeMap = FxHashMap<EcoString, EcoString>;
 type ClassList = EcoVec<EcoString>;
 
 pub struct Element {
-  tag_name: EcoString,
-  id: RefCell<Option<EcoString>>,
-  attributes: RefCell<AttributeMap>,
-  class_list: RefCell<ClassList>,
+  pub tag_name: EcoString,
+  pub id: RefCell<Option<EcoString>>,
+  pub attributes: RefCell<AttributeMap>,
+  pub class_list: RefCell<ClassList>,
 }
 
 impl Element {
@@ -32,12 +32,12 @@ impl Element {
     names.iter().any(|name| self.tag_name() == *name)
   }
 
-  pub fn attributes(&self) -> RefCell<AttributeMap> {
-    self.attributes.clone()
+  pub fn attributes(&self) -> AttributeMap {
+    self.attributes.borrow().clone()
   }
 
-  pub fn id(&self) -> RefCell<Option<EcoString>> {
-    self.id.clone()
+  pub fn id(&self) -> Option<EcoString> {
+    self.id.borrow().clone()
   }
 
   pub fn class_list(&self) -> RefCell<ClassList> {

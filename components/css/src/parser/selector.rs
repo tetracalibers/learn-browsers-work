@@ -39,13 +39,13 @@ pub struct CompoundSelector(pub Vec<SimpleSelector>);
 
 #[derive(Debug, PartialEq, Clone)]
 pub struct AttributeSelector {
-  name: String,
-  operator: Option<AttributeOperator>,
-  value: Option<String>,
+  pub name: String,
+  pub operator: Option<AttributeOperator>,
+  pub value: Option<String>,
 }
 
 #[derive(Debug, PartialEq, Clone)]
-enum AttributeOperator {
+pub enum AttributeOperator {
   Equal,
   Contains,
   StartsWith,
@@ -84,6 +84,12 @@ impl Deref for CompoundSelector {
 impl DerefMut for CompoundSelector {
   fn deref_mut(&mut self) -> &mut Self::Target {
     &mut self.0
+  }
+}
+
+impl CompoundSelector {
+  pub fn values(&self) -> &Vec<SimpleSelector> {
+    &self.0
   }
 }
 
