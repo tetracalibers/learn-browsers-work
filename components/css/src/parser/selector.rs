@@ -87,6 +87,12 @@ impl DerefMut for CompoundSelector {
   }
 }
 
+impl CompoundSelector {
+  pub fn sequence(&self) -> &Vec<SimpleSelector> {
+    &self.0
+  }
+}
+
 /* -------------------------------------------- */
 
 fn parenthesized<'a, F, O>(

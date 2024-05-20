@@ -1,6 +1,20 @@
-use css::parser::selector::{AttributeOperator, SimpleSelector};
+use css::parser::selector::{
+  AttributeOperator, CompoundSelector, SimpleSelector,
+};
 use ecow::EcoString;
-use fast_dom::element::Element;
+use fast_dom::{element::Element, node::NodePtr};
+
+fn is_match_compound_selector(
+  element: &NodePtr,
+  selector: &CompoundSelector,
+) -> bool {
+  if let Some(element) = element.as_maybe_element() {
+    return selector.sequence().iter().all(|simple_selector| {
+      is_match_simple_selector(element, &simple_selector)
+    });
+  }
+  false
+}
 
 fn is_match_simple_selector(
   element: &Element,
