@@ -86,6 +86,10 @@ impl DOMNode {
   pub fn as_text(&self) -> &Text {
     self.as_maybe_text().expect("Node is not a Text")
   }
+
+  pub fn is_element(&self) -> bool {
+    self.as_maybe_element().is_some()
+  }
 }
 
 impl Clone for NodePtr {

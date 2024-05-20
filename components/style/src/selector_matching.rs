@@ -1,8 +1,88 @@
 use css::parser::selector::{
-  AttributeOperator, CompoundSelector, SimpleSelector,
+  AttributeOperator, Combinator, ComplexSelectorSequence, CompoundSelector,
+  SimpleSelector,
 };
 use ecow::EcoString;
 use fast_dom::{element::Element, node::NodePtr};
+
+fn get_parent(element: &NodePtr) -> Option<NodePtr> {
+  let parent = element.parent();
+
+  if let Some(parent) = parent {
+    if parent.is_element() {
+      return Some(NodePtr(parent));
+    }
+  }
+
+  None
+}
+
+fn get_prev_sibling(element: &NodePtr) -> Option<NodePtr> {
+  element.prev_sibling().map(|sibling| NodePtr(sibling))
+}
+
+/* -------------------------------------------- */
+
+fn is_match_selector(
+  element: NodePtr,
+  selector: &ComplexSelectorSequence,
+) -> bool {
+  let mut current_element = Some(element);
+
+  for (selector_seq, combinator) in selector.iter().rev() {
+    if let Some(el) = current_element.clone() {
+      match combinator {
+        Some(Combinator::Child) => {
+          let parent = get_parent(&el);
+          if let Some(p) = &parent {
+            if !is_match_compound_selector(p, selector_seq) {
+              return false;
+            }
+          }
+          current_element = parent;
+        }
+        Some(Combinator::Descendant) => loop {
+          let parent = get_parent(&el);
+          if let Some(p) = &parent {
+            if is_match_compound_selector(p, selector_seq) {
+              current_element = parent;
+              break;
+            }
+          }
+          return false;
+        },
+        Some(Combinator::NextSibling) => {
+          let sibling = get_prev_sibling(&el);
+          if let Some(s) = &sibling {
+            if !is_match_compound_selector(s, selector_seq) {
+              return false;
+            }
+          }
+          current_element = sibling;
+        }
+        Some(Combinator::SubsequentSibling) => loop {
+          let sibling = get_prev_sibling(&el);
+          if let Some(s) = &sibling {
+            if is_match_compound_selector(s, selector_seq) {
+              current_element = sibling;
+              break;
+            }
+          }
+          return false;
+        },
+        None => {
+          if !is_match_compound_selector(&el, selector_seq) {
+            return false;
+          }
+        }
+      }
+    } else {
+      return false;
+    }
+  }
+
+  false
+}
 
 fn is_match_compound_selector(
   element: &NodePtr,
