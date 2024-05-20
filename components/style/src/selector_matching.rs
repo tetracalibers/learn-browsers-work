@@ -1,6 +1,6 @@
 use css::parser::selector::{
   AttributeOperator, Combinator, ComplexSelectorSequence, CompoundSelector,
-  SimpleSelector,
+  SelectorList, SimpleSelector,
 };
 use ecow::EcoString;
 use fast_dom::{element::Element, node::NodePtr};
@@ -22,6 +22,10 @@ fn get_prev_sibling(element: &NodePtr) -> Option<NodePtr> {
 }
 
 /* -------------------------------------------- */
+
+fn is_match_selectors(element: &NodePtr, selectors: SelectorList) -> bool {
+  selectors.iter().any(|selector| is_match_selector(element.clone(), selector))
+}
 
 fn is_match_selector(
   element: NodePtr,
