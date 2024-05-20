@@ -4,6 +4,7 @@ pub mod node;
 pub mod text;
 pub mod tree;
 
+use document::Document;
 use element::Element;
 
 use node::DOMNode;
@@ -20,4 +21,10 @@ pub fn create_element(
   let node = DOMNode::new(DOMNodeData::Element(Element::new(tag_name)));
   node.set_document(document);
   NodePtr(TreeNode::new(node))
+}
+
+pub fn create_document() -> NodePtr {
+  NodePtr(TreeNode::new(DOMNode::new(DOMNodeData::Document(
+    Document::new(),
+  ))))
 }
