@@ -10,28 +10,11 @@ use nom::multi::separated_list1;
 use nom::sequence::tuple;
 use nom::IResult;
 
-use super::component_value::component_value;
-use super::component_value::ComponentValue;
+use crate::structs::declaration::Declaration;
 
+use super::component_value::component_value;
 use super::utility::alpha1_with_hyphen;
 use super::utility::space_with_newline;
-
-#[derive(Debug, PartialEq)]
-pub struct Declaration {
-  pub name: String,
-  pub value: Vec<ComponentValue>,
-  pub important: bool,
-}
-
-impl Declaration {
-  pub fn new(name: String) -> Self {
-    Self {
-      name,
-      value: Vec::new(),
-      important: false,
-    }
-  }
-}
 
 fn declaration_name(input: &str) -> IResult<&str, String> {
   alpha1_with_hyphen(input)
@@ -74,6 +57,7 @@ pub fn declaration(input: &str) -> IResult<&str, Declaration> {
 #[cfg(test)]
 mod tests {
   use super::*;
+  use crate::structs::component_value::ComponentValue;
 
   #[test]
   fn test_declaration_name() {

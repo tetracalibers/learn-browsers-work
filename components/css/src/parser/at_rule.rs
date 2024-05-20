@@ -7,31 +7,8 @@ use nom::combinator::opt;
 use nom::sequence::tuple;
 use nom::IResult;
 
-#[derive(Debug, PartialEq)]
-pub enum AtRule {
-  Regular(RegularAtRule),
-  Nested(NestedAtRule),
-  ConditionalGroup(ConditionalGroupAtRule),
-}
-
-#[derive(Debug, PartialEq)]
-pub struct RegularAtRule {
-  name: String,
-  value: String,
-}
-
-#[derive(Debug, PartialEq)]
-pub struct NestedAtRule {
-  name: String,
-  prelude: Vec<String>,
-}
-
-#[derive(Debug, PartialEq)]
-pub struct ConditionalGroupAtRule {
-  name: String,
-  prelude: Vec<String>,
-  block: Vec<AtRule>,
-}
+use crate::structs::at_rule::AtRule;
+use crate::structs::at_rule::RegularAtRule;
 
 fn at_rule_identifier(input: &str) -> IResult<&str, &str> {
   let identifier_name = tuple((alpha1, opt(tuple((tag("-"), alpha1)))));
