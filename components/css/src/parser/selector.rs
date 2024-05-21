@@ -73,7 +73,9 @@ fn class_selector(input: &str) -> IResult<&str, SimpleSelector> {
 fn attribute_operator(input: &str) -> IResult<&str, AttributeOperator> {
   alt((
     value(AttributeOperator::Equal, tag("=")),
+    value(AttributeOperator::DashMatch, tag("|=")),
     value(AttributeOperator::Contains, tag("~=")),
+    value(AttributeOperator::Substring, tag("*=")),
     value(AttributeOperator::StartsWith, tag("^=")),
     value(AttributeOperator::EndsWith, tag("$=")),
   ))(input)
