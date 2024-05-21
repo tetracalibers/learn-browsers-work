@@ -24,16 +24,18 @@ pub struct CompoundSelector(pub Vec<SimpleSelector>);
 #[derive(Debug, PartialEq, Clone)]
 pub struct AttributeSelector {
   pub name: String,
-  pub operator: Option<AttributeOperator>,
+  pub operator: Option<AttributeOperator>, // Noneの場合は存在チェック
   pub value: Option<String>,
 }
 
 #[derive(Debug, PartialEq, Clone)]
 pub enum AttributeOperator {
-  Equal,
-  Contains,
-  StartsWith,
-  EndsWith,
+  Equal,      // [attr="value"] ...完全一致
+  DashMatch,  // [attr|="value"] ... valueに完全一致 or value-で始まる
+  Contains,   // [attr~="value"] ...単語として含む
+  Substring,  // [attr*="value"] ...部分文字列として含む
+  StartsWith, // [attr^="value"] ...先頭が一致
+  EndsWith,   // [attr$="value"] ...末尾が一致
 }
 
 #[derive(Debug, PartialEq, Clone)]
