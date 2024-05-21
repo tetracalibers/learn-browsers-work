@@ -119,7 +119,19 @@ fn is_match_simple_selector(
               .attributes()
               .get(attr_selector.name.as_str())
               .map_or(false, |a| a.eq(value)),
+            AttributeOperator::DashMatch => element
+              .attributes()
+              .get(attr_selector.name.as_str())
+              .map_or(false, |a| {
+                a.eq(value) || a.starts_with(format!("{}-", value).as_str())
+              }),
             AttributeOperator::Contains => element
+              .attributes()
+              .get(attr_selector.name.as_str())
+              .map_or(false, |a| {
+                a.split_whitespace().any(|v| v == value.as_str())
+              }),
+            AttributeOperator::Substring => element
               .attributes()
               .get(attr_selector.name.as_str())
               .map_or(false, |a| a.contains(value.as_str())),
@@ -241,7 +253,87 @@ mod tests {
     assert_style_rule_matched_element(&rules, &element);
   }
 
-  // todo: more attribute tests
+  #[test]
+  fn match_attribute_dash_match() {
+    let element =
+      create_element(WeakTreeNode::from(&create_document().0), "h1");
+    element.as_element().set_attribute("data-foo", "fizz-buzz");
+    let css = "h1[data-foo|=\"fizz\"] { color: red; }";
+
+    let stylesheet = parse_css(css).unwrap();
+    let rules = stylesheet.rules.first().unwrap();
+
+    assert_style_rule_matched_element(&rules, &element);
+  }
+
+  #[test]
+  fn unmatch_attribute_dash_match() {
+    let element =
+      create_element(WeakTreeNode::from(&create_document().0), "h1");
+    element.as_element().set_attribute("data-foo", "fizzbuzz");
+    let css = "h1[data-foo|=\"fizz\"] { color: red; }";
+
+    let stylesheet = parse_css(css).unwrap();
+    let rules = stylesheet.rules.first().unwrap();
+
+    assert_style_rule_not_matched_element(&rules, &element);
+  }
+
+  #[test]
+  fn match_attribute_contains() {
+    let element =
+      create_element(WeakTreeNode::from(&create_document().0), "h1");
+    element.as_element().set_attribute("data-foo", "fiz buz");
+
+    let css = "h1[data-foo~=\"fiz\"] { color: red; }";
+
+    let stylesheet = parse_css(css).unwrap();
+    let rules = stylesheet.rules.first().unwrap();
+
+    assert_style_rule_matched_element(&rules, &element);
+  }
+
+  #[test]
+  fn match_attribute_substring() {
+    let element =
+      create_element(WeakTreeNode::from(&create_document().0), "h1");
+    element.as_element().set_attribute("data-foo", "fizbuz");
+
+    let css = "h1[data-foo*=\"z\"] { color: red; }";
+
+    let stylesheet = parse_css(css).unwrap();
+    let rules = stylesheet.rules.first().unwrap();
+
+    assert_style_rule_matched_element(&rules, &element);
+  }
+
+  #[test]
+  fn match_attribute_start_with() {
+    let element =
+      create_element(WeakTreeNode::from(&create_document().0), "h1");
+    element.as_element().set_attribute("data-foo", "fizbuz");
+
+    let css = "h1[data-foo^=\"fiz\"] { color: red; }";
+
+    let stylesheet = parse_css(css).unwrap();
+    let rules = stylesheet.rules.first().unwrap();
+
+    assert_style_rule_matched_element(&rules, &element);
+  }
+
+  #[test]
+  fn match_attribute_end_with() {
+    let element =
+      create_element(WeakTreeNode::from(&create_document().0), "h1");
+    element.as_element().set_attribute("data-foo", "fizbuz");
+
+    let css = "h1[data-foo$=\"buz\"] { color: red; }";
+
+    let stylesheet = parse_css(css).unwrap();
+    let rules = stylesheet.rules.first().unwrap();
+
+    assert_style_rule_matched_element(&rules, &element);
+  }
 
   #[test]
   fn match_simple_decendant() {
