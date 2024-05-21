@@ -1,20 +1,13 @@
-use super::declaration::declaration_list;
-use super::declaration::Declaration;
+use crate::cssom::style_rule::StyleRule;
 
+use super::declaration::declaration_list;
 use super::selector::selector_list;
-use super::selector::SelectorList;
 use super::utility::space_with_newline;
 
 use nom::character::complete::char;
 use nom::combinator::map;
 use nom::sequence::tuple;
 use nom::IResult;
-
-#[derive(Debug, PartialEq)]
-pub struct StyleRule {
-  selector: SelectorList,
-  declarations: Vec<Declaration>,
-}
 
 pub fn style_rule(input: &str) -> IResult<&str, StyleRule> {
   map(
@@ -36,10 +29,12 @@ pub fn style_rule(input: &str) -> IResult<&str, StyleRule> {
 mod tests {
   use std::vec;
 
-  use super::super::component_value::ComponentValue;
-  use super::super::selector::CompoundSelector;
-  use super::super::selector::SimpleSelector;
   use super::*;
+  use crate::structs::component_value::ComponentValue;
+  use crate::structs::{
+    declaration::Declaration,
+    selector::{CompoundSelector, SimpleSelector},
+  };
 
   #[test]
   fn test_style_rule() {

@@ -1,6 +1,4 @@
-pub mod color;
-
-use self::color::Color;
+use crate::structs::component_value::ComponentValue;
 
 use nom::branch::alt;
 use nom::bytes::complete::tag;
@@ -12,28 +10,11 @@ use nom::IResult;
 use super::utility::alpha1_with_hyphen;
 use super::utility::quoted_within_esceped_quote;
 
-#[derive(Debug, PartialEq)]
-pub enum ComponentValue {
-  // ref: https://www.w3.org/TR/css-values-4/#keywords
-  Keyword(String),
-  // ref: https://www.w3.org/TR/css-values-4/#dashed-idents
-  DashedIndent(String),
-  // ref: https://www.w3.org/TR/css-values-4/#strings
-  QuotedString(String),
-  Length(f32, Unit),
-  ColorValue(Color),
-}
-
-#[derive(Debug, PartialEq)]
-pub enum Unit {
-  Px,
-}
-
 pub fn component_value(input: &str) -> IResult<&str, ComponentValue> {
   alt((keyword, dashed_ident, quoted_string))(input)
 }
 
-fn color(input: &str) -> IResult<&str, ComponentValue> {
+fn color(_input: &str) -> IResult<&str, ComponentValue> {
   todo!("parse_color");
 }
 
@@ -54,7 +35,7 @@ fn quoted_string(input: &str) -> IResult<&str, ComponentValue> {
   })(input)
 }
 
-fn length(input: &str) -> IResult<&str, ComponentValue> {
+fn length(_input: &str) -> IResult<&str, ComponentValue> {
   todo!("parse_length");
 }
 

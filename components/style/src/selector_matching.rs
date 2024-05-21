@@ -1,4 +1,4 @@
-use css::parser::selector::{
+use css::structs::selector::{
   AttributeOperator, Combinator, ComplexSelectorSequence, CompoundSelector,
   SelectorList, SimpleSelector,
 };
@@ -146,9 +146,9 @@ fn is_match_simple_selector(
 #[cfg(test)]
 mod tests {
   use super::*;
-  use css::parser::selector::AttributeOperator;
-  use css::parser::selector::AttributeSelector;
-  use css::parser::selector::SimpleSelector;
+  use css::structs::selector::AttributeOperator;
+  use css::structs::selector::AttributeSelector;
+  use css::structs::selector::SimpleSelector;
   use ecow::eco_vec;
   use ecow::EcoString;
   use fast_dom::element::Element;

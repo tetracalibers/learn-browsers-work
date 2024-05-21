@@ -1,23 +1,13 @@
-use super::style_rule::style_rule;
-use super::style_rule::StyleRule;
+use crate::cssom::stylesheet::Rule;
+use crate::cssom::stylesheet::StyleSheet;
 
+use super::style_rule::style_rule;
 use super::utility::space_with_newline;
 
 use nom::combinator::map;
 use nom::multi::many0;
 use nom::sequence::tuple;
 use nom::IResult;
-
-#[derive(Debug, PartialEq)]
-pub struct StyleSheet {
-  pub rules: Vec<Rule>,
-}
-
-#[derive(Debug, PartialEq)]
-pub enum Rule {
-  StyleRule(StyleRule),
-  //AtRule(AtRule),
-}
 
 pub fn stylesheet(input: &str) -> IResult<&str, StyleSheet> {
   map(
