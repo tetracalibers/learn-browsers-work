@@ -58,8 +58,6 @@ pub struct PseudoElementSelector {
   pub name: String,
 }
 
-/* -------------------------------------------- */
-
 impl Deref for CompoundSelector {
   type Target = Vec<SimpleSelector>;
   fn deref(&self) -> &Self::Target {
@@ -78,3 +76,9 @@ impl CompoundSelector {
     &self.0
   }
 }
+
+/* -------------------------------------------- */
+
+/// CSS Selector specificity
+#[derive(Debug)]
+pub struct Specificity(u32, u32, u32);
