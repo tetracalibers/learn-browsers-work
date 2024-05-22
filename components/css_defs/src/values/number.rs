@@ -1,4 +1,4 @@
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Number(pub f32);
 
 impl PartialEq for Number {

@@ -1,6 +1,6 @@
 use super::values::prelude::*;
 
-#[derive(Debug, Eq, PartialEq)]
+#[derive(Debug, Eq, PartialEq, Clone)]
 pub enum Value {
   Color(Color),
   Display(Display),
