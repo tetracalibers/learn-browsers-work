@@ -19,6 +19,12 @@ struct PropertyDeclaration {
   pub specificity: Specificity,
 }
 
+/// sort and get the wining value
+fn cascade(declared_values: &mut Vec<PropertyDeclaration>) -> Value {
+  declared_values.sort();
+  declared_values.last().unwrap().value.clone()
+}
+
 impl Ord for PropertyDeclaration {
   fn cmp(&self, other: &Self) -> Ordering {
     // location > origin > specificity の順に比較
