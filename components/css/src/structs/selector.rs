@@ -1,4 +1,7 @@
-use std::ops::{Deref, DerefMut};
+use std::{
+  cmp::Ordering,
+  ops::{Deref, DerefMut},
+};
 
 pub type SelectorList = Vec<ComplexSelectorSequence>;
 
@@ -79,6 +82,22 @@ impl CompoundSelector {
 
 /* -------------------------------------------- */
 
-/// CSS Selector specificity
-#[derive(Debug)]
-pub struct Specificity(u32, u32, u32);
+// ref: https://developer.mozilla.org/ja/docs/Web/CSS/Specificity
+#[derive(Debug, Eq, PartialEq, PartialOrd)]
+pub struct Specificity(u32, u32, u32); // (ID, CLASS, TYPE)
+
+impl Ord for Specificity {
+  fn cmp(&self, other: &Self) -> Ordering {
+    match self.0.cmp(&other.0) {
+      // ID列の数字が同じであれば、次のCLASS列を比較
+      Ordering::Equal => match self.1.cmp(&other.1) {
+        // ID列の数字も同じであれば、TYPE列を比較
+        Ordering::Equal => self.2.cmp(&other.2),
+        // TYPE列の値にかかわらず、 CLASS列の値が大きいセレクターが勝つ
+        other => other,
+      },
+      // 他の列の値がどうであれ、ID列の値がより大きいセレクターが勝つ
+      other => other,
+    }
+  }
+}

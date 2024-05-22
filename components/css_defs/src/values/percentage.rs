@@ -1,4 +1,4 @@
 use super::number::Number;
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq, Eq)]
 pub struct Percentage(pub Number);

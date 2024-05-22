@@ -1,19 +1,19 @@
 // ref: https://developer.mozilla.org/ja/docs/Web/CSS/display
-#[derive(Debug)]
+#[derive(Debug, Eq, PartialEq)]
 pub enum Display {
   FullValue(DisplayOutside, DisplayInside), // ref: https://developer.mozilla.org/ja/docs/Web/CSS/display/multi-keyword_syntax_of_display
   Box(DisplayBox),
 }
 
 // ref: https://developer.mozilla.org/ja/docs/Web/CSS/display-outside
-#[derive(Debug)]
+#[derive(Debug, Eq, PartialEq)]
 pub enum DisplayOutside {
   Block,
   Inline,
 }
 
 // ref: https://developer.mozilla.org/ja/docs/Web/CSS/display-inside
-#[derive(Debug)]
+#[derive(Debug, Eq, PartialEq)]
 pub enum DisplayInside {
   Flow,
   FlowRoot,
@@ -24,7 +24,7 @@ pub enum DisplayInside {
 }
 
 // ref: https://developer.mozilla.org/ja/docs/Web/CSS/display-box
-#[derive(Debug)]
+#[derive(Debug, Eq, PartialEq)]
 pub enum DisplayBox {
   Contents,
   None,

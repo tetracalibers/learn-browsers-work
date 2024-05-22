@@ -1,13 +1,13 @@
 use super::number::Number;
 
 // ref: https://developer.mozilla.org/ja/docs/Web/CSS/length
-#[derive(Debug)]
+#[derive(Debug, Eq, PartialEq)]
 pub struct Length {
   pub value: Number,
   pub unit: LengthUnit,
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq, Eq)]
 pub enum LengthUnit {
   // Relative length units based on font
   Cap,
