@@ -2,7 +2,7 @@ use css::cssom::style_rule::StyleRule;
 
 #[derive(Debug)]
 pub struct ContextualRule {
-  pub inner: StyleRule,
+  pub style: StyleRule,
   pub origin: CascadeOrigin,
   pub location: CSSLocation,
 }
