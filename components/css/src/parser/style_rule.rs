@@ -18,8 +18,8 @@ pub fn style_rule(input: &str) -> IResult<&str, StyleRule> {
       declaration_list,
       tuple((space_with_newline, char('}'), space_with_newline)),
     )),
-    |(_, selector, _, declarations, _)| StyleRule {
-      selector,
+    |(_, selectors, _, declarations, _)| StyleRule {
+      selectors,
       declarations,
     },
   )(input)
@@ -43,7 +43,7 @@ mod tests {
       Ok((
         "",
         StyleRule {
-          selector: vec![vec![(
+          selectors: vec![vec![(
             CompoundSelector(vec![SimpleSelector::Type("h1".to_string())]),
             None
           )],],
@@ -67,7 +67,7 @@ mod tests {
       Ok((
         "",
         StyleRule {
-          selector: vec![vec![(
+          selectors: vec![vec![(
             CompoundSelector(vec![SimpleSelector::Type("h1".to_string())]),
             None
           )],],

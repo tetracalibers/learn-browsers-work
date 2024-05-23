@@ -169,7 +169,7 @@ mod tests {
   fn assert_style_rule_matched_element(rule: &CSSRule, element: &NodePtr) {
     match rule {
       CSSRule::Style(style) => {
-        let selectors = &style.selector;
+        let selectors = &style.selectors;
         assert!(is_match_selectors(&element, selectors));
       }
     }
@@ -178,7 +178,7 @@ mod tests {
   fn assert_style_rule_not_matched_element(rule: &CSSRule, element: &NodePtr) {
     match rule {
       CSSRule::Style(style) => {
-        let selectors = &style.selector;
+        let selectors = &style.selectors;
         assert!(!is_match_selectors(&element, selectors));
       }
     }
