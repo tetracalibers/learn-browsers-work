@@ -229,6 +229,9 @@ dependencies = [
 [[package]]
 name = "css_defs"
 version = "0.1.0"
+dependencies = [
+ "css",
+]
 
 [[package]]
 name = "cssparser"
