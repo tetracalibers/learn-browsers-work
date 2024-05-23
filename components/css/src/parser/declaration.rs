@@ -57,7 +57,7 @@ pub fn declaration(input: &str) -> IResult<&str, Declaration> {
 #[cfg(test)]
 mod tests {
   use super::*;
-  use crate::structs::component_value::ComponentValue;
+  use crate::structs::declaration_value::DeclarationValue;
 
   #[test]
   fn test_declaration_name() {
@@ -85,7 +85,7 @@ mod tests {
         "",
         Declaration {
           name: String::from("color"),
-          value: vec![ComponentValue::Keyword(String::from("red"))],
+          value: vec![DeclarationValue::Keyword(String::from("red"))],
           important: false,
         }
       ))
@@ -96,7 +96,7 @@ mod tests {
         "",
         Declaration {
           name: String::from("color"),
-          value: vec![ComponentValue::Keyword(String::from("red"))],
+          value: vec![DeclarationValue::Keyword(String::from("red"))],
           important: true,
         }
       ))
@@ -112,12 +112,12 @@ mod tests {
         vec![
           Declaration {
             name: String::from("color"),
-            value: vec![ComponentValue::Keyword(String::from("red"))],
+            value: vec![DeclarationValue::Keyword(String::from("red"))],
             important: false,
           },
           Declaration {
             name: String::from("background-color"),
-            value: vec![ComponentValue::Keyword(String::from("blue"))],
+            value: vec![DeclarationValue::Keyword(String::from("blue"))],
             important: false,
           },
         ]
@@ -130,12 +130,12 @@ mod tests {
         vec![
           Declaration {
             name: String::from("color"),
-            value: vec![ComponentValue::Keyword(String::from("red"))],
+            value: vec![DeclarationValue::Keyword(String::from("red"))],
             important: false,
           },
           Declaration {
             name: String::from("background-color"),
-            value: vec![ComponentValue::Keyword(String::from("blue"))],
+            value: vec![DeclarationValue::Keyword(String::from("blue"))],
             important: false,
           },
         ]

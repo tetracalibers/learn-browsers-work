@@ -1,5 +1,5 @@
 #[derive(Debug, PartialEq)]
-pub enum ComponentValue {
+pub enum DeclarationValue {
   // ref: https://www.w3.org/TR/css-values-4/#keywords
   Keyword(String),
   // ref: https://www.w3.org/TR/css-values-4/#dashed-idents

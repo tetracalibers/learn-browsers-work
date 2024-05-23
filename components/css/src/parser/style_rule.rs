@@ -30,7 +30,7 @@ mod tests {
   use std::vec;
 
   use super::*;
-  use crate::structs::component_value::ComponentValue;
+  use crate::structs::declaration_value::DeclarationValue;
   use crate::structs::{
     declaration::Declaration,
     selector::{CompoundSelector, SimpleSelector},
@@ -49,7 +49,7 @@ mod tests {
           )],],
           declarations: vec![Declaration {
             name: "font-weight".to_string(),
-            value: vec![ComponentValue::Keyword("bold".to_string())],
+            value: vec![DeclarationValue::Keyword("bold".to_string())],
             important: false,
           }],
         }
@@ -73,7 +73,7 @@ mod tests {
           )],],
           declarations: vec![Declaration {
             name: "font-weight".to_string(),
-            value: vec![ComponentValue::Keyword("bold".to_string())],
+            value: vec![DeclarationValue::Keyword("bold".to_string())],
             important: false,
           }],
         }
