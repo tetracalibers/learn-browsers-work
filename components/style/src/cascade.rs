@@ -4,11 +4,16 @@
 
 use std::cmp::Ordering;
 
+use rustc_hash::FxHashMap;
+
 use css::structs::selector::Specificity;
 use css_defs::{
   context::{CSSLocation, CascadeOrigin},
+  property::Property,
   value::Value,
 };
+
+pub type Properties = FxHashMap<Property, Value>;
 
 #[derive(Debug, Eq, PartialEq)]
 struct PropertyDeclaration {
