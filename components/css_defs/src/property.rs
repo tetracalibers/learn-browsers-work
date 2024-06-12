@@ -1,2 +1,7 @@
 #[derive(Debug)]
-pub enum Property {}
+pub enum Property {
+  BorderTopColor,
+  BorderRightColor,
+  BorderBottomColor,
+  BorderLeftColor,
+}
