@@ -4,14 +4,17 @@
 
 use std::cmp::Ordering;
 
+use fast_dom::node::NodePtr;
 use rustc_hash::FxHashMap;
 
 use css::structs::selector::Specificity;
 use css_defs::{
-  context::{CSSLocation, CascadeOrigin},
+  context::{CSSLocation, CascadeOrigin, ContextualRule},
   property::Property,
   value::Value,
 };
+
+use crate::selector_matching::is_match_selectors;
 
 pub type Properties = FxHashMap<Property, Value>;
 
@@ -22,6 +25,24 @@ struct PropertyDeclaration {
   pub origin: CascadeOrigin,
   pub location: CSSLocation,
   pub specificity: Specificity,
+}
+
+pub fn collect_declared_values(
+  node: &NodePtr,
+  rules: &[ContextualRule],
+) -> Properties {
+  let mut result = Properties::default();
+
+  if !node.is_element() {
+    return result;
+  }
+
+  let matched_rules = rules
+    .iter()
+    .filter(|rule| is_match_selectors(node, &rule.style.selectors))
+    .collect::<Vec<&ContextualRule>>();
+
+  return result;
 }
 
 /// sort and get the wining value

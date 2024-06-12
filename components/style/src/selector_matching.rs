@@ -23,7 +23,7 @@ fn get_prev_sibling(element: &NodePtr) -> Option<NodePtr> {
 
 /* -------------------------------------------- */
 
-fn is_match_selectors(element: &NodePtr, selectors: &SelectorList) -> bool {
+pub fn is_match_selectors(element: &NodePtr, selectors: &SelectorList) -> bool {
   selectors.iter().any(|selector| is_match_selector(element.clone(), selector))
 }
 
