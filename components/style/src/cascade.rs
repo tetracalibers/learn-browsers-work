@@ -7,14 +7,18 @@ use std::cmp::Ordering;
 use fast_dom::node::NodePtr;
 use rustc_hash::FxHashMap;
 
+use css::structs::declaration::Declaration;
 use css::structs::selector::Specificity;
 use css_defs::{
   context::{CSSLocation, CascadeOrigin, ContextualRule},
+  properties::get_expander_shorthand_property,
   property::Property,
   value::Value,
 };
 
 use crate::selector_matching::is_match_selectors;
+
+type DeclaredValuesMap = FxHashMap<Property, Vec<PropertyDeclaration>>;
 
 pub type Properties = FxHashMap<Property, Value>;
 
@@ -27,11 +31,32 @@ struct PropertyDeclaration {
   pub specificity: Specificity,
 }
 
+fn insert_declaration(
+  value: Value,
+  property: Property,
+  rule: &ContextualRule,
+  declaration: &Declaration,
+  result: &mut DeclaredValuesMap,
+) {
+  let declaration = PropertyDeclaration {
+    value,
+    important: declaration.important,
+    origin: rule.origin.clone(),
+    location: rule.location.clone(),
+    specificity: rule.style.specificity(),
+  };
+  if result.contains_key(&property) {
+    result.get_mut(&property).unwrap().push(declaration);
+  } else {
+    result.insert(property, vec![declaration]);
+  }
+}
+
 pub fn collect_declared_values(
   node: &NodePtr,
   rules: &[ContextualRule],
-) -> Properties {
-  let mut result = Properties::default();
+) -> DeclaredValuesMap {
+  let mut result: DeclaredValuesMap = FxHashMap::default();
 
   if !node.is_element() {
     return result;
@@ -42,7 +67,39 @@ pub fn collect_declared_values(
     .filter(|rule| is_match_selectors(node, &rule.style.selectors))
     .collect::<Vec<&ContextualRule>>();
 
-  return result;
+  for rule in matched_rules {
+    for declaration in &rule.style.declarations {
+      if let Some(expand) = get_expander_shorthand_property(&declaration.name) {
+        let values = declaration.value.as_slice();
+
+        // TODO: expandの引数の型がおかしいかも？動作確認が必要
+        if let Some(value_maps) = expand(&[values]) {
+          for (property, value_opt) in value_maps {
+            if let Some(value) = value_opt {
+              insert_declaration(
+                value,
+                property,
+                rule,
+                declaration,
+                &mut result,
+              );
+            }
+          }
+        }
+      } else {
+        let property_opt = Property::parse(declaration.name.as_str());
+
+        if let Some(property) = property_opt {
+          let value_opt = Value::parse(&property, declaration.value.as_slice());
+          if let Some(value) = value_opt {
+            insert_declaration(value, property, rule, declaration, &mut result);
+          }
+        }
+      }
+    }
+  }
+
+  result
 }
 
 /// sort and get the wining value

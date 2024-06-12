@@ -8,7 +8,7 @@ pub struct ContextualRule {
 }
 
 /// Location of the CSS applied
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Debug, PartialEq, Eq, Clone)]
 pub enum CSSLocation {
   /// Inline CSS (in HTML tags)
   Inline,
@@ -19,7 +19,7 @@ pub enum CSSLocation {
 }
 
 // ref: https://www.w3.org/TR/css3-cascade/#cascading-origins
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Debug, PartialEq, Eq, Clone)]
 pub enum CascadeOrigin {
   Author,
   User,
