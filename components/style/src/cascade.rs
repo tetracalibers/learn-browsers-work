@@ -31,6 +31,24 @@ struct PropertyDeclaration {
   pub specificity: Specificity,
 }
 
+// ref: https://www.w3.org/TR/css3-cascade/#value-stages
+pub fn collect_cascaded_values(
+  node: &NodePtr,
+  rules: &[ContextualRule],
+) -> Properties {
+  let mut declared_values = collect_declared_values(&node, rules);
+
+  let cascade_values = declared_values
+    .iter_mut()
+    .map(|(property, values)| {
+      let value = cascade(values);
+      (*property, value)
+    })
+    .collect();
+
+  cascade_values
+}
+
 fn insert_declaration(
   value: Value,
   property: Property,
@@ -52,7 +70,7 @@ fn insert_declaration(
   }
 }
 
-pub fn collect_declared_values(
+fn collect_declared_values(
   node: &NodePtr,
   rules: &[ContextualRule],
 ) -> DeclaredValuesMap {
