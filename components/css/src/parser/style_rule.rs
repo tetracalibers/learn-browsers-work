@@ -31,6 +31,7 @@ mod tests {
 
   use super::*;
   use crate::structs::declaration_value::DeclarationValue;
+  use crate::structs::selector::Selector;
   use crate::structs::{
     declaration::Declaration,
     selector::{CompoundSelector, SimpleSelector},
@@ -43,10 +44,10 @@ mod tests {
       Ok((
         "",
         StyleRule {
-          selectors: vec![vec![(
+          selectors: vec![Selector(vec![(
             CompoundSelector(vec![SimpleSelector::Type("h1".to_string())]),
             None
-          )],],
+          )]),],
           declarations: vec![Declaration {
             name: "font-weight".to_string(),
             value: vec![DeclarationValue::Keyword("bold".to_string())],
@@ -67,10 +68,10 @@ mod tests {
       Ok((
         "",
         StyleRule {
-          selectors: vec![vec![(
+          selectors: vec![Selector(vec![(
             CompoundSelector(vec![SimpleSelector::Type("h1".to_string())]),
             None
-          )],],
+          )]),],
           declarations: vec![Declaration {
             name: "font-weight".to_string(),
             value: vec![DeclarationValue::Keyword("bold".to_string())],

@@ -3,7 +3,29 @@ use std::{
   ops::{Deref, DerefMut},
 };
 
-pub type SelectorList = Vec<ComplexSelectorSequence>;
+pub type SelectorList = Vec<Selector>;
+
+#[derive(Debug, PartialEq, Clone)]
+pub struct Selector(pub ComplexSelectorSequence);
+
+impl Selector {
+  pub fn values(&self) -> &ComplexSelectorSequence {
+    &self.0
+  }
+
+  pub fn specificity(&self) -> Specificity {
+    let (a, b, c) =
+      self.values().iter().fold((0, 0, 0), |acc, (selector, _)| {
+        let specificity = selector.specificity();
+        (
+          acc.0 + specificity.0,
+          acc.1 + specificity.1,
+          acc.2 + specificity.2,
+        )
+      });
+    Specificity(a, b, c)
+  }
+}
 
 pub type ComplexSelectorSequence = Vec<ComplexSelector>;
 
@@ -23,6 +45,19 @@ pub enum SimpleSelector {
 // p.class#id とか p:not(.class) とか
 #[derive(Debug, PartialEq, Clone)]
 pub struct CompoundSelector(pub Vec<SimpleSelector>);
+
+impl CompoundSelector {
+  pub fn specificity(&self) -> Specificity {
+    let (a, b, c) =
+      self.values().iter().fold((0, 0, 0), |acc, curr| match curr {
+        SimpleSelector::Id(_) => (acc.0 + 1, acc.1, acc.2),
+        SimpleSelector::Class(_) => (acc.0, acc.1 + 1, acc.2),
+        SimpleSelector::Type(_) => (acc.0, acc.1, acc.2 + 1),
+        _ => acc,
+      });
+    Specificity(a, b, c)
+  }
+}
 
 #[derive(Debug, PartialEq, Clone)]
 pub struct AttributeSelector {
