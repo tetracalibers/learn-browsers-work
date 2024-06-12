@@ -1,6 +1,6 @@
 use css::structs::selector::{
-  AttributeOperator, Combinator, ComplexSelectorSequence, CompoundSelector,
-  SelectorList, SimpleSelector,
+  AttributeOperator, Combinator, CompoundSelector, Selector, SelectorList,
+  SimpleSelector,
 };
 use ecow::EcoString;
 use fast_dom::{element::Element, node::NodePtr};
@@ -27,13 +27,10 @@ pub fn is_match_selectors(element: &NodePtr, selectors: &SelectorList) -> bool {
   selectors.iter().any(|selector| is_match_selector(element.clone(), selector))
 }
 
-fn is_match_selector(
-  element: NodePtr,
-  selector: &ComplexSelectorSequence,
-) -> bool {
+fn is_match_selector(element: NodePtr, selector: &Selector) -> bool {
   let mut current_element = Some(element);
 
-  for (selector_seq, combinator) in selector.iter().rev() {
+  for (selector_seq, combinator) in selector.values().iter().rev() {
     if let Some(el) = current_element.clone() {
       match combinator {
         Some(Combinator::Child) => {
