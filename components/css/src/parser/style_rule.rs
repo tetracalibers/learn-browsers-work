@@ -18,8 +18,8 @@ pub fn style_rule(input: &str) -> IResult<&str, StyleRule> {
       declaration_list,
       tuple((space_with_newline, char('}'), space_with_newline)),
     )),
-    |(_, selector, _, declarations, _)| StyleRule {
-      selector,
+    |(_, selectors, _, declarations, _)| StyleRule {
+      selectors,
       declarations,
     },
   )(input)
@@ -30,7 +30,8 @@ mod tests {
   use std::vec;
 
   use super::*;
-  use crate::structs::component_value::ComponentValue;
+  use crate::structs::declaration_value::DeclarationValue;
+  use crate::structs::selector::Selector;
   use crate::structs::{
     declaration::Declaration,
     selector::{CompoundSelector, SimpleSelector},
@@ -43,13 +44,13 @@ mod tests {
       Ok((
         "",
         StyleRule {
-          selector: vec![vec![(
+          selectors: vec![Selector(vec![(
             CompoundSelector(vec![SimpleSelector::Type("h1".to_string())]),
             None
-          )],],
+          )]),],
           declarations: vec![Declaration {
             name: "font-weight".to_string(),
-            value: vec![ComponentValue::Keyword("bold".to_string())],
+            value: vec![DeclarationValue::Keyword("bold".to_string())],
             important: false,
           }],
         }
@@ -67,13 +68,13 @@ mod tests {
       Ok((
         "",
         StyleRule {
-          selector: vec![vec![(
+          selectors: vec![Selector(vec![(
             CompoundSelector(vec![SimpleSelector::Type("h1".to_string())]),
             None
-          )],],
+          )]),],
           declarations: vec![Declaration {
             name: "font-weight".to_string(),
-            value: vec![ComponentValue::Keyword("bold".to_string())],
+            value: vec![DeclarationValue::Keyword("bold".to_string())],
             important: false,
           }],
         }

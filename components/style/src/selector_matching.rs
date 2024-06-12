@@ -1,6 +1,6 @@
 use css::structs::selector::{
-  AttributeOperator, Combinator, ComplexSelectorSequence, CompoundSelector,
-  SelectorList, SimpleSelector,
+  AttributeOperator, Combinator, CompoundSelector, Selector, SelectorList,
+  SimpleSelector,
 };
 use ecow::EcoString;
 use fast_dom::{element::Element, node::NodePtr};
@@ -23,17 +23,14 @@ fn get_prev_sibling(element: &NodePtr) -> Option<NodePtr> {
 
 /* -------------------------------------------- */
 
-fn is_match_selectors(element: &NodePtr, selectors: &SelectorList) -> bool {
+pub fn is_match_selectors(element: &NodePtr, selectors: &SelectorList) -> bool {
   selectors.iter().any(|selector| is_match_selector(element.clone(), selector))
 }
 
-fn is_match_selector(
-  element: NodePtr,
-  selector: &ComplexSelectorSequence,
-) -> bool {
+fn is_match_selector(element: NodePtr, selector: &Selector) -> bool {
   let mut current_element = Some(element);
 
-  for (selector_seq, combinator) in selector.iter().rev() {
+  for (selector_seq, combinator) in selector.values().iter().rev() {
     if let Some(el) = current_element.clone() {
       match combinator {
         Some(Combinator::Child) => {
@@ -169,7 +166,7 @@ mod tests {
   fn assert_style_rule_matched_element(rule: &CSSRule, element: &NodePtr) {
     match rule {
       CSSRule::Style(style) => {
-        let selectors = &style.selector;
+        let selectors = &style.selectors;
         assert!(is_match_selectors(&element, selectors));
       }
     }
@@ -178,7 +175,7 @@ mod tests {
   fn assert_style_rule_not_matched_element(rule: &CSSRule, element: &NodePtr) {
     match rule {
       CSSRule::Style(style) => {
-        let selectors = &style.selector;
+        let selectors = &style.selectors;
         assert!(!is_match_selectors(&element, selectors));
       }
     }

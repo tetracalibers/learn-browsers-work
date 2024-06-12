@@ -1,9 +1,9 @@
-use super::component_value::ComponentValue;
+use super::declaration_value::DeclarationValue;
 
 #[derive(Debug, PartialEq)]
 pub struct Declaration {
   pub name: String,
-  pub value: Vec<ComponentValue>,
+  pub value: Vec<DeclarationValue>,
   pub important: bool,
 }
 

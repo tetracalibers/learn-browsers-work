@@ -20,6 +20,7 @@ use crate::structs::selector::ComplexSelectorSequence;
 use crate::structs::selector::CompoundSelector;
 use crate::structs::selector::PseudoClassSelector;
 use crate::structs::selector::PseudoElementSelector;
+use crate::structs::selector::Selector;
 use crate::structs::selector::SelectorList;
 use crate::structs::selector::SimpleSelector;
 
@@ -187,13 +188,14 @@ fn complex_selector_sequence(
   )(input)
 }
 
+pub fn selector(input: &str) -> IResult<&str, Selector> {
+  map(complex_selector_sequence, |selectors| Selector(selectors))(input)
+}
+
 pub fn selector_list(input: &str) -> IResult<&str, SelectorList> {
   map(
     tuple((
-      separated_list1(
-        tuple((space0, char(','), space0)),
-        complex_selector_sequence,
-      ),
+      separated_list1(tuple((space0, char(','), space0)), selector),
       opt(tuple((space0, char(','), space0))),
     )),
     |(selectors, _)| selectors,
@@ -330,10 +332,10 @@ mod tests {
             PseudoClassSelector {
               name: "where".to_string(),
               argument: None,
-              subtree: Some(vec![vec![(
+              subtree: Some(vec![Selector(vec![(
                 CompoundSelector(vec![SimpleSelector::Id("yoro".to_string())]),
                 None
-              )]])
+              )])]),
             }
           )]),
           None
@@ -350,21 +352,21 @@ mod tests {
             SimpleSelector::PseudoClass(PseudoClassSelector {
               name: "not".to_string(),
               argument: None,
-              subtree: Some(vec![vec![(
+              subtree: Some(vec![Selector(vec![(
                 CompoundSelector(vec![SimpleSelector::PseudoClass(
                   PseudoClassSelector {
                     name: "where".to_string(),
                     argument: None,
-                    subtree: Some(vec![vec![(
+                    subtree: Some(vec![Selector(vec![(
                       CompoundSelector(vec![SimpleSelector::Id(
                         "yolo".to_string()
                       )]),
                       None
-                    )]])
+                    )])])
                   }
                 )]),
                 None
-              )]])
+              )])])
             })
           ]),
           None
@@ -424,10 +426,10 @@ mod tests {
         SimpleSelector::PseudoClass(PseudoClassSelector {
           name: "not".to_string(),
           argument: None,
-          subtree: Some(vec![vec![(
+          subtree: Some(vec![Selector(vec![(
             CompoundSelector(vec![SimpleSelector::Class("class".to_string())]),
             None
-          ),]]),
+          ),])]),
         })
       ))
     );
@@ -453,22 +455,22 @@ mod tests {
       Ok((
         "",
         vec![
-          vec![(
+          Selector(vec![(
             CompoundSelector(vec![SimpleSelector::Type("div".to_string())]),
             None
-          )],
-          vec![(
+          )]),
+          Selector(vec![(
             CompoundSelector(vec![SimpleSelector::Type("a".to_string())]),
             None
-          )],
-          vec![(
+          )]),
+          Selector(vec![(
             CompoundSelector(vec![SimpleSelector::Class("class".to_string())]),
             None
-          )],
-          vec![(
+          )]),
+          Selector(vec![(
             CompoundSelector(vec![SimpleSelector::Id("id".to_string())]),
             None
-          )],
+          )]),
         ]
       ))
     );
@@ -476,13 +478,13 @@ mod tests {
       selector_list("div.class"),
       Ok((
         "",
-        vec![vec![(
+        vec![Selector(vec![(
           CompoundSelector(vec![
             SimpleSelector::Type("div".to_string()),
             SimpleSelector::Class("class".to_string()),
           ]),
           None
-        )]]
+        )])]
       ))
     );
     assert_eq!(
@@ -490,14 +492,14 @@ mod tests {
       Ok((
         "",
         vec![
-          vec![(
+          Selector(vec![(
             CompoundSelector(vec![SimpleSelector::Type("div".to_string())]),
             None
-          )],
-          vec![(
+          )]),
+          Selector(vec![(
             CompoundSelector(vec![SimpleSelector::Type("a".to_string())]),
             None
-          )],
+          )]),
         ]
       ))
     )

@@ -1,6 +1,31 @@
-use std::ops::{Deref, DerefMut};
+use std::{
+  cmp::Ordering,
+  ops::{Deref, DerefMut},
+};
 
-pub type SelectorList = Vec<ComplexSelectorSequence>;
+pub type SelectorList = Vec<Selector>;
+
+#[derive(Debug, PartialEq, Clone)]
+pub struct Selector(pub ComplexSelectorSequence);
+
+impl Selector {
+  pub fn values(&self) -> &ComplexSelectorSequence {
+    &self.0
+  }
+
+  pub fn specificity(&self) -> Specificity {
+    let (a, b, c) =
+      self.values().iter().fold((0, 0, 0), |acc, (selector, _)| {
+        let specificity = selector.specificity();
+        (
+          acc.0 + specificity.0,
+          acc.1 + specificity.1,
+          acc.2 + specificity.2,
+        )
+      });
+    Specificity(a, b, c)
+  }
+}
 
 pub type ComplexSelectorSequence = Vec<ComplexSelector>;
 
@@ -20,6 +45,19 @@ pub enum SimpleSelector {
 // p.class#id とか p:not(.class) とか
 #[derive(Debug, PartialEq, Clone)]
 pub struct CompoundSelector(pub Vec<SimpleSelector>);
+
+impl CompoundSelector {
+  pub fn specificity(&self) -> Specificity {
+    let (a, b, c) =
+      self.values().iter().fold((0, 0, 0), |acc, curr| match curr {
+        SimpleSelector::Id(_) => (acc.0 + 1, acc.1, acc.2),
+        SimpleSelector::Class(_) => (acc.0, acc.1 + 1, acc.2),
+        SimpleSelector::Type(_) => (acc.0, acc.1, acc.2 + 1),
+        _ => acc,
+      });
+    Specificity(a, b, c)
+  }
+}
 
 #[derive(Debug, PartialEq, Clone)]
 pub struct AttributeSelector {
@@ -58,8 +96,6 @@ pub struct PseudoElementSelector {
   pub name: String,
 }
 
-/* -------------------------------------------- */
-
 impl Deref for CompoundSelector {
   type Target = Vec<SimpleSelector>;
   fn deref(&self) -> &Self::Target {
@@ -76,5 +112,27 @@ impl DerefMut for CompoundSelector {
 impl CompoundSelector {
   pub fn values(&self) -> &Vec<SimpleSelector> {
     &self.0
+  }
+}
+
+/* -------------------------------------------- */
+
+// ref: https://developer.mozilla.org/ja/docs/Web/CSS/Specificity
+#[derive(Debug, Eq, PartialEq, PartialOrd)]
+pub struct Specificity(u32, u32, u32); // (ID, CLASS, TYPE)
+
+impl Ord for Specificity {
+  fn cmp(&self, other: &Self) -> Ordering {
+    match self.0.cmp(&other.0) {
+      // ID列の数字が同じであれば、次のCLASS列を比較
+      Ordering::Equal => match self.1.cmp(&other.1) {
+        // ID列の数字も同じであれば、TYPE列を比較
+        Ordering::Equal => self.2.cmp(&other.2),
+        // TYPE列の値にかかわらず、 CLASS列の値が大きいセレクターが勝つ
+        other => other,
+      },
+      // 他の列の値がどうであれ、ID列の値がより大きいセレクターが勝つ
+      other => other,
+    }
   }
 }
