@@ -2,6 +2,8 @@ use super::values::prelude::*;
 use crate::property::Property;
 use css::structs::declaration_value::DeclarationValue;
 
+pub const BASE_FONT_SIZE: f32 = 16.0;
+
 fn has_keyword(values: &[DeclarationValue], target: &str) -> bool {
   match values.iter().next() {
     Some(DeclarationValue::Keyword(keyword)) => {
@@ -99,6 +101,20 @@ impl Value {
           Color | Inherit | Initial | Unset;
           values
       ),
+      Property::FontSize => parse_value!(
+          Length | Percentage | Auto | Inherit | Initial | Unset;
+          values
+      ),
+    }
+  }
+
+  pub fn initial(property: &Property) -> Self {
+    match property {
+      Property::BorderTopColor
+      | Property::BorderRightColor
+      | Property::BorderBottomColor
+      | Property::BorderLeftColor => Value::Color(Color::black()),
+      Property::FontSize => Value::Length(Length::new_px(BASE_FONT_SIZE)),
     }
   }
 }

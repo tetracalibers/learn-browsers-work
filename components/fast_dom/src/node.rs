@@ -1,6 +1,8 @@
-use std::cell::RefCell;
+use std::cell::{Ref, RefCell};
 use std::ops::Deref;
 
+use css_defs::property::{Properties, Property};
+use css_defs::value::Value;
 use ecow::EcoString;
 
 use super::document::Document;
@@ -13,6 +15,7 @@ pub struct NodePtr(pub TreeNode<DOMNode>);
 pub struct DOMNode {
   owner_document: RefCell<Option<WeakTreeNode<DOMNode>>>,
   data: Option<DOMNodeData>,
+  computed_styles: RefCell<Properties>,
 }
 
 pub enum DOMNodeData {
@@ -33,6 +36,7 @@ impl DOMNode {
     Self {
       owner_document: RefCell::new(None),
       data: None,
+      computed_styles: RefCell::new(Properties::default()),
     }
   }
 
@@ -89,6 +93,18 @@ impl DOMNode {
 
   pub fn is_element(&self) -> bool {
     self.as_maybe_element().is_some()
+  }
+
+  pub fn computed_styles(&self) -> Ref<Properties> {
+    self.computed_styles.borrow()
+  }
+
+  pub fn get_style(&self, property: &Property) -> Value {
+    self
+      .computed_styles()
+      .get(property)
+      .expect(&format!("Unavailable style for :{:?}", property))
+      .clone()
   }
 }
 

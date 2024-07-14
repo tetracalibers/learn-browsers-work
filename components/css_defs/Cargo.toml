@@ -4,6 +4,8 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-css = { path = "../css" }
+css            = { path = "../css" }
 csscolorparser = "0.6.2"
-log = "0.4.21"
+log            = "0.4.21"
+strum          = { version = "0.26", features = ["derive"] }
+rustc-hash     = "1.1.0"

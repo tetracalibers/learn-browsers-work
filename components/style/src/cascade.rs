@@ -12,15 +12,13 @@ use css::structs::selector::Specificity;
 use css_defs::{
   context::{CSSLocation, CascadeOrigin, ContextualRule},
   properties::get_expander_shorthand_property,
-  property::Property,
+  property::{Properties, Property},
   value::Value,
 };
 
 use crate::selector_matching::is_match_selectors;
 
 type DeclaredValuesMap = FxHashMap<Property, Vec<PropertyDeclaration>>;
-
-pub type Properties = FxHashMap<Property, Value>;
 
 #[derive(Debug, Eq, PartialEq)]
 struct PropertyDeclaration {

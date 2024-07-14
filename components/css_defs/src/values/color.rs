@@ -34,4 +34,8 @@ impl Color {
       _ => None,
     }
   }
+
+  pub fn black() -> Self {
+    Color::Rgba(Number(0.0), Number(0.0), Number(0.0), Number(1.0))
+  }
 }
