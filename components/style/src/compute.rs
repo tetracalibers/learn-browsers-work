@@ -5,7 +5,7 @@ use css_defs::{
 use fast_dom::node::NodePtr;
 use strum::IntoEnumIterator;
 
-fn compute_specified_values(node: &NodePtr, styles: &mut Properties) {
+fn to_specified_values(node: &NodePtr, styles: &mut Properties) {
   let inherit = |property: Property| {
     if let Some(parent) = &node.parent() {
       return (property.clone(), parent.get_style(&property));
