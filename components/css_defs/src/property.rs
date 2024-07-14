@@ -7,6 +7,7 @@ pub enum Property {
   BorderRightColor,
   BorderBottomColor,
   BorderLeftColor,
+  FontSize,
 }
 
 impl Property {
@@ -16,6 +17,7 @@ impl Property {
       "border-right-color" => Some(Self::BorderRightColor),
       "border-bottom-color" => Some(Self::BorderBottomColor),
       "border-left-color" => Some(Self::BorderLeftColor),
+      "font-size" => Some(Property::FontSize),
       _ => {
         log::debug!("Unknown property: {}", name);
         None
@@ -28,7 +30,8 @@ impl Property {
       Self::BorderTopColor
       | Self::BorderRightColor
       | Self::BorderBottomColor
-      | Self::BorderLeftColor => true,
+      | Self::BorderLeftColor
+      | Self::FontSize => true,
       _ => false,
     }
   }

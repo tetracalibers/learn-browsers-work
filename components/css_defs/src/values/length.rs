@@ -1,3 +1,5 @@
+use css::structs::declaration_value::DeclarationValue;
+
 use super::number::Number;
 
 // ref: https://developer.mozilla.org/ja/docs/Web/CSS/length
@@ -24,4 +26,13 @@ pub enum LengthUnit {
   Vmin,
   // Absolute length units
   Px,
+}
+
+impl Length {
+  pub fn new_px(value: f32) -> Self {
+    todo!("Length::new_px");
+  }
+  pub fn parse(values: &[DeclarationValue]) -> Option<Self> {
+    todo!("Length::parse");
+  }
 }
