@@ -5,6 +5,10 @@ use css_defs::{
 use fast_dom::node::NodePtr;
 use strum::IntoEnumIterator;
 
+fn to_computed_values(node: &NodePtr, styles: &mut Properties) {
+  todo!("to_computed_values");
+}
+
 fn to_specified_values(node: &NodePtr, styles: &mut Properties) {
   let inherit = |property: Property| {
     if let Some(parent) = &node.parent() {
