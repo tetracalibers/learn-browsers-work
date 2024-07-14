@@ -28,8 +28,8 @@ pub fn number_token(input: &str) -> IResult<&str, &str> {
   recognize(tuple((alt((decimal, integer)), opt(exponent))))(input)
 }
 
-pub fn dimension_token(input: &str) -> IResult<&str, (&str, &str)> {
-  pair(number_token, ident_token)(input)
+pub fn dimension_token(input: &str) -> IResult<&str, &str> {
+  recognize(pair(number_token, ident_token))(input)
 }
 
 pub fn percentage_token(input: &str) -> IResult<&str, &str> {
