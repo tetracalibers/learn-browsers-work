@@ -1020,6 +1020,7 @@ dependencies = [
 name = "re_css"
 version = "0.1.0"
 dependencies = [
+ "css",
  "nom",
 ]
 
