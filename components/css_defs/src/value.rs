@@ -101,4 +101,13 @@ impl Value {
       ),
     }
   }
+
+  pub fn initial(property: &Property) -> Self {
+    match property {
+      Property::BorderTopColor
+      | Property::BorderRightColor
+      | Property::BorderBottomColor
+      | Property::BorderLeftColor => Value::Color(Color::black()),
+    }
+  }
 }

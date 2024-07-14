@@ -9,3 +9,4 @@ css        = { path = "../css" }
 css_defs   = { path = "../css_defs" }
 ecow       = "0.2.2"
 rustc-hash = "1.1.0"
+strum      = { version = "0.26", features = ["derive"] }
