@@ -26,5 +26,6 @@ exclude = ["benchmark/compare_html_parser"]
 [dependencies]
 html       = { path = "./components/html" }
 css        = { path = "./components/css" }
+re_css     = { path = "./components/re_css" }
 fast_html  = { path = "./components/fast_html" }
 env_logger = "0.10.1"

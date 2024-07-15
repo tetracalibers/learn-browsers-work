@@ -29,6 +29,19 @@ fn run_css() {
   css::parser::stylesheet::main();
 }
 
+fn run_re_css() {
+  let sample = r#"
+    h1 {
+      color: blue !important;
+      text-align: center;
+      box-shadow: 12px 12px 2px 1px rgba(0, 0, 255, .2);
+    }
+  "#;
+
+  let result = re_css::parser::parse::rules(sample);
+  println!("{:#?}", result);
+}
+
 fn main() {
   env_logger::init();
 
@@ -61,6 +74,7 @@ fn main() {
       run_fast_html(html);
     }
     "css" => run_css(),
+    "re_css" => run_re_css(),
     _ => println!("Please specify the target."),
   }
 }

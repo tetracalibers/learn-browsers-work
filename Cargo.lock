@@ -541,6 +541,7 @@ dependencies = [
  "env_logger",
  "fast_html",
  "html",
+ "re_css",
 ]
 
 [[package]]
