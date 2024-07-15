@@ -2,11 +2,13 @@ use nom::{
   branch::alt,
   bytes::complete::tag_no_case,
   character::complete::{char, hex_digit1},
-  combinator::recognize,
+  combinator::{map, recognize},
   multi::many_m_n,
   sequence::{pair, preceded},
   IResult,
 };
+
+use super::CSSToken;
 
 fn hex_digit_1_to_6(input: &str) -> IResult<&str, &str> {
   recognize(many_m_n(1, 6, hex_digit1))(input)
@@ -41,6 +43,10 @@ fn unicode_range_3(input: &str) -> IResult<&str, &str> {
   ))(input)
 }
 
-pub fn unicode_range_token(input: &str) -> IResult<&str, &str> {
+fn unicode_range_str(input: &str) -> IResult<&str, &str> {
   alt((unicode_range_3, unicode_range_2, unicode_range_1))(input)
+}
+
+pub fn unicode_range_token(input: &str) -> IResult<&str, CSSToken> {
+  map(unicode_range_str, CSSToken::UnicodeRange)(input)
 }

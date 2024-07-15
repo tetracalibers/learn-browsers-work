@@ -2,11 +2,13 @@ use nom::{
   branch::alt,
   bytes::complete::take_while,
   character::complete::{char, none_of},
-  combinator::recognize,
+  combinator::{map, recognize},
   multi::many0,
   sequence::{delimited, pair},
   IResult,
 };
+
+use super::CSSToken;
 
 fn is_not_newline_or_quote(c: char) -> bool {
   c != '"' && c != '\'' && c != '\n'
@@ -28,6 +30,10 @@ fn single_quoted_string(input: &str) -> IResult<&str, &str> {
   delimited(char('\''), string_content, char('\''))(input)
 }
 
-pub fn string_token(input: &str) -> IResult<&str, &str> {
+fn string_str(input: &str) -> IResult<&str, &str> {
   alt((double_quoted_string, single_quoted_string))(input)
+}
+
+pub fn string_token(input: &str) -> IResult<&str, CSSToken> {
+  map(string_str, CSSToken::String)(input)
 }
