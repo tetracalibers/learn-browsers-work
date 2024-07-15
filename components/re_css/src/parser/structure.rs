@@ -1,54 +1,54 @@
-use css::structs::selector::SelectorList;
-
 use crate::token::{Bracket, CSSToken};
 
-struct FunctionBlock<'a> {
-  name: &'a str,
-  value: Vec<ComponentValue<'a>>,
+#[derive(Debug)]
+pub struct Function<'a> {
+  pub name: &'a str,
+  pub value: Vec<ComponentValue<'a>>,
 }
 
-struct SimpleBlock<'a> {
-  bracket: Bracket,
-  value: Vec<ComponentValue<'a>>,
+#[derive(Debug)]
+pub struct SimpleBlock<'a> {
+  pub associated: Bracket,
+  pub value: Vec<ComponentValue<'a>>,
 }
 
+#[derive(Debug)]
 pub enum ComponentValue<'a> {
   PreservedToken(CSSToken<'a>),
-  Function(FunctionBlock<'a>),
-  Block(SimpleBlock<'a>),
+  Function(Function<'a>),
+  SimpleBlock(SimpleBlock<'a>),
 }
 
-struct Declaration<'a> {
-  name: &'a str,
-  value: Vec<ComponentValue<'a>>,
-  important: bool,
+#[derive(Debug)]
+pub struct Declaration<'a> {
+  pub name: &'a str,
+  pub value: Vec<ComponentValue<'a>>,
+  pub important: bool,
 }
 
-struct QualifiedRule<'a> {
-  selectors: SelectorList,
-  declarations: Vec<Declaration<'a>>,
+#[derive(Debug)]
+pub enum BlockContent<'a> {
+  Declaration(Declaration<'a>),
+  AtRule(AtRule<'a>),
+  QualifiedRule(QualifiedRule<'a>),
 }
 
-enum AtRule<'a> {
-  Regular(RegularAtRule<'a>),
-  Nested(NestedAtRule<'a>),
+#[derive(Debug)]
+pub struct QualifiedRule<'a> {
+  pub prelude: Vec<ComponentValue<'a>>,
+  pub block: Vec<BlockContent<'a>>,
 }
 
-// @identifier RULE;
-struct RegularAtRule<'a> {
-  name: &'a str,
-  value: &'a str,
+#[derive(Debug)]
+pub struct AtRule<'a> {
+  pub name: &'a str,
+  pub prelude: Vec<ComponentValue<'a>>,
+  pub block: Option<SimpleBlock<'a>>,
 }
 
-// @identifier PRELUDE (RULE) {}
-struct NestedAtRule<'a> {
-  name: &'a str,
-  prelude: Vec<&'a str>,
-  block: QualifiedRule<'a>,
-}
-
-enum CSSRule<'a> {
-  StyleRule(QualifiedRule<'a>),
+#[derive(Debug)]
+pub enum CSSRule<'a> {
+  QualifiedRule(QualifiedRule<'a>),
   AtRule(AtRule<'a>),
 }
 
