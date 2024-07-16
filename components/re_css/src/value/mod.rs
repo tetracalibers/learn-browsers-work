@@ -6,8 +6,9 @@ use crate::{parser::structure::ComponentValue, token::CSSToken};
 
 pub mod length;
 pub mod percentage;
-mod property;
+pub mod property;
 
+#[derive(Debug)]
 pub enum Value {
   Length(Length),
   Percentage(Percentage),
@@ -86,7 +87,7 @@ macro_rules! parse_value {
 impl Value {
   pub fn parse(
     property: Property,
-    values: Vec<ComponentValue>,
+    values: &Vec<ComponentValue>,
   ) -> Option<Self> {
     match property {
       Property::MarginTop => {

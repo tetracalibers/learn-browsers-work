@@ -1,3 +1,3 @@
 pub mod parser;
 mod token;
-mod value;
+pub mod value;

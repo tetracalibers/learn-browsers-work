@@ -2,6 +2,7 @@ use crate::token::CSSToken;
 
 use super::{Value, ValueParser};
 
+#[derive(Debug)]
 pub struct Percentage(f64);
 
 impl ValueParser for Percentage {

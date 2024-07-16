@@ -2,6 +2,7 @@ use crate::token::CSSToken;
 
 use super::{Value, ValueParser};
 
+#[derive(Debug)]
 enum LengthUnit {
   Px,
   Em,
@@ -21,6 +22,7 @@ impl std::str::FromStr for LengthUnit {
   }
 }
 
+#[derive(Debug)]
 pub struct Length {
   value: f64,
   unit: LengthUnit,
