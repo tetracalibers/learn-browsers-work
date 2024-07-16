@@ -1,3 +1,5 @@
+use css::structs::selector::SelectorList;
+
 use crate::token::{Bracket, CSSToken};
 
 #[derive(Debug)]
@@ -40,6 +42,12 @@ pub struct QualifiedRule<'a> {
 }
 
 #[derive(Debug)]
+pub struct StyleRule<'a> {
+  pub selectors: SelectorList,
+  pub declarations: Vec<Declaration<'a>>,
+}
+
+#[derive(Debug)]
 pub struct AtRule<'a> {
   pub name: &'a str,
   pub prelude: Vec<ComponentValue<'a>>,
@@ -48,7 +56,7 @@ pub struct AtRule<'a> {
 
 #[derive(Debug)]
 pub enum CSSRule<'a> {
-  QualifiedRule(QualifiedRule<'a>),
+  StyleRule(StyleRule<'a>),
   AtRule(AtRule<'a>),
 }
 

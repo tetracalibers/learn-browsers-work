@@ -1,3 +1,4 @@
+use css::parser::selector::selector_list;
 use nom::{
   branch::alt,
   bytes::complete::tag,
@@ -10,7 +11,7 @@ use nom::{
 
 use super::structure::{
   AtRule, BlockContent, CSSRule, ComponentValue, Declaration, Function,
-  QualifiedRule, SimpleBlock,
+  QualifiedRule, SimpleBlock, StyleRule,
 };
 use crate::token::{prelude::*, Bracket};
 
@@ -21,9 +22,50 @@ where
   delimited(multispace0, parser, multispace0)
 }
 
-pub fn rules(input: &str) -> IResult<&str, Vec<CSSRule>> {
-  many1(trimed(alt((at_rule_as_rule, qualified_rule_as_rule))))(input)
+fn blocked<'a, F, O>(content: F) -> impl FnMut(&'a str) -> IResult<&'a str, O>
+where
+  F: FnMut(&'a str) -> IResult<&'a str, O>,
+{
+  delimited(tag("{"), trimed(content), tag("}"))
 }
+
+pub fn rules(input: &str) -> IResult<&str, Vec<CSSRule>> {
+  many1(trimed(alt((at_rule_as_rule, style_rule_as_rule))))(input)
+}
+
+/* 生成規則 --------------------------------------- */
+
+// ref: https://triple-underscore.github.io/css-syntax-ja.html#typedef-block-contents
+
+// 宣言は許容され，［ at-規則, 有修飾規則 ］は無効
+fn declaration_list(input: &str) -> IResult<&str, Vec<Declaration>> {
+  many0(trimed(terminated(declaration, tag(";"))))(input)
+}
+
+// 有修飾規則は許容され，［ 宣言, at-規則 ］は無効
+fn qualified_rule_list(input: &str) -> IResult<&str, Vec<BlockContent>> {
+  many0(qualified_rule_as_content)(input)
+}
+
+// at-規則は許容され，［ 宣言, 有修飾規則 ］は無効
+fn at_rule_list(input: &str) -> IResult<&str, Vec<BlockContent>> {
+  many0(at_rule_as_content)(input)
+}
+
+// ［ 宣言, at-規則 ］は許容され， 有修飾規則は無効
+fn declaration_rule_list(input: &str) -> IResult<&str, Vec<BlockContent>> {
+  many0(alt((
+    at_rule_as_content,
+    terminated(declaration_as_content, tag(";")),
+  )))(input)
+}
+
+// ［ 有修飾規則, at-規則 ］は許容され， 宣言は無効
+fn rule_list(input: &str) -> IResult<&str, Vec<BlockContent>> {
+  many0(alt((at_rule_as_content, qualified_rule_as_content)))(input)
+}
+
+/* 構成要素 --------------------------------------- */
 
 fn at_rule_as_rule(input: &str) -> IResult<&str, CSSRule> {
   map(at_rule, CSSRule::AtRule)(input)
@@ -55,9 +97,20 @@ fn nested_at_rule(input: &str) -> IResult<&str, AtRule> {
   )(input)
 }
 
-fn qualified_rule_as_rule(input: &str) -> IResult<&str, CSSRule> {
-  map(qualified_rule, CSSRule::QualifiedRule)(input)
+// ref: https://triple-underscore.github.io/css-syntax-ja.html#style-rules
+fn style_rule(input: &str) -> IResult<&str, StyleRule> {
+  map(
+    tuple((selector_list, trimed(blocked(declaration_list)))),
+    |(selectors, declarations)| StyleRule {
+      selectors,
+      declarations,
+    },
+  )(input)
 }
+fn style_rule_as_rule(input: &str) -> IResult<&str, CSSRule> {
+  map(style_rule, CSSRule::StyleRule)(input)
+}
+
 fn qualified_rule_as_content(input: &str) -> IResult<&str, BlockContent> {
   map(qualified_rule, BlockContent::QualifiedRule)(input)
 }
@@ -69,20 +122,11 @@ fn qualified_rule(input: &str) -> IResult<&str, QualifiedRule> {
 }
 
 fn curly_block_content(input: &str) -> IResult<&str, Vec<BlockContent>> {
-  map(
-    tuple((
-      tag("{"),
-      multispace0,
-      many0(alt((
-        trimed(terminated(declaration_as_content, tag(";"))),
-        at_rule_as_content,
-        qualified_rule_as_content,
-      ))),
-      multispace0,
-      tag("}"),
-    )),
-    |(_, _, content, _, _)| content,
-  )(input)
+  blocked(many0(alt((
+    trimed(terminated(declaration_as_content, tag(";"))),
+    at_rule_as_content,
+    qualified_rule_as_content,
+  ))))(input)
 }
 
 fn declaration_as_content(input: &str) -> IResult<&str, BlockContent> {
