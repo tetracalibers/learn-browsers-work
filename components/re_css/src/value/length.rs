@@ -27,12 +27,15 @@ pub struct Length {
 }
 
 impl ValueParser for Length {
-  fn parse(token: CSSToken) -> Option<Value> {
+  fn parse(token: &CSSToken) -> Option<Value> {
     match token {
       CSSToken::Dimension(value, unit_str) => {
         let parsed_unit = unit_str.parse().ok();
         if let Some(unit) = parsed_unit {
-          Some(Value::Length(Length { value, unit }))
+          Some(Value::Length(Length {
+            value: *value,
+            unit,
+          }))
         } else {
           None
         }
