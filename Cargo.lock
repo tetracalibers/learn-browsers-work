@@ -541,6 +541,7 @@ dependencies = [
  "env_logger",
  "fast_html",
  "html",
+ "re_css",
 ]
 
 [[package]]
@@ -1014,6 +1015,14 @@ checksum = "5ce3fb6ad83f861aac485e76e1985cd109d9a3713802152be56c3b1f0e0658ed"
 dependencies = [
  "crossbeam-deque",
  "crossbeam-utils",
+]
+
+[[package]]
+name = "re_css"
+version = "0.1.0"
+dependencies = [
+ "css",
+ "nom",
 ]
 
 [[package]]
