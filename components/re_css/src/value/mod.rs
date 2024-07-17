@@ -1,6 +1,7 @@
 use length::Length;
 use percentage::Percentage;
 use property::Property;
+use property::Property::*;
 
 use crate::{parser::structure::ComponentValue, token::CSSToken};
 
@@ -8,7 +9,7 @@ pub mod length;
 pub mod percentage;
 pub mod property;
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum Value {
   Length(Length),
   Percentage(Percentage),
@@ -20,60 +21,56 @@ pub enum Value {
 }
 
 pub trait ValueParser {
-  fn parse(token: &CSSToken) -> Option<Value>;
+  fn parse_token(token: &CSSToken) -> Option<Value>;
 
-  fn parse_first(values: &Vec<ComponentValue>) -> Option<Value> {
-    match values.iter().next() {
-      Some(ComponentValue::PreservedToken(token)) => Self::parse(token),
-      _ => None,
+  fn parse_component_value(value: &ComponentValue) -> Option<Value> {
+    if let ComponentValue::PreservedToken(token) = value {
+      Self::parse_token(token)
+    } else {
+      None
     }
   }
 }
 
-fn has_keyword(values: &Vec<ComponentValue>, target: &str) -> bool {
-  match values.iter().next() {
-    Some(ComponentValue::PreservedToken(token)) => {
-      if let CSSToken::Ident(keyword) = token {
-        keyword.eq_ignore_ascii_case(target)
-      } else {
-        false
-      }
-    }
-    _ => false,
+fn match_keyword(value: &ComponentValue, target: &str) -> bool {
+  if let ComponentValue::PreservedToken(CSSToken::Ident(keyword)) = value {
+    keyword.eq_ignore_ascii_case(target)
+  } else {
+    false
   }
 }
 
 macro_rules! parse_value {
   (Auto; $tokens:ident) => {{
-      if has_keyword(&$tokens, "auto") {
+      if match_keyword(&$tokens, "auto") {
           Some(Value::Auto)
       } else {
           None
       }
   }};
   (Inherit; $tokens:ident) => {{
-      if has_keyword(&$tokens, "inherit") {
+      if match_keyword(&$tokens, "inherit") {
           Some(Value::Inherit)
       } else {
           None
       }
   }};
   (Initial; $tokens:ident) => {{
-      if has_keyword(&$tokens, "initial") {
+      if match_keyword(&$tokens, "initial") {
           Some(Value::Initial)
       } else {
           None
       }
   }};
   (Unset; $tokens:ident) => {{
-      if has_keyword(&$tokens, "unset") {
+      if match_keyword(&$tokens, "unset") {
           Some(Value::Unset)
       } else {
           None
       }
   }};
   ($value:ident; $tokens:ident) => {{
-      $value::parse_first(&$tokens)
+      $value::parse_component_value(&$tokens)
   }};
   ($value:ident | $($remain:ident)|+; $tokens:ident) => {{
       let value = parse_value!($value; $tokens);
@@ -85,12 +82,9 @@ macro_rules! parse_value {
 }
 
 impl Value {
-  pub fn parse(
-    property: Property,
-    values: &Vec<ComponentValue>,
-  ) -> Option<Self> {
+  pub fn parse(property: &Property, values: &ComponentValue) -> Option<Self> {
     match property {
-      Property::MarginTop => {
+      MarginTop | MarginRight | MarginBottom | MarginLeft => {
         parse_value!(
           Length | Percentage | Auto | Inherit | Initial | Unset;
           values

@@ -1,5 +1,9 @@
 pub enum Property {
+  // physical margin
   MarginTop,
+  MarginRight,
+  MarginBottom,
+  MarginLeft,
 }
 
 impl std::str::FromStr for Property {
@@ -8,6 +12,9 @@ impl std::str::FromStr for Property {
   fn from_str(s: &str) -> Result<Self, Self::Err> {
     match s {
       "margin-top" => Ok(Property::MarginTop),
+      "margin-right" => Ok(Property::MarginRight),
+      "margin-bottom" => Ok(Property::MarginBottom),
+      "margin-left" => Ok(Property::MarginLeft),
       _ => Err("Invalid property"),
     }
   }
