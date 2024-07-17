@@ -5,22 +5,26 @@
 use std::cmp::Ordering;
 
 use fast_dom::node::NodePtr;
+use re_css::{
+  parser::structure::Declaration,
+  shorthand_property::get_expander_shorthand_property,
+  value::{
+    property::{Properties, Property},
+    Value,
+  },
+};
 use rustc_hash::FxHashMap;
 
-use css::structs::declaration::Declaration;
 use css::structs::selector::Specificity;
-use css_defs::{
-  context::{CSSLocation, CascadeOrigin, ContextualRule},
-  properties::get_expander_shorthand_property,
-  property::{Properties, Property},
-  value::Value,
-};
 
-use crate::selector_matching::is_match_selectors;
+use crate::{
+  context::{CSSLocation, CascadeOrigin, ContextualRule},
+  selector_matching::is_match_selectors,
+};
 
 type DeclaredValuesMap = FxHashMap<Property, Vec<PropertyDeclaration>>;
 
-#[derive(Debug, Eq, PartialEq)]
+#[derive(Debug, PartialEq, Eq)]
 struct PropertyDeclaration {
   pub value: Value,
   pub important: bool,
@@ -86,10 +90,7 @@ fn collect_declared_values(
   for rule in matched_rules {
     for declaration in &rule.style.declarations {
       if let Some(expand) = get_expander_shorthand_property(&declaration.name) {
-        let values = declaration.value.as_slice();
-
-        // TODO: expandの引数の型がおかしいかも？動作確認が必要
-        if let Some(value_maps) = expand(&[values]) {
+        if let Some(value_maps) = expand(&declaration.value) {
           for (property, value_opt) in value_maps {
             if let Some(value) = value_opt {
               insert_declaration(
@@ -103,11 +104,11 @@ fn collect_declared_values(
           }
         }
       } else {
-        let property_opt = Property::parse(declaration.name.as_str());
+        let property = declaration.name.parse::<Property>().ok();
 
-        if let Some(property) = property_opt {
-          let value_opt = Value::parse(&property, declaration.value.as_slice());
-          if let Some(value) = value_opt {
+        if let Some(property) = property {
+          let value = Value::parse(&property, &declaration.value);
+          if let Some(value) = value {
             insert_declaration(value, property, rule, declaration, &mut result);
           }
         }

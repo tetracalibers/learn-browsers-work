@@ -1,3 +1,9 @@
+use super::Value;
+use rustc_hash::FxHashMap;
+
+pub type Properties = FxHashMap<Property, Value>;
+
+#[derive(Debug, Hash, PartialEq, Eq, Clone, Copy, strum::EnumIter)]
 pub enum Property {
   // physical margin
   MarginTop,
@@ -16,6 +22,14 @@ impl std::str::FromStr for Property {
       "margin-bottom" => Ok(Property::MarginBottom),
       "margin-left" => Ok(Property::MarginLeft),
       _ => Err("Invalid property"),
+    }
+  }
+}
+
+impl Property {
+  pub fn inheritable(&self) -> bool {
+    match self {
+      _ => false,
     }
   }
 }

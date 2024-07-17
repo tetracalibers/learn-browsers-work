@@ -4,5 +4,7 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-nom = "7.1.3"
-css = { path = "../css" }
+nom        = "7.1.3"
+css        = { path = "../css" }
+rustc-hash = "1.1.0"
+strum      = { version = "0.26", features = ["derive"] }

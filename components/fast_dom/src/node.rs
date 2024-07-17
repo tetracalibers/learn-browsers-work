@@ -1,9 +1,9 @@
 use std::cell::{Ref, RefCell};
 use std::ops::Deref;
 
-use css_defs::property::{Properties, Property};
-use css_defs::value::Value;
 use ecow::EcoString;
+use re_css::value::property::{Properties, Property};
+use re_css::value::Value;
 
 use super::document::Document;
 use super::element::Element;

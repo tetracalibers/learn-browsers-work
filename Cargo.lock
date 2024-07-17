@@ -357,8 +357,8 @@ dependencies = [
 name = "fast_dom"
 version = "0.1.0"
 dependencies = [
- "css_defs",
  "ecow",
+ "re_css",
  "rustc-hash",
 ]
 
@@ -1023,6 +1023,8 @@ version = "0.1.0"
 dependencies = [
  "css",
  "nom",
+ "rustc-hash",
+ "strum",
 ]
 
 [[package]]
@@ -1269,6 +1271,7 @@ dependencies = [
  "css_defs",
  "ecow",
  "fast_dom",
+ "re_css",
  "rustc-hash",
  "strum",
 ]

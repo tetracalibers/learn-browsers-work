@@ -1,4 +1,4 @@
-use css::structs::selector::SelectorList;
+use css::structs::selector::{SelectorList, Specificity};
 
 use crate::token::{Bracket, CSSToken};
 
@@ -62,4 +62,16 @@ pub enum CSSRule<'a> {
 
 struct StyleSheet<'a> {
   rules: Vec<CSSRule<'a>>,
+}
+
+impl StyleRule<'_> {
+  pub fn specificity(&self) -> Specificity {
+    let specificities = self
+      .selectors
+      .iter()
+      .map(|selector| selector.specificity())
+      .collect::<Vec<Specificity>>();
+
+    specificities.into_iter().max().unwrap()
+  }
 }

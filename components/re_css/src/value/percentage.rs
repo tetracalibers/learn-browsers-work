@@ -2,8 +2,10 @@ use crate::token::CSSToken;
 
 use super::{Value, ValueParser};
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct Percentage(f64);
+
+impl Eq for Percentage {}
 
 impl ValueParser for Percentage {
   fn parse_token(token: &CSSToken) -> Option<Value> {
