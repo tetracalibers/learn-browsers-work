@@ -10,7 +10,7 @@ pub fn expand_four_box_values(
   trbl: (Property, Property, Property, Property),
 ) -> Option<ExpandedProperty> {
   if values.len() == 1 {
-    let value = Value::parse(&trbl.0, &values[0]);
+    let value = Value::parse(&trbl.0, &values);
 
     if value.is_none() {
       return None;
@@ -25,8 +25,8 @@ pub fn expand_four_box_values(
   }
 
   if values.len() == 2 {
-    let value_y = Value::parse(&trbl.0, &values[0]);
-    let value_x = Value::parse(&trbl.1, &values[1]);
+    let value_y = Value::parse(&trbl.0, &values[..1]);
+    let value_x = Value::parse(&trbl.1, &values[1..]);
 
     if value_y.is_none() || value_x.is_none() {
       return None;
@@ -41,9 +41,9 @@ pub fn expand_four_box_values(
   }
 
   if values.len() == 3 {
-    let value_top = Value::parse(&trbl.0, &values[0]);
-    let value_x = Value::parse(&trbl.1, &values[1]);
-    let value_bottom = Value::parse(&trbl.2, &values[2]);
+    let value_top = Value::parse(&trbl.0, &values[..1]);
+    let value_x = Value::parse(&trbl.1, &values[1..2]);
+    let value_bottom = Value::parse(&trbl.2, &values[2..]);
 
     if value_top.is_none() || value_x.is_none() || value_bottom.is_none() {
       return None;
@@ -58,10 +58,10 @@ pub fn expand_four_box_values(
   }
 
   if values.len() == 4 {
-    let value_top = Value::parse(&trbl.0, &values[0]);
-    let value_right = Value::parse(&trbl.1, &values[1]);
-    let value_bottom = Value::parse(&trbl.2, &values[2]);
-    let value_left = Value::parse(&trbl.3, &values[3]);
+    let value_top = Value::parse(&trbl.0, &values[..1]);
+    let value_right = Value::parse(&trbl.1, &values[1..2]);
+    let value_bottom = Value::parse(&trbl.2, &values[2..3]);
+    let value_left = Value::parse(&trbl.3, &values[3..]);
 
     if value_top.is_none()
       || value_right.is_none()

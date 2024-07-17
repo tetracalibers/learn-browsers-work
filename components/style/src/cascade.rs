@@ -92,7 +92,7 @@ fn collect_declared_values(
       if let Some(expand) = get_expander_shorthand_property(&declaration.name) {
         let values = declaration.value;
 
-        if let Some(value_maps) = expand(values) {
+        if let Some(value_maps) = expand(&declaration.value) {
           for (property, value_opt) in value_maps {
             if let Some(value) = value_opt {
               insert_declaration(
@@ -109,7 +109,7 @@ fn collect_declared_values(
         let property = declaration.name.parse::<Property>().ok();
 
         if let Some(property) = property {
-          let value = Value::parse(&property, declaration.value);
+          let value = Value::parse(&property, &declaration.value);
           if let Some(value) = value {
             insert_declaration(value, property, rule, declaration, &mut result);
           }
