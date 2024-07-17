@@ -7,6 +7,16 @@ use re_css::value::{
 };
 use strum::IntoEnumIterator;
 
+use crate::{cascade::collect_cascaded_values, context::ContextualRule};
+
+pub fn compute_styles(node: NodePtr, rules: &[ContextualRule]) -> Properties {
+  let mut styles = collect_cascaded_values(&node, rules);
+
+  to_specified_values(&node, &mut styles);
+  to_computed_values(&node, &mut styles);
+  styles
+}
+
 fn to_computed_values(node: &NodePtr, styles: &mut Properties) {
   let parent_font_size = node
     .parent()
