@@ -357,8 +357,8 @@ dependencies = [
 name = "fast_dom"
 version = "0.1.0"
 dependencies = [
- "css_defs",
  "ecow",
+ "re_css",
  "rustc-hash",
 ]
 
