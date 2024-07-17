@@ -35,11 +35,11 @@ fn run_re_css() {
       color: blue !important;
       text-align: center;
       box-shadow: 12px 12px 2px 1px rgba(0, 0, 255, .2);
+      margin-top: 10px auto;
     }
   "#;
-
-  let result = re_css::parser::parse::rules(sample);
-  println!("{:#?}", result);
+  let syntax = re_css::parser::parse::rules(sample);
+  println!("{:#?}", syntax);
 }
 
 fn main() {
