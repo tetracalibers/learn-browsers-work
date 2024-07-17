@@ -3,7 +3,7 @@ use crate::token::CSSToken;
 use super::{Value, ValueParser};
 
 #[derive(Debug, Clone, PartialEq)]
-pub struct Percentage(f64);
+pub struct Percentage(pub f64);
 
 impl Eq for Percentage {}
 

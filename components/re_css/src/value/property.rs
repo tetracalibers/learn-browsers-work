@@ -10,6 +10,8 @@ pub enum Property {
   MarginRight,
   MarginBottom,
   MarginLeft,
+  // font
+  FontSize,
 }
 
 impl std::str::FromStr for Property {
@@ -21,6 +23,7 @@ impl std::str::FromStr for Property {
       "margin-right" => Ok(Property::MarginRight),
       "margin-bottom" => Ok(Property::MarginBottom),
       "margin-left" => Ok(Property::MarginLeft),
+      "font-size" => Ok(Property::FontSize),
       _ => Err("Invalid property"),
     }
   }
