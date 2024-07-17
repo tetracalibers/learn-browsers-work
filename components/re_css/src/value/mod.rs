@@ -9,6 +9,8 @@ pub mod length;
 pub mod percentage;
 pub mod property;
 
+pub const BASE_FONT_SIZE: f64 = 16.0;
+
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Value {
   Length(Length),
@@ -94,6 +96,12 @@ impl Value {
           values
         )
       }
+      FontSize => {
+        parse_value!(
+          Length | Percentage | Inherit | Initial | Unset;
+          values
+        )
+      }
     }
   }
 
@@ -102,6 +110,7 @@ impl Value {
       MarginTop | MarginRight | MarginBottom | MarginLeft => {
         Value::Length(Length::new_px(0.0))
       }
+      FontSize => Value::Length(Length::new_px(BASE_FONT_SIZE)),
     }
   }
 }
