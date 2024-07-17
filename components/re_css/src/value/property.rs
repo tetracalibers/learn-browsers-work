@@ -25,3 +25,11 @@ impl std::str::FromStr for Property {
     }
   }
 }
+
+impl Property {
+  pub fn inheritable(&self) -> bool {
+    match self {
+      _ => false,
+    }
+  }
+}
