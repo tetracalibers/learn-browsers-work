@@ -9,7 +9,7 @@ pub mod length;
 pub mod percentage;
 pub mod property;
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Value {
   Length(Length),
   Percentage(Percentage),

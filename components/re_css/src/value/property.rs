@@ -1,3 +1,9 @@
+use super::Value;
+use rustc_hash::FxHashMap;
+
+pub type Properties = FxHashMap<Property, Value>;
+
+#[derive(Debug, Hash, PartialEq, Eq, Clone, Copy)]
 pub enum Property {
   // physical margin
   MarginTop,
