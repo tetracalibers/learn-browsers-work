@@ -1,8 +1,8 @@
-use css_defs::{
-  property::{Properties, Property},
-  value::Value,
-};
 use fast_dom::node::NodePtr;
+use re_css::value::{
+  property::{Properties, Property},
+  Value,
+};
 use strum::IntoEnumIterator;
 
 fn to_computed_values(node: &NodePtr, styles: &mut Properties) {

@@ -3,7 +3,7 @@ use rustc_hash::FxHashMap;
 
 pub type Properties = FxHashMap<Property, Value>;
 
-#[derive(Debug, Hash, PartialEq, Eq, Clone, Copy)]
+#[derive(Debug, Hash, PartialEq, Eq, Clone, Copy, strum::EnumIter)]
 pub enum Property {
   // physical margin
   MarginTop,
