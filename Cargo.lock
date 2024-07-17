@@ -1268,7 +1268,6 @@ name = "style"
 version = "0.1.0"
 dependencies = [
  "css",
- "css_defs",
  "ecow",
  "fast_dom",
  "re_css",

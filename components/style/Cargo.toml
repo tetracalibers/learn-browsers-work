@@ -6,7 +6,6 @@ edition = "2021"
 [dependencies]
 fast_dom   = { path = "../fast_dom" }
 css        = { path = "../css" }
-css_defs   = { path = "../css_defs" }
 re_css     = { path = "../re_css" }
 ecow       = "0.2.2"
 rustc-hash = "1.1.0"
