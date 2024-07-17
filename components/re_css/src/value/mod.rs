@@ -1,4 +1,4 @@
-use length::Length;
+use length::{Length, LengthUnit};
 use percentage::Percentage;
 use property::Property;
 use property::Property::*;
@@ -111,6 +111,16 @@ impl Value {
         Value::Length(Length::new_px(0.0))
       }
       FontSize => Value::Length(Length::new_px(BASE_FONT_SIZE)),
+    }
+  }
+
+  pub fn to_absolute_px(&self) -> f64 {
+    match self {
+      Value::Length(Length {
+        value,
+        unit: LengthUnit::Px,
+      }) => *value,
+      _ => unreachable!("Calling to_absolute_px for unsupported value"),
     }
   }
 }
