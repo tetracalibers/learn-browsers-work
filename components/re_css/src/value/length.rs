@@ -48,3 +48,13 @@ impl ValueParser for Length {
     }
   }
 }
+
+impl Length {
+  pub fn new(value: f64, unit: LengthUnit) -> Self {
+    Self { value, unit }
+  }
+
+  pub fn new_px(value: f64) -> Self {
+    Self::new(value, LengthUnit::Px)
+  }
+}

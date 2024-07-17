@@ -96,4 +96,12 @@ impl Value {
       }
     }
   }
+
+  pub fn initial(property: &Property) -> Self {
+    match property {
+      MarginTop | MarginRight | MarginBottom | MarginLeft => {
+        Value::Length(Length::new_px(0.0))
+      }
+    }
+  }
 }
