@@ -90,8 +90,6 @@ fn collect_declared_values(
   for rule in matched_rules {
     for declaration in &rule.style.declarations {
       if let Some(expand) = get_expander_shorthand_property(&declaration.name) {
-        let values = declaration.value;
-
         if let Some(value_maps) = expand(&declaration.value) {
           for (property, value_opt) in value_maps {
             if let Some(value) = value_opt {

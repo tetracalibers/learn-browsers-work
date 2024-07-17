@@ -6,7 +6,7 @@ use crate::{
 use super::ExpandedProperty;
 
 pub fn expand_four_box_values(
-  values: Vec<ComponentValue>,
+  values: &[ComponentValue],
   trbl: (Property, Property, Property, Property),
 ) -> Option<ExpandedProperty> {
   if values.len() == 1 {

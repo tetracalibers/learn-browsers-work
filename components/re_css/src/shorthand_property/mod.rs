@@ -12,7 +12,7 @@ pub type ExpandedProperty = Vec<(Property, Option<Value>)>;
 
 pub fn get_expander_shorthand_property(
   property: &str,
-) -> Option<&dyn Fn(Vec<ComponentValue>) -> Option<ExpandedProperty>> {
+) -> Option<&dyn Fn(&[ComponentValue]) -> Option<ExpandedProperty>> {
   match property {
     "margin" => Some(&expand_margin),
     _ => None,
