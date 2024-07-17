@@ -12,12 +12,13 @@ use crate::{cascade::collect_cascaded_values, context::ContextualRule};
 pub fn compute_styles(node: NodePtr, rules: &[ContextualRule]) -> Properties {
   let mut styles = collect_cascaded_values(&node, rules);
 
-  to_specified_values(&node, &mut styles);
-  to_computed_values(&node, &mut styles);
+  set_specified_values(&node, &mut styles);
+  set_computed_values(&node, &mut styles);
+
   styles
 }
 
-fn to_computed_values(node: &NodePtr, styles: &mut Properties) {
+fn set_computed_values(node: &NodePtr, styles: &mut Properties) {
   let parent_font_size = node
     .parent()
     .map(|parent| {
@@ -67,7 +68,7 @@ fn to_computed_values(node: &NodePtr, styles: &mut Properties) {
   }
 }
 
-fn to_specified_values(node: &NodePtr, styles: &mut Properties) {
+fn set_specified_values(node: &NodePtr, styles: &mut Properties) {
   let inherit = |property: Property| {
     if let Some(parent) = &node.parent() {
       return (property.clone(), parent.get_style(&property));
