@@ -2,7 +2,6 @@ use display::Display;
 use length::{Length, LengthUnit};
 use percentage::Percentage;
 use property::Property;
-use property::Property::*;
 
 use crate::{parser::structure::ComponentValue, token::CSSToken};
 
@@ -92,19 +91,22 @@ macro_rules! parse_value {
 impl Value {
   pub fn parse(property: &Property, values: &[ComponentValue]) -> Option<Self> {
     match property {
-      Display => {
+      Property::Display => {
         parse_value!(
           Display | Inherit | Initial | Unset;
           values
         )
       }
-      MarginTop | MarginRight | MarginBottom | MarginLeft => {
+      Property::MarginTop
+      | Property::MarginRight
+      | Property::MarginBottom
+      | Property::MarginLeft => {
         parse_value!(
           Length | Percentage | Auto | Inherit | Initial | Unset;
           values
         )
       }
-      FontSize => {
+      Property::FontSize => {
         parse_value!(
           Length | Percentage | Inherit | Initial | Unset;
           values
@@ -115,11 +117,12 @@ impl Value {
 
   pub fn initial(property: &Property) -> Self {
     match property {
-      Display => Value::Display(Display::new_inline()),
-      MarginTop | MarginRight | MarginBottom | MarginLeft => {
-        Value::Length(Length::new_px(0.0))
-      }
-      FontSize => Value::Length(Length::new_px(BASE_FONT_SIZE)),
+      Property::Display => Value::Display(Display::new_inline()),
+      Property::MarginTop
+      | Property::MarginRight
+      | Property::MarginBottom
+      | Property::MarginLeft => Value::Length(Length::new_px(0.0)),
+      Property::FontSize => Value::Length(Length::new_px(BASE_FONT_SIZE)),
     }
   }
 
