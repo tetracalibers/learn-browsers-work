@@ -1,3 +1,4 @@
+use display::Display;
 use length::{Length, LengthUnit};
 use percentage::Percentage;
 use property::Property;
@@ -5,6 +6,7 @@ use property::Property::*;
 
 use crate::{parser::structure::ComponentValue, token::CSSToken};
 
+mod display;
 pub mod length;
 pub mod percentage;
 pub mod property;
@@ -15,7 +17,7 @@ pub const BASE_FONT_SIZE: f64 = 16.0;
 pub enum Value {
   Length(Length),
   Percentage(Percentage),
-  // css wide keywords
+  Display(Display),
   Inherit,
   Initial,
   Unset,
@@ -90,6 +92,12 @@ macro_rules! parse_value {
 impl Value {
   pub fn parse(property: &Property, values: &[ComponentValue]) -> Option<Self> {
     match property {
+      Display => {
+        parse_value!(
+          Display | Inherit | Initial | Unset;
+          values
+        )
+      }
       MarginTop | MarginRight | MarginBottom | MarginLeft => {
         parse_value!(
           Length | Percentage | Auto | Inherit | Initial | Unset;
@@ -107,6 +115,7 @@ impl Value {
 
   pub fn initial(property: &Property) -> Self {
     match property {
+      Display => Value::Display(Display::new_inline()),
       MarginTop | MarginRight | MarginBottom | MarginLeft => {
         Value::Length(Length::new_px(0.0))
       }
