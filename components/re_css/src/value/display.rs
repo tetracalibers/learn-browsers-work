@@ -7,7 +7,8 @@ use super::{Value, ValueParser};
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Display {
   Full(DisplayOutside, DisplayInside),
-  Box(DisplayBox),
+  Contents,
+  None,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -27,19 +28,13 @@ enum DisplayInside {
   Ruby,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
-enum DisplayBox {
-  Contents,
-  None,
-}
-
 impl std::str::FromStr for Display {
   type Err = &'static str;
 
   fn from_str(s: &str) -> Result<Self, Self::Err> {
     match s {
-      "none" => Ok(Display::Box(DisplayBox::None)),
-      "contents" => Ok(Display::Box(DisplayBox::Contents)),
+      "none" => Ok(Display::None),
+      "contents" => Ok(Display::Contents),
       "block" => Ok(Self::new_block()),
       "inline" => Ok(Self::new_inline()),
       "inline-block" => Ok(Display::Full(
