@@ -91,6 +91,18 @@ impl LayoutBox {
       _ => true,
     }
   }
+
+  pub fn node(&self) -> Option<NodePtr> {
+    self.node.clone()
+  }
+
+  pub fn friendly_name(&self) -> &str {
+    match self.box_type {
+      BoxType::BlockBox => "BlockBox",
+      BoxType::InlineBox => "InlineBox",
+      BoxType::TextSequence => "TextSequence",
+    }
+  }
 }
 
 impl LayoutBoxPtr {

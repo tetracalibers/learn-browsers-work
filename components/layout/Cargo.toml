@@ -7,3 +7,4 @@ edition = "2021"
 tree     = { path = "../../utilities/tree" }
 fast_dom = { path = "../fast_dom" }
 re_css   = { path = "../re_css" }
+log      = "0.4.20"

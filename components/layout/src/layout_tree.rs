@@ -43,7 +43,18 @@ impl LayoutTreeBuilder {
       node.for_each_child(|child| self.build_layout_tree(NodePtr(child)));
       self.parent_stack.pop();
     } else {
-      todo!("print error");
+      let parent_stack = self
+        .parent_stack
+        .iter()
+        .map(|parent| format!("{} {:?}", parent.friendly_name(), parent.node()))
+        .collect::<Vec<String>>();
+
+      log::error!(
+        "Couldn't find the correct parent for node: {} {:?}",
+        LayoutBoxPtr(layout_box).friendly_name(),
+        node
+      );
+      log::error!("Parent stack: {:#?}", parent_stack);
     }
   }
 

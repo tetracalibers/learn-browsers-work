@@ -506,6 +506,7 @@ name = "layout"
 version = "0.1.0"
 dependencies = [
  "fast_dom",
+ "log",
  "re_css",
  "tree",
 ]
