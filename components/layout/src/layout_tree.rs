@@ -25,5 +25,19 @@ impl LayoutTreeBuilder {
     }
 
     let layout_box = TreeNode::new(LayoutBox::new(node));
+
+    let parent = if layout_box.is_inline() {
+      self.get_parent_for_inline()
+    } else {
+      self.get_parent_for_block()
+    };
+  }
+
+  fn get_parent_for_inline(&self) -> Option<LayoutBoxPtr> {
+    todo!("get_parent_for_inline");
+  }
+
+  fn get_parent_for_block(&self) -> Option<LayoutBoxPtr> {
+    todo!("get_parent_for_block");
   }
 }

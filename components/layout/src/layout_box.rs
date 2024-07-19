@@ -53,4 +53,12 @@ impl LayoutBox {
       _ => unreachable!(),
     }
   }
+
+  pub fn is_inline(&self) -> bool {
+    match self.box_type {
+      BoxType::InlineBox => true,
+      BoxType::TextSequence => true,
+      _ => false,
+    }
+  }
 }
