@@ -14,9 +14,10 @@ use crate::box_model::BoxModel;
 pub struct LayoutBox {
   box_type: BoxType,
   box_model: BoxModel,
+  node: Option<NodePtr>,
 }
 
-pub struct LayoutBoxPtr(TreeNode<LayoutBox>);
+pub struct LayoutBoxPtr(pub TreeNode<LayoutBox>);
 
 impl TreeNodeHooks<LayoutBox> for LayoutBox {}
 
@@ -28,10 +29,11 @@ pub enum BoxType {
 }
 
 impl LayoutBox {
-  pub fn new(node: &NodePtr) -> Self {
+  pub fn new(node: NodePtr) -> Self {
     Self {
-      box_type: Self::get_box_type(node),
+      box_type: Self::get_box_type(&node),
       box_model: Default::default(),
+      node: Some(node),
     }
   }
 
@@ -39,6 +41,7 @@ impl LayoutBox {
     LayoutBox {
       box_type,
       box_model: Default::default(),
+      node: None,
     }
   }
 
@@ -76,6 +79,10 @@ impl LayoutBox {
       BoxType::TextSequence => true,
       _ => false,
     }
+  }
+
+  pub fn is_anonymous(&self) -> bool {
+    self.node.is_none()
   }
 
   pub fn can_have_children(&self) -> bool {

@@ -15,7 +15,7 @@ impl LayoutTreeBuilder {
     }
   }
 
-  fn build_layout_tree(&mut self, node: &NodePtr) {
+  fn build_layout_tree(&mut self, node: NodePtr) {
     let display = node.get_style(&Property::Display);
 
     if let Value::Display(display) = display {
@@ -34,7 +34,31 @@ impl LayoutTreeBuilder {
   }
 
   fn get_parent_for_inline(&self) -> Option<LayoutBoxPtr> {
-    todo!("get_parent_for_inline");
+    let parent = self.parent_stack.last();
+
+    if let Some(parent) = parent {
+      if parent.has_no_child() || parent.children_are_inline() {
+        return Some(parent.clone());
+      }
+
+      let get_last_node = || parent.last_child().map(|node| LayoutBoxPtr(node));
+
+      let require_anonymous = get_last_node()
+        .map(|last_node| {
+          !(last_node.is_anonymous() && last_node.children_are_inline())
+        })
+        .unwrap_or(true);
+
+      if require_anonymous {
+        let anonymous =
+          TreeNode::new(LayoutBox::new_anonymous(BoxType::BlockBox));
+        parent.append_child(anonymous);
+      }
+
+      return get_last_node();
+    }
+
+    None
   }
 
   fn get_parent_for_block(&self) -> Option<LayoutBoxPtr> {
