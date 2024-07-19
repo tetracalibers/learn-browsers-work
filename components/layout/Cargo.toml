@@ -4,3 +4,6 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
+tree     = { path = "../../utilities/tree" }
+fast_dom = { path = "../fast_dom" }
+re_css   = { path = "../re_css" }

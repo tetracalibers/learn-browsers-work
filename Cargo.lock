@@ -504,6 +504,11 @@ dependencies = [
 [[package]]
 name = "layout"
 version = "0.1.0"
+dependencies = [
+ "fast_dom",
+ "re_css",
+ "tree",
+]
 
 [[package]]
 name = "lazy_static"

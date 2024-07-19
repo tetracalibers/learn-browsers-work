@@ -5,7 +5,7 @@ use property::Property;
 
 use crate::{parser::structure::ComponentValue, token::CSSToken};
 
-mod display;
+pub mod display;
 pub mod length;
 pub mod percentage;
 pub mod property;

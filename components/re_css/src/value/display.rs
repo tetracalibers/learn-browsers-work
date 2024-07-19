@@ -12,14 +12,14 @@ pub enum Display {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
-enum DisplayOutside {
+pub enum DisplayOutside {
   Block,
   Inline,
   RunIn,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
-enum DisplayInside {
+pub enum DisplayInside {
   Flow,
   FlowRoot,
   Table,
@@ -68,5 +68,9 @@ impl Display {
 
   pub fn new_inline() -> Self {
     Display::Full(DisplayOutside::Inline, DisplayInside::Flow)
+  }
+
+  pub fn is_none(&self) -> bool {
+    matches!(self, Display::None)
   }
 }

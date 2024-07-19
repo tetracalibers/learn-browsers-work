@@ -95,6 +95,10 @@ impl DOMNode {
     self.as_maybe_element().is_some()
   }
 
+  pub fn is_text(&self) -> bool {
+    self.as_maybe_text().is_some()
+  }
+
   pub fn computed_styles(&self) -> Ref<Properties> {
     self.computed_styles.borrow()
   }
