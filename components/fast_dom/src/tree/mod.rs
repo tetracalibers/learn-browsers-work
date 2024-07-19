@@ -164,6 +164,17 @@ impl<T: Debug> TreeNode<T> {
   pub fn iterate_children(&self) -> ChildrenIterator<T> {
     ChildrenIterator::new(self.clone())
   }
+
+  pub fn for_each_child<F>(&self, mut callback: F)
+  where
+    F: FnMut(TreeNode<T>),
+  {
+    let mut maybe_child = self.first_child();
+    while let Some(child) = maybe_child {
+      callback(child.clone());
+      maybe_child = child.next_sibling();
+    }
+  }
 }
 
 impl<T: Debug> WeakTreeNode<T> {

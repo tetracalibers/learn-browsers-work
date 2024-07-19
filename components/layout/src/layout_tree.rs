@@ -24,13 +24,27 @@ impl LayoutTreeBuilder {
       }
     }
 
-    let layout_box = TreeNode::new(LayoutBox::new(node));
+    let layout_box = TreeNode::new(LayoutBox::new(node.clone()));
 
     let parent = if layout_box.is_inline() {
       self.get_parent_for_inline()
     } else {
       self.get_parent_for_block()
     };
+
+    if let Some(parent) = parent {
+      parent.append_child(layout_box.clone());
+
+      if !node.is_element() && !node.is_document() {
+        return;
+      }
+
+      self.parent_stack.push(LayoutBoxPtr(layout_box));
+      node.for_each_child(|child| self.build_layout_tree(NodePtr(child)));
+      self.parent_stack.pop();
+    } else {
+      todo!("print error");
+    }
   }
 
   fn get_parent_for_inline(&self) -> Option<LayoutBoxPtr> {
