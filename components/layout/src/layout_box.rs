@@ -28,12 +28,12 @@ enum BoxType {
 impl LayoutBox {
   pub fn new(node: &NodePtr) -> Self {
     Self {
-      box_type: Self::judge_box_type(node),
+      box_type: Self::get_box_type(node),
       box_model: Default::default(),
     }
   }
 
-  fn judge_box_type(node: &NodePtr) -> BoxType {
+  fn get_box_type(node: &NodePtr) -> BoxType {
     if node.is_text() {
       return BoxType::TextSequence;
     }
