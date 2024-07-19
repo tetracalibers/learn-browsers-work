@@ -1,3 +1,5 @@
+use std::ops::Deref;
+
 use fast_dom::node::NodePtr;
 use re_css::value::{
   display::{Display, DisplayInside, DisplayOutside},
@@ -19,7 +21,7 @@ pub struct LayoutBoxPtr(TreeNode<LayoutBox>);
 impl TreeNodeHooks<LayoutBox> for LayoutBox {}
 
 #[derive(Debug)]
-enum BoxType {
+pub enum BoxType {
   BlockBox,
   InlineBox,
   TextSequence,
@@ -29,6 +31,13 @@ impl LayoutBox {
   pub fn new(node: &NodePtr) -> Self {
     Self {
       box_type: Self::get_box_type(node),
+      box_model: Default::default(),
+    }
+  }
+
+  pub fn new_anonymous(box_type: BoxType) -> Self {
+    LayoutBox {
+      box_type,
       box_model: Default::default(),
     }
   }
@@ -54,11 +63,44 @@ impl LayoutBox {
     }
   }
 
+  pub fn is_block(&self) -> bool {
+    match self.box_type {
+      BoxType::BlockBox => true,
+      _ => false,
+    }
+  }
+
   pub fn is_inline(&self) -> bool {
     match self.box_type {
       BoxType::InlineBox => true,
       BoxType::TextSequence => true,
       _ => false,
     }
+  }
+
+  pub fn can_have_children(&self) -> bool {
+    match self.box_type {
+      BoxType::TextSequence => false,
+      _ => true,
+    }
+  }
+}
+
+impl LayoutBoxPtr {
+  pub fn children_are_inline(&self) -> bool {
+    self.iterate_children().all(|child| child.is_inline())
+  }
+}
+
+impl Deref for LayoutBoxPtr {
+  type Target = TreeNode<LayoutBox>;
+  fn deref(&self) -> &Self::Target {
+    &self.0
+  }
+}
+
+impl Clone for LayoutBoxPtr {
+  fn clone(&self) -> Self {
+    LayoutBoxPtr(self.0.clone())
   }
 }
