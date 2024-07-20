@@ -237,4 +237,8 @@ impl<T: TreeNodeHooks<T> + Debug> TreeNode<T> {
   pub fn iterate_children(&self) -> ChildrenIterator<T> {
     ChildrenIterator::new(self.clone())
   }
+
+  pub fn has_no_child(&self) -> bool {
+    self.first_child().is_none()
+  }
 }

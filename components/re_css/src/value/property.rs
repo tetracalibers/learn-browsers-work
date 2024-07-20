@@ -5,6 +5,8 @@ pub type Properties = FxHashMap<Property, Value>;
 
 #[derive(Debug, Hash, PartialEq, Eq, Clone, Copy, strum::EnumIter)]
 pub enum Property {
+  // display
+  Display,
   // physical margin
   MarginTop,
   MarginRight,
