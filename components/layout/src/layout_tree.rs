@@ -15,6 +15,35 @@ impl LayoutTreeBuilder {
     }
   }
 
+  pub fn build(mut self, root: NodePtr) -> Option<LayoutBoxPtr> {
+    let root_node = if root.is_document() {
+      root.first_child().map(|child| NodePtr(child))
+    } else {
+      Some(root)
+    };
+
+    if let Some(root_node) = root_node {
+      let display = root_node.get_style(&Property::Display);
+
+      if let Value::Display(display) = display {
+        if display.is_none() {
+          return None;
+        }
+      }
+
+      let root_box =
+        LayoutBoxPtr(TreeNode::new(LayoutBox::new(root_node.clone())));
+
+      self.parent_stack.push(root_box.clone());
+      root_node.for_each_child(|child| self.build_layout_tree(NodePtr(child)));
+      self.parent_stack.pop();
+
+      return Some(root_box);
+    }
+
+    None
+  }
+
   fn build_layout_tree(&mut self, node: NodePtr) {
     let display = node.get_style(&Property::Display);
 
